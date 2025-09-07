@@ -1,3 +1,9 @@
+/** Published Google Sheet link (pubhtml, not pubcsv) */
+const PUBHTML_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRrjRRrlWpb8tC3iMA6S0hEFLMpkg2cAxLKFqE9Vy-aVQCwv1D5WKYCxHuwo9edF1M_0sBdJEsQ96-c/pubhtml";
+
+/** Tab gids */
+const LIVE_GID = "1410250735"; // live
+const BANK_GID = "2009978011"; // bank (fallback)
 /* The Daily BrainBolt – App Logic (resilient CSV loader + 10s timer + share) */
 
 /** 👇 UPDATE THIS to your *published to web* URL (pubhtml) */
