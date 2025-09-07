@@ -27,19 +27,19 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://incomparable-smakager-64c5de.netlify.app/">
+  <meta property="og:url" content="https://dailybrainbolt.com/">
   <meta property="og:title" content="The Daily BrainBolt">
   <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta property="og:image" content="https://incomparable-smakager-64c5de.netlify.app/og-image-dark.png?v=2">
+  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png?v=2">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://incomparable-smakager-64c5de.netlify.app/">
+  <meta name="twitter:url" content="https://dailybrainbolt.com/">
   <meta name="twitter:title" content="The Daily BrainBolt">
   <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta name="twitter:image" content="https://incomparable-smakager-64c5de.netlify.app/og-image-dark.png?v=2">
+  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png?v=2">
 
   <!-- CSV Parser -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -102,9 +102,9 @@
 
   <script>
     // ====== CONFIG ======
-    const SITE_URL = "https://incomparable-smakager-64c5de.netlify.app/";
+    const SITE_URL = "https://dailybrainbolt.com/";
 
-    // Published-to-web key you verified
+    // Published-to-web key (verified)
     const DEFAULT_SHEET_ID = "2PACX-1vRrjRRrlWpb8tC3iMA6S0hEFLMpkg2cAxLKFqE9Vy-aVQCwv1D5WKYCxHuwo9edF1M_0sBdJEsQ96-c";
 
     // Tab gids (update if they changed in your new copy)
@@ -381,6 +381,16 @@
         }
       }
     });
+  </script>
+
+  <!-- PWA: register service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .catch(err => console.log('SW registration failed:', err));
+      });
+    }
   </script>
 </body>
 </html>
