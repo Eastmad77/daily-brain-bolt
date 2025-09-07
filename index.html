@@ -27,19 +27,19 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://daily-brain-bolt.netlify.app/">
+  <meta property="og:url" content="https://incomparable-smakager-64c5de.netlify.app/">
   <meta property="og:title" content="The Daily Brain Bolt">
   <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta property="og:image" content="https://daily-brain-bolt.netlify.app/og-image-dark.png?v=1">
+  <meta property="og:image" content="https://incomparable-smakager-64c5de.netlify.app/og-image-dark.png?v=1">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://daily-brain-bolt.netlify.app/">
+  <meta name="twitter:url" content="https://incomparable-smakager-64c5de.netlify.app/">
   <meta name="twitter:title" content="The Daily Brain Bolt">
   <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta name="twitter:image" content="https://daily-brain-bolt.netlify.app/og-image-dark.png?v=1">
+  <meta name="twitter:image" content="https://incomparable-smakager-64c5de.netlify.app/og-image-dark.png?v=1">
 
   <!-- CSV Parser -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -96,22 +96,29 @@
 
   <script>
     // ====== CONFIG ======
-    // One place to change if your Netlify URL is different:
-    const SITE_URL = "https://daily-brain-bolt.netlify.app/";
+    const SITE_URL = "https://incomparable-smakager-64c5de.netlify.app/";
 
-    // IMPORTANT: set your Sheet ID here OR pass it via ?sheet=<ID> in the URL.
-    const DEFAULT_SHEET_ID = ""; // ← paste your Google Sheet ID here if you like
+    // Published-to-web key you provided (works with /d/e/.../pub endpoints)
+    const DEFAULT_SHEET_ID = "2PACX-1vRrjRRrlWpb8tC3iMA6S0hEFLMpkg2cAxLKFqE9Vy-aVQCwv1D5WKYCxHuwo9edF1M_0sBdJEsQ96-c";
 
-    // Your known tab gids:
+    // Tab gids you shared earlier
     const LIVE_GID = "1410250735";   // 'live'
     const BANK_GID = "2009978011";   // 'bank'
 
-    // Read ?sheet=<ID> override from URL (handy for testing)
+    // Allow ?sheet=<ID> override for testing
     const urlParams = new URLSearchParams(window.location.search);
     const SHEET_ID = urlParams.get("sheet") || DEFAULT_SHEET_ID;
 
-    // Helper to build candidate CSV URLs (works with export and publish-to-web)
-    function csvCandidates(spreadsheetId, gid){
+    // Build CSV candidates for both "normal" IDs and published keys
+    function csvCandidates(spreadsheetId, gid) {
+      const isPublishedKey = String(spreadsheetId).startsWith("2PACX-");
+      if (isPublishedKey) {
+        const basePub = `https://docs.google.com/spreadsheets/d/e/${spreadsheetId}`;
+        return [
+          `${basePub}/pub?gid=${gid}&single=true&output=csv`,
+          `${basePub}/pub?output=csv`
+        ].map(u => u + (u.includes("?") ? "&" : "?") + "cb=" + Date.now());
+      }
       const base = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
       return [
         `${base}/gviz/tq?tqx=out:csv&gid=${gid}`,
