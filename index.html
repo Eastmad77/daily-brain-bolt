@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>The Daily Brain Bolt</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Favicon & Icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="mask-icon" href="/favicon.svg" color="#FFB400">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0B1C21">
+
+  <!-- Primary Meta -->
+  <meta name="title" content="The Daily Brain Bolt">
+  <meta name="description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
+
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://YOUR-DOMAIN/">
+  <meta property="og:title" content="The Daily Brain Bolt">
+  <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
+  <meta property="og:image" content="https://YOUR-DOMAIN/og-image-dark.png?v=1">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://YOUR-DOMAIN/">
+  <meta name="twitter:title" content="The Daily Brain Bolt">
+  <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
+  <meta name="twitter:image" content="https://YOUR-DOMAIN/og-image-dark.png?v=1">
+
+  <!-- CSV Parser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <h1>The Daily Brain Bolt</h1>
+      <p class="subtitle">Shock your synapses. Keep the streak alive!</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card bar-card">
+      <div class="bar-top">
+        <div><strong>Score:</strong> <span id="score">0</span></div>
+        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+      </div>
+      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+    </section>
+
+    <section class="card" id="quiz-card">
+      <div class="meta">
+        <span id="metaText" class="meta-text">Loading…</span>
+        <span class="spacer"></span>
+        <span id="today" class="meta-date"></span>
+      </div>
+      <div id="statusline" style="color:#666;font-size:12px;margin:-4px 0 6px 0;"></div>
+
+      <div id="question" class="question">Loading…</div>
+      <div id="options" class="options"></div>
+
+      <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+      <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
+    </section>
+
+    <!-- Timer bar -->
+    <section class="card timer-card">
+      <div class="timer">
+        <div id="timerFill" class="timer-fill"></div>
+        <span id="timerLabel" class="timer-label">10</span>
+      </div>
+    </section>
+
+    <!-- Share -->
+    <section class="card share-card">
+      <button id="shareBtn" class="btn accent">Share</button>
+    </section>
+  </main>
+
+  <footer class="footer">© 2025 The Daily Brain Bolt</footer>
+
+  <script>
+    // === Config ===
+    const SPREADSHEET_ID = "YOUR-SHEET-ID"; // Replace with your Google Sheet ID
+    const LIVE_GID = "1410250735";
+    const BANK_GID = "2009978011";
+
+    const SHEET_URL = (gid) =>
+      `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/pub?gid=${gid}&single=true&output=csv`;
+
+    // === Element refs ===
+    const elQ = document.getElementById('question');
+    const elOpts = document.getElementById('options');
+    const elShow = document.getElementById('showAnswerBtn');
+    const elFB = document.getElementById('feedback');
+    const elMetaText = document.getElementById('metaText');
+    const elToday = document.getElementById('today');
+    const elProgText = document.getElementById('progressText');
+    const elProgFill = document.getElementById('progressFill');
+    const elScore = document.getElementById('score');
+    const elPlayAgain = document.getElementById('playAgain');
+    const elStatus = document.getElementById('statusline');
+    const timerFill = document.getElementById('timerFill');
+    const timerLabel = document.getElementById('timerLabel');
+    const shareBtn = document.getElementById('shareBtn');
+
+    const now = new Date();
+    const todayKey = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0')
+    ].join('-');
+    elToday.textContent = todayKey;
+
+    let todays = [], idx = 0, score = 0, selected = null;
+    let timerId = null, timeLeft = 10;
+
+    function status(msg) { elStatus.textContent = msg; console.log("[CSV]", msg); }
+    const norm = s => String(s || '').trim();
+
+    // === Load questions ===
+    Papa.parse(SHEET_URL(LIVE_GID) + "&cb=" + Date.now(), {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: ({ data }) => {
+        const rows = (data || []).filter(r => r && r.Date && r.Question);
+        if (!rows.length) {
+          status("No rows found in live sheet. Falling back to bank.");
+          Papa.parse(SHEET_URL(BANK_GID), {
+            download: true,
+            header: true,
+            skipEmptyLines: true,
+            complete: ({ data: bankRows }) => {
+              todays = bankRows.slice(0, 12);
+              resetAndStart();
+            }
+          });
+        } else {
+          todays = rows;
+          resetAndStart();
+        }
+      },
+      error: (err) => {
+        status("Error fetching CSV: " + err.message);
+      }
+    });
+
+    function resetAndStart() {
+      idx = 0; score = 0; selected = null;
+      updateMeta();
+      if (!todays.length) { elQ.textContent = "No quiz rows found."; return; }
+      showQuestion();
+    }
+
+    function updateMeta() {
+      elProgText.textContent = `${idx}/${todays.length || 0}`;
+      const pct = (todays.length ? (idx / todays.length) : 0) * 100;
+      elProgFill.style.width = `${pct}%`;
+      elScore.textContent = String(score);
+    }
+
+    function showQuestion() {
+      const q = todays[idx];
+      if (!q) {
+        elFB.innerHTML = "<div class='correct'>Done for today! 🎉</div>";
+        elPlayAgain.style.display = "inline-flex";
+        elPlayAgain.onclick = resetAndStart;
+        clearTimer();
+        return;
+      }
+      selected = null;
+      elFB.innerHTML = '';
+      elShow.style.display = 'none';
+      elPlayAgain.style.display = 'none';
+
+      elMetaText.innerHTML = `<span class="accent-text">${q.Difficulty || '—'}</span> • ${q.Category || 'Quiz'}`;
+      elQ.textContent = q.Question || '—';
+
+      const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
+      elOpts.innerHTML = '';
+      opts.forEach((optText) => {
+        const btn = document.createElement('button');
+        btn.className = 'choice';
+        btn.textContent = optText;
+        btn.onclick = () => onSelect(btn, optText);
+        elOpts.appendChild(btn);
+      });
+
+      startTimer();
+    }
+
+    function onSelect(btn, val) {
+      document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selected = val;
+      elShow.style.display = 'inline-flex';
+    }
+
+    elShow.addEventListener('click', () => {
+      const q = todays[idx];
+      if (!q || !selected) return;
+      reveal(q);
+    });
+
+    function reveal(q, timedOut = false) {
+      const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
+      const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
+      elFB.innerHTML = timedOut
+        ? `<div class="wrong">⏰ Time's up! Correct: <strong>${q.Answer}</strong> ${expl}</div>`
+        : isCorrect
+          ? `<div class="correct">✅ Correct! ${expl}</div>`
+          : `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer}</strong> ${expl}</div>`;
+      clearTimer();
+      setTimeout(() => {
+        if (isCorrect && !timedOut) { score++; idx++; }
+        else { idx = 0; score = 0; }
+        updateMeta();
+        showQuestion();
+      }, 1000);
+    }
+
+    // === Timer ===
+    function startTimer() {
+      clearTimer();
+      timeLeft = 10;
+      updateTimerUI();
+      timerId = setInterval(() => {
+        timeLeft = Math.max(0, timeLeft - 0.1);
+        updateTimerUI();
+        if (timeLeft <= 0) {
+          clearTimer();
+          const q = todays[idx];
+          if (q) reveal(q, true);
+        }
+      }, 100);
+    }
+
+    function clearTimer() {
+      if (timerId) { clearInterval(timerId); timerId = null; }
+      timerFill.style.width = '0%';
+    }
+
+    function updateTimerUI() {
+      const pct = (timeLeft / 10) * 100;
+      timerFill.style.width = pct + '%';
+      if (timeLeft <= 3) timerFill.classList.add('urgent');
+      else timerFill.classList.remove('urgent');
+      timerLabel.textContent = Math.ceil(timeLeft);
+    }
+
+    // Pause/resume when tab inactive
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearTimer();
+      else startTimer();
+    });
+
+    // === Share button ===
+    shareBtn.addEventListener('click', async () => {
+      const shareData = {
+        title: "The Daily Brain Bolt",
+        text: "Can you keep your streak alive? Play today’s quiz!",
+        url: "https://YOUR-DOMAIN/"
+      };
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        navigator.clipboard.writeText(shareData.url);
+        alert("Link copied! Share it with your friends.");
+      }
+    });
+  </script>
+</body>
+</html>

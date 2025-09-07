@@ -1,0 +1,23 @@
+<!-- /public/favicon.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="boltFill" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#FFE172"/>
+      <stop offset="100%" stop-color="#FFB400"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="60%">
+      <stop offset="0%"  stop-color="#FFFFFF" stop-opacity=".95"/>
+      <stop offset="50%" stop-color="#7CFFF7" stop-opacity=".70"/>
+      <stop offset="100%" stop-color="#38FFF9" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- deep background -->
+  <rect width="256" height="256" rx="56" fill="#0B1C21"/>
+  <!-- cyan aura -->
+  <circle cx="128" cy="128" r="110" fill="url(#glow)"/>
+  <!-- bolt -->
+  <path d="M150 38 L94 128 L142 128 L112 218 L190 122 L140 122 Z"
+        fill="url(#boltFill)" stroke="#FFCB47" stroke-width="6"
+        style="filter: drop-shadow(0 8px 14px rgba(255,180,0,.35)) drop-shadow(0 14px 28px rgba(56,255,249,.25));"/>
+</svg>
