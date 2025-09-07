@@ -1,22 +1,25 @@
-/* DailyBrainBolt Service Worker */
+/* The Daily BrainBolt – Service Worker */
 const VERSION = 'v1.0.0';
 const STATIC_CACHE = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 
-// Files to precache (must exist at site root)
+/** Files to precache at install (update if you add/remove assets) */
 const PRECACHE_URLS = [
-  '/',               // Netlify serves index.html at /
+  '/',                 // Netlify will serve index.html here
   '/index.html',
   '/style.css',
+  '/app.js',           // if you keep the quiz logic inline, remove this
   '/favicon.svg',
   '/app-icon.svg',
   '/icon-192.png',
   '/icon-512.png',
   '/apple-touch-icon.png',
-  '/og-image-dark.png'
+  '/og-image-dark.png',
+  '/header-bg.png',    // your animated hero background
+  '/site.webmanifest'
 ];
 
-// Helper: identify Google Sheets CSV requests
+/** Heuristics to identify CSV requests to Google Sheets */
 const isCsvRequest = (url) => {
   try {
     const u = new URL(url);
@@ -25,7 +28,9 @@ const isCsvRequest = (url) => {
       u.pathname.includes('/spreadsheets/') &&
       (u.search.includes('output=csv') || u.search.includes('tqx=out:csv'))
     );
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 };
 
 self.addEventListener('install', (event) => {
@@ -47,16 +52,17 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
-// Strategy:
-// • Static: cache-first from STATIC_CACHE
-// • CSV (Google Sheets): network-first with 3s timeout, fallback to cache if offline
-// • Everything else: try network, fallback to cache (basic)
+/**
+ * Fetch strategy:
+ *  - Static assets in PRECACHE_URLS → Cache First
+ *  - Google Sheets CSV            → Network First (3s timeout), fallback to cache or minimal CSV
+ *  - Everything else              → Network First, fallback to cache (basic offline support)
+ */
 self.addEventListener('fetch', (event) => {
   const req = event.request;
-  const url = new URL(req.url);
-
-  // Only GET is cacheable
   if (req.method !== 'GET') return;
+
+  const url = new URL(req.url);
 
   // Static assets → Cache First
   if (PRECACHE_URLS.includes(url.pathname) || url.pathname === '/') {
@@ -66,47 +72,50 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // CSV runtime cache → Network First with timeout, fallback to cache
+  // Google Sheets CSV → Network First with timeout + cache fallback
   if (isCsvRequest(req.url)) {
-    event.respondWith((async () => {
-      const cache = await caches.open(RUNTIME_CACHE);
-
-      // 3s network timeout
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 3000);
-
-      try {
-        const fresh = await fetch(req, { signal: controller.signal });
-        clearTimeout(timeout);
-        if (fresh && fresh.ok) {
-          cache.put(req, fresh.clone());
-        }
-        return fresh;
-      } catch {
-        clearTimeout(timeout);
-        const cached = await cache.match(req);
-        if (cached) return cached;
-        // final fallback: a tiny CSV so app shows a friendly message
-        return new Response('Question,OptionA,OptionB,OptionC,OptionD,Answer\n', {
-          headers: { 'Content-Type': 'text/csv' },
-          status: 200
-        });
-      }
-    })());
+    event.respondWith(networkFirstCsv(req));
     return;
   }
 
-  // Default: network, then cache fallback
-  event.respondWith((async () => {
-    try {
-      const fresh = await fetch(req);
-      const cache = await caches.open(RUNTIME_CACHE);
-      cache.put(req, fresh.clone());
-      return fresh;
-    } catch {
-      const cached = await caches.match(req);
-      if (cached) return cached;
-      return new Response('Offline', { status: 503, statusText: 'Offline' });
-    }
-  })());
+  // Default → Network First, then cache
+  event.respondWith(networkFirstGeneric(req));
 });
+
+async function networkFirstCsv(req) {
+  const cache = await caches.open(RUNTIME_CACHE);
+
+  // 3s timeout so UI isn't stuck when offline/slow
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+
+  try {
+    const fresh = await fetch(req, { signal: controller.signal, cache: 'no-store' });
+    clearTimeout(timer);
+    if (fresh && fresh.ok) cache.put(req, fresh.clone());
+    return fresh;
+  } catch {
+    clearTimeout(timer);
+    const cached = await cache.match(req);
+    if (cached) return cached;
+
+    // Minimal CSV fallback so app shows a friendly message
+    return new Response('Question,OptionA,OptionB,OptionC,OptionD,Answer\n', {
+      headers: { 'Content-Type': 'text/csv' },
+      status: 200
+    });
+  }
+}
+
+async function networkFirstGeneric(req) {
+  try {
+    const fresh = await fetch(req);
+    const cache = await caches.open(RUNTIME_CACHE);
+    cache.put(req, fresh.clone());
+    return fresh;
+  } catch {
+    const cached = await caches.match(req);
+    if (cached) return cached;
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
