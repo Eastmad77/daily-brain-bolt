@@ -48,9 +48,13 @@
 
   <header class="hero">
     <div class="hero-inner">
-      <h1>The Daily BrainBolt</h1>
+      <div class="logo-wrap">
+        <img src="/app-icon.svg" alt="BrainBolt logo" class="logo" width="48" height="48">
+        <h1>The Daily BrainBolt</h1>
+      </div>
       <p class="subtitle">Shock your synapses. Keep the streak alive!</p>
-      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+
+      <div class="action-buttons">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn ghost">Shuffle & Start</button>
         <button id="shareBtn" class="btn accent">Share</button>
@@ -73,12 +77,14 @@
         <span class="spacer"></span>
         <span id="today" class="meta-date"></span>
       </div>
+
       <div id="statusline" style="color:#8FE7EC;font-size:12px;margin:-4px 0 6px 0;"></div>
 
       <div id="question" class="question">—</div>
       <div id="options" class="options"></div>
 
       <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
+
       <div id="feedback" class="feedback" aria-live="polite"></div>
       <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
     </section>
@@ -101,14 +107,14 @@
     // Published-to-web key you verified
     const DEFAULT_SHEET_ID = "2PACX-1vRrjRRrlWpb8tC3iMA6S0hEFLMpkg2cAxLKFqE9Vy-aVQCwv1D5WKYCxHuwo9edF1M_0sBdJEsQ96-c";
 
-    // Tab gids (update if changed in the new copy)
+    // Tab gids (update if they changed in your new copy)
     const LIVE_GID = "1410250735";   // 'live'
     const BANK_GID = "2009978011";   // 'bank'
 
+    // ?sheet=<ID> override for testing
     const urlParams = new URLSearchParams(window.location.search);
     const SHEET_ID = urlParams.get("sheet") || DEFAULT_SHEET_ID;
 
-    // Build CSV candidates for both published keys and normal IDs
     function csvCandidates(spreadsheetId, gid) {
       const isPublishedKey = String(spreadsheetId).startsWith("2PACX-");
       if (isPublishedKey) {
