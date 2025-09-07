@@ -1,121 +1,125 @@
-/* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.0';
-const STATIC_CACHE = `dbb-static-${VERSION}`;
+/* ============================================================
+   The Daily BrainBolt – Service Worker
+   - Static app shell cache + runtime cache
+   - Do NOT cache CSV / Google Sheets (always live)
+   - Bump VERSION to force clients to update
+   ============================================================ */
+
+const VERSION = 'v1.0.6'; // bump when assets/logic change
+const STATIC_CACHE  = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 
-/** Files to precache at install (update if you add/remove assets) */
-const PRECACHE_URLS = [
-  '/',                 // Netlify will serve index.html here
+/** Files we want cached up-front for fast/ offline starts */
+const PRECACHE = [
+  '/',                    // Netlify will serve index.html at /
   '/index.html',
   '/style.css',
-  '/app.js',           // if you keep the quiz logic inline, remove this
+  '/app.js',
+  '/site.webmanifest',
   '/favicon.svg',
-  '/app-icon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
   '/apple-touch-icon.png',
-  '/og-image-dark.png',
-  '/header-bg.png',    // your animated hero background
-  '/site.webmanifest'
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
-/** Heuristics to identify CSV requests to Google Sheets */
-const isCsvRequest = (url) => {
-  try {
-    const u = new URL(url);
-    return (
-      u.hostname === 'docs.google.com' &&
-      u.pathname.includes('/spreadsheets/') &&
-      (u.search.includes('output=csv') || u.search.includes('tqx=out:csv'))
-    );
-  } catch {
-    return false;
-  }
-};
+/** Helpers */
+const isSameOrigin = (url) => self.location.origin === url.origin;
 
+/** Never cache Google Sheets or CSV requests */
+const isCsvLike = (url) =>
+  url.hostname.includes('docs.google.com') ||
+  (url.searchParams.has('output') && url.searchParams.get('output') === 'csv') ||
+  url.pathname.endsWith('.csv');
+
+/** INSTALL: precache static assets */
 self.addEventListener('install', (event) => {
-  self.skipWaiting();
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE))
   );
+  self.skipWaiting(); // allow new SW to move to waiting immediately
 });
 
+/** ACTIVATE: clean up old caches */
 self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(
-      keys
-        .filter((key) => key !== STATIC_CACHE && key !== RUNTIME_CACHE)
-        .map((key) => caches.delete(key))
-    );
-    await self.clients.claim();
-  })());
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((k) =>
+            (k.startsWith('dbb-static-') || k.startsWith('dbb-runtime-')) &&
+            k !== STATIC_CACHE &&
+            k !== RUNTIME_CACHE
+          )
+          .map((k) => caches.delete(k))
+      )
+    )
+  );
+  self.clients.claim(); // take control of open pages ASAP
 });
 
-/**
- * Fetch strategy:
- *  - Static assets in PRECACHE_URLS → Cache First
- *  - Google Sheets CSV            → Network First (3s timeout), fallback to cache or minimal CSV
- *  - Everything else              → Network First, fallback to cache (basic offline support)
- */
+/** FETCH: smart strategies by request type */
 self.addEventListener('fetch', (event) => {
   const req = event.request;
+  // Only handle GET
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
 
-  // Static assets → Cache First
-  if (PRECACHE_URLS.includes(url.pathname) || url.pathname === '/') {
+  // Never cache Google Sheets / CSV (always live)
+  if (isCsvLike(url)) {
+    event.respondWith(fetch(req));
+    return;
+  }
+
+  // Same-origin requests (HTML/CSS/JS/icons)
+  if (isSameOrigin(url)) {
+    // Navigations → cache-first (offline fallback to index.html)
+    if (req.mode === 'navigate') {
+      event.respondWith(
+        caches.match('/index.html').then((cached) =>
+          cached ||
+          fetch(req).catch(() => caches.match('/index.html'))
+        )
+      );
+      return;
+    }
+
+    // Other same-origin GETs → cache-first
     event.respondWith(
-      caches.match(req).then((cached) => cached || fetch(req))
+      caches.match(req).then((cached) => {
+        if (cached) return cached;
+        return fetch(req).then((res) => {
+          if (res && res.status === 200 && res.type === 'basic') {
+            const copy = res.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        });
+      })
     );
     return;
   }
 
-  // Google Sheets CSV → Network First with timeout + cache fallback
-  if (isCsvRequest(req.url)) {
-    event.respondWith(networkFirstCsv(req));
-    return;
-  }
-
-  // Default → Network First, then cache
-  event.respondWith(networkFirstGeneric(req));
+  // Cross-origin (e.g., CDN for PapaParse) → stale-while-revalidate via RUNTIME cache
+  event.respondWith(
+    caches.match(req).then((cached) => {
+      const network = fetch(req)
+        .then((res) => {
+          if (res && res.status === 200) {
+            const copy = res.clone();
+            caches.open(RUNTIME_CACHE).then((cache) => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => cached); // offline fallback to whatever we have
+      return cached || network;
+    })
+  );
 });
 
-async function networkFirstCsv(req) {
-  const cache = await caches.open(RUNTIME_CACHE);
-
-  // 3s timeout so UI isn't stuck when offline/slow
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 3000);
-
-  try {
-    const fresh = await fetch(req, { signal: controller.signal, cache: 'no-store' });
-    clearTimeout(timer);
-    if (fresh && fresh.ok) cache.put(req, fresh.clone());
-    return fresh;
-  } catch {
-    clearTimeout(timer);
-    const cached = await cache.match(req);
-    if (cached) return cached;
-
-    // Minimal CSV fallback so app shows a friendly message
-    return new Response('Question,OptionA,OptionB,OptionC,OptionD,Answer\n', {
-      headers: { 'Content-Type': 'text/csv' },
-      status: 200
-    });
+/** Optional: allow page to trigger immediate activation */
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
   }
-}
-
-async function networkFirstGeneric(req) {
-  try {
-    const fresh = await fetch(req);
-    const cache = await caches.open(RUNTIME_CACHE);
-    cache.put(req, fresh.clone());
-    return fresh;
-  } catch {
-    const cached = await caches.match(req);
-    if (cached) return cached;
-    return new Response('Offline', { status: 503, statusText: 'Offline' });
-  }
-}
+});
