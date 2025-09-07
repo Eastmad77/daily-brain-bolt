@@ -1,25 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="boltFill" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#FFE172"/>
-      <stop offset="100%" stop-color="#FFB400"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2C2C2C"/>
+      <stop offset="100%" stop-color="#232323"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="50%" r="65%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.92"/>
-      <stop offset="45%" stop-color="#7CFFF7" stop-opacity="0.75"/>
-      <stop offset="100%" stop-color="#38FFF9" stop-opacity="0"/>
-    </radialGradient>
+    <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#4AC9FF"/>
+      <stop offset="100%" stop-color="#1CA7E3"/>
+    </linearGradient>
   </defs>
 
-  <!-- Rounded square background -->
-  <rect width="512" height="512" rx="110" fill="#0B1C21"/>
+  <!-- Rounded square -->
+  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
 
-  <!-- Cyan aura -->
-  <circle cx="256" cy="256" r="220" fill="url(#glow)"/>
+  <!-- Brain outline (accent) -->
+  <path fill="none" stroke="#FF8C00" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"
+        d="M370 340c-60 10-110 70-110 135 0 33 10 63 30 88-20 25-30 55-30 88 0 80 65 145 145 145h95
+           m194-456c60 10 110 70 110 135 0 33-10 63-30 88 20 25 30 55 30 88 0 80-65 145-145 145h-90"/>
 
-  <!-- Lightning bolt -->
-  <path d="M300 100 L200 260 L270 260 L230 412 L360 230 L280 230 Z"
-        fill="url(#boltFill)" stroke="#FFCB47" stroke-width="12"
-        style="filter: drop-shadow(0 8px 14px rgba(255,180,0,.35))
-                        drop-shadow(0 18px 28px rgba(56,255,249,.25));"/>
+  <!-- Lightning bolt (primary) -->
+  <path fill="url(#bolt)" d="M540 260l-120 220h90l-30 180l120-220h-90z" />
+
+  <!-- Glow -->
+  <circle cx="520" cy="460" r="220" fill="#4AC9FF" opacity="0.08"/>
 </svg>
