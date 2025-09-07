@@ -1,67 +1,130 @@
-/* Base */
+/* ================================
+   The Daily BrainBolt – Styles
+   ================================ */
+
+/* Theme tokens */
 :root{
-  --bg:#0B1C21;
-  --card:#102830;
-  --ink:#EFFFFE;
-  --muted:#8FE7EC;
-  --accent:#FFB400; /* warm accent */
-  --choice:#0F2F37;
-  --choice-hover:#11414B;
-  --wrong:#FF5C5C;
-  --right:#4ADE80;
+  --bg:#0B1C21;          /* app background */
+  --card:#102830;        /* card background */
+  --ink:#EFFFFE;         /* main text */
+  --muted:#8FE7EC;       /* secondary text (cyan) */
+  --accent:#FFB400;      /* warm accent (amber) */
+  --choice:#0F2F37;      /* choice button bg */
+  --choice-hover:#11414B;/* choice hover bg */
+  --wrong:#FF5C5C;       /* incorrect */
+  --right:#4ADE80;       /* correct */
+  --divider: rgba(255,255,255,0.1);
 }
 
+/* Base reset */
 *{ box-sizing:border-box; }
 html,body{
   margin:0; padding:0;
   background:var(--bg);
   color:var(--ink);
   font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+img{ max-width:100%; display:block; }
+button{ font-family: inherit; }
 
-/* Top Navigation */
+/* ================================
+   Top Navigation (sticky)
+   ================================ */
 .top-nav{
   display:flex; justify-content:center; gap:1.5rem;
-  background:rgba(11,28,33,0.85);
+  position: sticky; top:0; z-index:1000;
   padding:0.75rem 1rem;
-  position:sticky; top:0; z-index:1000;
+  background: rgba(11,28,33,0.85);
   backdrop-filter: blur(6px);
-  border-bottom:1px solid rgba(255,255,255,0.1);
+  border-bottom:1px solid var(--divider);
 }
-.top-nav a{ color:var(--muted); font-weight:600; text-decoration:none; }
+.top-nav a{
+  color:var(--muted);
+  font-weight:600;
+  text-decoration:none;
+  letter-spacing:.2px;
+  transition: color .2s ease;
+}
 .top-nav a:hover{ color:var(--accent); }
 
-/* Hero */
+/* ================================
+   Hero (subtle energy)
+   Optionally add /header-bg.png in root;
+   we blend it under gradients if present.
+   ================================ */
 .hero{
+  /* Optional background art; leave as-is if not present */
   background:
-    radial-gradient(1200px 400px at 10% -10%, rgba(143,231,236,0.25), transparent 40%),
-    radial-gradient(800px 320px at 90% -10%, rgba(255,180,0,0.18), transparent 45%),
-    linear-gradient(180deg, rgba(16,40,48,0.85), rgba(11,28,33,0.95));
+    radial-gradient(1200px 420px at 10% -10%, rgba(143,231,236,0.25), transparent 40%),
+    radial-gradient(900px 360px at 90% -10%, rgba(255,180,0,0.18), transparent 45%),
+    linear-gradient(180deg, rgba(16,40,48,0.88), rgba(11,28,33,0.96)),
+    url('/header-bg.png');
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat;
+  background-size: cover, cover, cover, cover;
+  background-position: center, center, center, center;
   padding: 56px 16px 36px;
   text-align:center;
 }
 .hero-inner{ max-width:980px; margin:0 auto; }
 .logo-wrap{ display:flex; align-items:center; justify-content:center; gap:12px; }
 .logo{ filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35)); }
-.hero h1{ margin:6px 0 6px; font-size: clamp(28px, 4vw, 40px); letter-spacing:0.5px; }
-.subtitle{ margin:0 auto 18px; color:var(--muted); max-width: 700px; }
-
-/* Buttons */
-.btn{
-  appearance:none; border:0; border-radius:12px;
-  padding:12px 16px; font-weight:700; cursor:pointer;
-  transition: transform .06s ease, box-shadow .2s ease, background .2s ease, color .2s ease;
+.hero h1{
+  margin:6px 0 6px; 
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing:0.5px;
 }
-.action-buttons{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-.btn.primary{ background:var(--accent); color:#1b1200; box-shadow:0 6px 18px rgba(255,180,0,0.25); }
-.btn.primary:hover{ transform: translateY(-1px); }
-.btn.ghost{ background:transparent; color:var(--muted); border:1px solid rgba(143,231,236,0.4); }
+.subtitle{
+  margin:0 auto 18px;
+  color:var(--muted);
+  max-width: 700px;
+}
+
+/* ================================
+   Buttons
+   - Stable (no layout wiggle)
+   ================================ */
+.btn{
+  appearance:none;
+  border:1px solid transparent; /* constant width to avoid reflow */
+  border-radius:12px;
+  padding:12px 16px;
+  font-weight:700;
+  cursor:pointer;
+  transition: transform .06s ease, box-shadow .2s ease, background .2s ease, color .2s ease, border-color .2s ease;
+  transform: translateY(0);
+}
+.action-buttons{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; min-height:48px; }
+.btn:active{ transform: translateY(0); } /* no nudge */
+.btn:disabled{ opacity:.7; cursor:not-allowed; }
+
+.btn.primary{
+  background:var(--accent);
+  color:#1b1200;
+  box-shadow:0 6px 18px rgba(255,180,0,0.25);
+}
+.btn.primary:hover{ filter: brightness(1.03); }
+
+.btn.ghost{
+  background:transparent;
+  color:var(--muted);
+  border-color: rgba(143,231,236,0.4);
+}
 .btn.ghost:hover{ background:#0F2F37; }
-.btn.accent{ background:#0F2F37; color:var(--accent); border:1px solid rgba(255,180,0,0.35); }
+
+.btn.accent{
+  background:#0F2F37;
+  color:var(--accent);
+  border-color: rgba(255,180,0,0.35);
+}
 .btn.accent:hover{ background:#11414B; }
 
-/* Layout */
+/* ================================
+   Layout & Cards
+   ================================ */
 .container{ max-width: 980px; margin: 24px auto; padding: 0 16px; }
+
 .card{
   background: var(--card);
   border-radius: 16px;
@@ -73,17 +136,42 @@ html,body{
 .bar-top{ display:flex; justify-content:space-between; align-items:center; font-size:14px; color:var(--muted); }
 
 /* Progress bar */
-.progress{ width:100%; height:10px; background:#0c242a; border-radius:999px; overflow:hidden; margin-top:8px; }
-.progress-fill{ width:0%; height:100%; background:linear-gradient(90deg, #39d0da, #8FE7EC); transition:width .3s ease; }
+.progress{
+  width:100%; height:10px;
+  background:#0c242a;
+  border-radius:999px; overflow:hidden;
+  margin-top:8px;
+}
+.progress-fill{
+  width:0%; height:100%;
+  background:linear-gradient(90deg, #39d0da, #8FE7EC);
+  transition:width .3s ease;
+}
 
-/* Quiz content */
+/* ================================
+   Quiz Body
+   ================================ */
 .meta{ display:flex; align-items:center; gap:10px; color:var(--muted); margin-bottom:8px; }
 .meta .spacer{ flex:1; }
 .meta-date{ opacity:0.9; }
-.statusline{ color:var(--muted); font-size:12px; margin:-4px 0 6px 0; }
-.question{ font-size: clamp(20px, 3.4vw, 26px); font-weight:800; margin:10px 0 12px; }
+
+.statusline{
+  color:var(--muted);
+  font-size:12px;
+  margin:-4px 0 6px 0;
+}
+
+.question{
+  font-size: clamp(20px, 3.4vw, 26px);
+  font-weight:800;
+  margin:10px 0 12px;
+}
+
 .options{ display:grid; grid-template-columns:1fr; gap:10px; }
-@media (min-width:640px){ .options{ grid-template-columns: 1fr 1fr; } }
+@media (min-width:640px){
+  .options{ grid-template-columns: 1fr 1fr; }
+}
+
 .choice{
   background: var(--choice);
   color: var(--ink);
@@ -91,8 +179,10 @@ html,body{
   padding:14px 12px;
   border-radius:12px;
   text-align:left;
-  cursor:pointer; font-weight:700; letter-spacing:0.2px;
-  transition: transform .05s ease, background .2s ease, border-color .2s ease;
+  cursor:pointer;
+  font-weight:700;
+  letter-spacing:0.2px;
+  transition: transform .05s ease, background .2s ease, border-color .2s ease, outline-color .2s ease;
 }
 .choice:hover{ background: var(--choice-hover); }
 .choice.selected{ outline:2px solid var(--accent); }
@@ -103,7 +193,9 @@ html,body{
 .feedback .wrong{ color: var(--wrong); font-weight:700; }
 .feedback .expl{ margin-top:6px; color: var(--muted); }
 
-/* Timer */
+/* ================================
+   10s Timer
+   ================================ */
 .timer-card{ padding: 12px 16px; }
 .timer{
   position: relative; height: 12px; border-radius: 999px;
@@ -116,10 +208,13 @@ html,body{
 }
 .timer-fill.urgent{ background: linear-gradient(90deg, #FF5C5C, #FF2D2D); }
 .timer-label{
-  display:block; text-align:right; margin-top:6px; font-size:12px; color:var(--muted);
+  display:block; text-align:right; margin-top:6px;
+  font-size:12px; color:var(--muted);
 }
 
-/* Contact card */
+/* ================================
+   Contact Card
+   ================================ */
 .contact-card {
   margin: 2rem auto;
   padding: 1.5rem;
@@ -130,16 +225,23 @@ html,body{
   box-shadow: 0 4px 10px rgba(0,0,0,0.25);
 }
 .contact-card h2 { margin-bottom: 0.5rem; color: #8FE7EC; }
-.contact-card a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.contact-card a {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
 .contact-card a:hover { text-decoration: underline; }
 
-/* Footer */
+/* ================================
+   Footer (shared)
+   ================================ */
 footer.footer{
   margin: 2rem 0 0;
   padding: 1rem;
   font-size: 0.9rem;
   text-align: center;
   color: #ccc;
+  border-top:1px solid var(--divider);
 }
 footer.footer nav a{
   margin: 0 0.25rem;
@@ -147,3 +249,18 @@ footer.footer nav a{
   text-decoration: none;
 }
 footer.footer nav a:hover{ text-decoration: underline; }
+
+/* ================================
+   Accessibility & Prefs
+   ================================ */
+:focus-visible{
+  outline: 2px dashed var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation: none !important; transition: none !important; }
+}
+
+/* Helpful utility for hiding text-only elements when empty */
+[hidden]{ display:none !important; }
