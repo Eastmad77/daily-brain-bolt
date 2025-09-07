@@ -1,5 +1,7 @@
 /* ============================================================
    The Daily BrainBolt – Quiz Logic
+   - NEW: Wrong answer no longer auto-restarts. User must press
+          "Start Quiz" or "Shuffle & Start" to begin again.
    ============================================================ */
 
 /** Published Google Sheet link (pubhtml, not pubcsv) */
@@ -53,6 +55,7 @@ elToday.textContent = todayKey;
 let allRows = [], todays = [], idx = 0, score = 0, selected = null;
 let csvLoaded = false;
 let timerId = null, timeLeft = 10;
+let locked = false; // prevents answering after round over
 const norm = s => String(s || '').trim();
 
 /* Status helper */
@@ -100,7 +103,8 @@ function parseCsv(csvUrl) {
 
 /* Quiz flow */
 function resetAndStart() {
-  idx = 0; score = 0; selected = null;
+  idx = 0; score = 0; selected = null; locked = false;
+  enableButtons();
   updateMeta();
   if (!todays.length) { elQ.textContent = "No quiz rows found."; return; }
   showQuestion();
@@ -134,6 +138,22 @@ function startTimer(onTimeUp) {
   timerId = requestAnimationFrame(tick);
 }
 
+/* Helpers to enable/disable choice buttons */
+function disableChoices() {
+  document.querySelectorAll('.choice').forEach(b => {
+    b.disabled = true;
+    b.classList.add('disabled');
+  });
+}
+function enableButtons() {
+  btnStart.disabled = false;
+  btnShuffle.disabled = false;
+  document.querySelectorAll('.choice').forEach(b => {
+    b.disabled = false;
+    b.classList.remove('disabled');
+  });
+}
+
 /* Show Q */
 function showQuestion() {
   const q = todays[idx];
@@ -144,6 +164,7 @@ function showQuestion() {
     clearTimer();
     return;
   }
+  locked = false;
   selected = null;
   elFB.innerHTML = ''; elShow.style.display = 'none'; elPlayAgain.style.display = 'none';
   elMetaText.textContent = `${q.Difficulty || '—'} • ${q.Category || 'Quiz'}`;
@@ -157,28 +178,45 @@ function showQuestion() {
     elOpts.appendChild(btn);
   });
   startTimer(() => {
-    if (!selected) {
+    if (!selected && !locked) {
       elFB.innerHTML = `<div class="wrong">⏱️ Time's up! Correct: <strong>${q.Answer || '—'}</strong></div>`;
+      // Time-up continues to next question (unchanged behavior)
       setTimeout(() => { idx++; updateMeta(); showQuestion(); }, 900);
     }
   });
 }
 function onSelect(btn, val) {
+  if (locked) return;
   document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected'); selected = val;
   elShow.style.display = 'inline-flex';
 }
 elShow.addEventListener('click', () => { const q = todays[idx]; if (q && selected) reveal(q); });
+
 function reveal(q) {
+  if (locked) return;
   const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
   const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
   elFB.innerHTML = isCorrect
     ? `<div class="correct">✅ Correct! ${expl}</div>`
-    : `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer}</strong> ${expl}</div>`;
+    : `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer}</strong>${expl ? ' ' + expl : ''}</div>
+       <div class="expl" style="margin-top:6px;">Tap <strong>Start Quiz</strong> or <strong>Shuffle & Start</strong> to try again.</div>`;
+
   clearTimer();
+  disableChoices();
+  elShow.style.display = 'none';
+  locked = true;
+
   setTimeout(() => {
-    if (isCorrect) { score++; idx++; } else { idx = 0; score = 0; }
-    updateMeta(); showQuestion();
+    if (isCorrect) {
+      score++; idx++;
+      updateMeta(); showQuestion();
+    } else {
+      // NEW BEHAVIOR: Do NOT auto-restart. Reset counters, wait for user action.
+      idx = 0; score = 0;
+      updateMeta();
+      // leave question & feedback visible until user presses Start/Shuffle
+    }
   }, 900);
 }
 
@@ -192,6 +230,7 @@ btnShuffle?.addEventListener('click', async () => {
   btnStart.disabled = true; btnShuffle.disabled = true;
   try {
     const ok = await loadCsvOnce(); if (!ok) return;
+    // shuffle today's set
     for (let i = todays.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [todays[i], todays[j]] = [todays[j], todays[i]];
