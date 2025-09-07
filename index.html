@@ -27,30 +27,34 @@
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://YOUR-DOMAIN/">
+  <meta property="og:url" content="https://daily-brain-bolt.netlify.app/">
   <meta property="og:title" content="The Daily Brain Bolt">
   <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta property="og:image" content="https://YOUR-DOMAIN/og-image-dark.png?v=1">
+  <meta property="og:image" content="https://daily-brain-bolt.netlify.app/og-image-dark.png?v=1">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://YOUR-DOMAIN/">
+  <meta name="twitter:url" content="https://daily-brain-bolt.netlify.app/">
   <meta name="twitter:title" content="The Daily Brain Bolt">
   <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta name="twitter:image" content="https://YOUR-DOMAIN/og-image-dark.png?v=1">
+  <meta name="twitter:image" content="https://daily-brain-bolt.netlify.app/og-image-dark.png?v=1">
 
   <!-- CSV Parser -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </head>
 <body>
 
   <header class="hero">
-    <div class="hero-overlay"></div>
     <div class="hero-inner">
       <h1>The Daily Brain Bolt</h1>
       <p class="subtitle">Shock your synapses. Keep the streak alive!</p>
+      <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+        <button id="startBtn" class="btn primary">Start Quiz</button>
+        <button id="shuffleBtn" class="btn ghost">Shuffle & Start</button>
+        <button id="shareBtn" class="btn accent">Share</button>
+      </div>
     </div>
   </header>
 
@@ -65,13 +69,13 @@
 
     <section class="card" id="quiz-card">
       <div class="meta">
-        <span id="metaText" class="meta-text">Loading…</span>
+        <span id="metaText" class="meta-text">Click <strong>Start Quiz</strong> to begin.</span>
         <span class="spacer"></span>
         <span id="today" class="meta-date"></span>
       </div>
-      <div id="statusline" style="color:#666;font-size:12px;margin:-4px 0 6px 0;"></div>
+      <div id="statusline" style="color:#8FE7EC;font-size:12px;margin:-4px 0 6px 0;"></div>
 
-      <div id="question" class="question">Loading…</div>
+      <div id="question" class="question">—</div>
       <div id="options" class="options"></div>
 
       <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
@@ -79,32 +83,45 @@
       <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
     </section>
 
-    <!-- Timer bar -->
+    <!-- Countdown timer -->
     <section class="card timer-card">
       <div class="timer">
         <div id="timerFill" class="timer-fill"></div>
         <span id="timerLabel" class="timer-label">10</span>
       </div>
     </section>
-
-    <!-- Share -->
-    <section class="card share-card">
-      <button id="shareBtn" class="btn accent">Share</button>
-    </section>
   </main>
 
   <footer class="footer">© 2025 The Daily Brain Bolt</footer>
 
   <script>
-    // === Config ===
-    const SPREADSHEET_ID = "YOUR-SHEET-ID"; // Replace with your Google Sheet ID
-    const LIVE_GID = "1410250735";
-    const BANK_GID = "2009978011";
+    // ====== CONFIG ======
+    // One place to change if your Netlify URL is different:
+    const SITE_URL = "https://daily-brain-bolt.netlify.app/";
 
-    const SHEET_URL = (gid) =>
-      `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/pub?gid=${gid}&single=true&output=csv`;
+    // IMPORTANT: set your Sheet ID here OR pass it via ?sheet=<ID> in the URL.
+    const DEFAULT_SHEET_ID = ""; // ← paste your Google Sheet ID here if you like
 
-    // === Element refs ===
+    // Your known tab gids:
+    const LIVE_GID = "1410250735";   // 'live'
+    const BANK_GID = "2009978011";   // 'bank'
+
+    // Read ?sheet=<ID> override from URL (handy for testing)
+    const urlParams = new URLSearchParams(window.location.search);
+    const SHEET_ID = urlParams.get("sheet") || DEFAULT_SHEET_ID;
+
+    // Helper to build candidate CSV URLs (works with export and publish-to-web)
+    function csvCandidates(spreadsheetId, gid){
+      const base = `https://docs.google.com/spreadsheets/d/${spreadsheetId}`;
+      return [
+        `${base}/gviz/tq?tqx=out:csv&gid=${gid}`,
+        `${base}/export?format=csv&gid=${gid}`,
+        `${base}/pub?gid=${gid}&single=true&output=csv`,
+        `${base}/pub?output=csv`
+      ].map(u => u + (u.includes("?") ? "&" : "?") + "cb=" + Date.now());
+    }
+
+    // ====== ELEMENTS ======
     const elQ = document.getElementById('question');
     const elOpts = document.getElementById('options');
     const elShow = document.getElementById('showAnswerBtn');
@@ -116,72 +133,134 @@
     const elScore = document.getElementById('score');
     const elPlayAgain = document.getElementById('playAgain');
     const elStatus = document.getElementById('statusline');
+    const btnStart = document.getElementById('startBtn');
+    const btnShuffle = document.getElementById('shuffleBtn');
+    const shareBtn = document.getElementById('shareBtn');
     const timerFill = document.getElementById('timerFill');
     const timerLabel = document.getElementById('timerLabel');
-    const shareBtn = document.getElementById('shareBtn');
 
+    // ====== STATE ======
     const now = new Date();
-    const todayKey = [
-      now.getFullYear(),
-      String(now.getMonth() + 1).padStart(2, '0'),
-      String(now.getDate()).padStart(2, '0')
-    ].join('-');
+    const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
     elToday.textContent = todayKey;
 
-    let todays = [], idx = 0, score = 0, selected = null;
-    let timerId = null, timeLeft = 10;
+    const norm = s => String(s||'').trim();
+    function status(msg){ elStatus.textContent = msg; console.log("[CSV]", msg); }
 
-    function status(msg) { elStatus.textContent = msg; console.log("[CSV]", msg); }
-    const norm = s => String(s || '').trim();
+    let allRows = [], todays = [], idx = 0, score = 0, selected = null;
+    let isShuffled = false;
 
-    // === Load questions ===
-    Papa.parse(SHEET_URL(LIVE_GID) + "&cb=" + Date.now(), {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: ({ data }) => {
-        const rows = (data || []).filter(r => r && r.Date && r.Question);
-        if (!rows.length) {
-          status("No rows found in live sheet. Falling back to bank.");
-          Papa.parse(SHEET_URL(BANK_GID), {
-            download: true,
-            header: true,
-            skipEmptyLines: true,
-            complete: ({ data: bankRows }) => {
-              todays = bankRows.slice(0, 12);
-              resetAndStart();
-            }
-          });
-        } else {
-          todays = rows;
-          resetAndStart();
+    // Timer
+    const TIMER_SECONDS = 10;
+    let timerId = null, timeLeft = TIMER_SECONDS;
+
+    function clearTimer(){ if (timerId){ clearInterval(timerId); timerId = null; } }
+    function updateTimerUI(){
+      const pct = Math.max(0, Math.min(100, (timeLeft / TIMER_SECONDS) * 100));
+      timerFill.style.width = pct + "%";
+      if (timeLeft <= 3) timerFill.classList.add('urgent'); else timerFill.classList.remove('urgent');
+      timerLabel.textContent = Math.ceil(Math.max(0, timeLeft));
+    }
+    function startTimer(){
+      clearTimer();
+      timeLeft = TIMER_SECONDS;
+      updateTimerUI();
+      timerId = setInterval(() => {
+        timeLeft = Math.max(0, timeLeft - 0.1);
+        updateTimerUI();
+        if (timeLeft <= 0){
+          clearTimer();
+          const q = todays[idx];
+          if (q) reveal(q, /*timedOut=*/true);
         }
-      },
-      error: (err) => {
-        status("Error fetching CSV: " + err.message);
-      }
-    });
+      }, 100);
+    }
+    document.addEventListener('visibilitychange', () => { if (document.hidden) clearTimer(); });
 
-    function resetAndStart() {
-      idx = 0; score = 0; selected = null;
-      updateMeta();
-      if (!todays.length) { elQ.textContent = "No quiz rows found."; return; }
-      showQuestion();
+    // ====== DATA LOADING ======
+    async function fetchCSVTextFromCandidates(candidates){
+      let lastDetail = "Unknown error";
+      for (const url of candidates){
+        status("Trying: " + url);
+        try{
+          const res = await fetch(url, { cache: "no-store" });
+          const text = await res.text();
+          if (!res.ok) { lastDetail = `HTTP ${res.status} – ${text.slice(0,140)}…`; throw new Error(lastDetail); }
+          if (!text.includes(",") || text.trim().length < 10) { lastDetail = `Non-CSV response: ${text.slice(0,140)}…`; throw new Error(lastDetail); }
+          status("Loaded via: " + url);
+          return text;
+        }catch(e){
+          console.warn("CSV attempt failed:", url, e);
+        }
+      }
+      throw new Error(lastDetail);
     }
 
-    function updateMeta() {
+    function parseCSV(text){
+      return new Promise((resolve, reject) => {
+        Papa.parse(text, {
+          header: true,
+          skipEmptyLines: true,
+          complete: ({ data }) => resolve(data || []),
+          error: (err) => reject(err)
+        });
+      });
+    }
+
+    async function loadRows(){
+      if (!SHEET_ID){
+        status('No Sheet ID. Add it in index.html or use ?sheet=YOUR_SHEET_ID in the URL.');
+        throw new Error("Missing Google Sheet ID");
+      }
+      // Try LIVE first
+      try{
+        const liveText = await fetchCSVTextFromCandidates(csvCandidates(SHEET_ID, LIVE_GID));
+        const liveRows = (await parseCSV(liveText)).filter(r => r && r.Question);
+        if (liveRows.length > 0){
+          status(`Loaded ${liveRows.length} rows from "live"`);
+          return { rows: liveRows, source: "live" };
+        }
+        status(`"live" has no rows; trying "bank"…`);
+      }catch(e){
+        status(`Couldn’t load "live" (${e.message}). Trying "bank"…`);
+      }
+      // Fallback BANK
+      const bankText = await fetchCSVTextFromCandidates(csvCandidates(SHEET_ID, BANK_GID));
+      const bankRows = (await parseCSV(bankText)).filter(r => r && r.Question);
+      status(`Loaded ${bankRows.length} rows from "bank"`);
+      return { rows: bankRows, source: "bank" };
+    }
+
+    // ====== QUIZ FLOW ======
+    function resetUI(){
+      idx = 0; score = 0; selected = null;
+      elQ.textContent = "—";
+      elOpts.innerHTML = "";
+      elFB.innerHTML = "";
+      elShow.style.display = "none";
+      elPlayAgain.style.display = "none";
+      elMetaText.innerHTML = "Preparing your questions…";
+      elProgText.textContent = "0/0";
+      elProgFill.style.width = "0%";
+      elScore.textContent = "0";
+      clearTimer();
+      timerFill.style.width = "0%";
+      timerLabel.textContent = TIMER_SECONDS;
+    }
+
+    function updateMeta(){
       elProgText.textContent = `${idx}/${todays.length || 0}`;
       const pct = (todays.length ? (idx / todays.length) : 0) * 100;
       elProgFill.style.width = `${pct}%`;
       elScore.textContent = String(score);
     }
 
-    function showQuestion() {
+    function showQuestion(){
       const q = todays[idx];
-      if (!q) {
-        elFB.innerHTML = "<div class='correct'>Done for today! 🎉</div>";
+      if (!q){
+        elFB.innerHTML = "<div class='correct'>Nice! Done for today. 🎉</div>";
         elPlayAgain.style.display = "inline-flex";
-        elPlayAgain.onclick = resetAndStart;
+        elPlayAgain.onclick = () => start(isShuffled);
         clearTimer();
         return;
       }
@@ -204,85 +283,90 @@
       });
 
       startTimer();
+      updateMeta();
     }
 
-    function onSelect(btn, val) {
+    function onSelect(btn, val){
       document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
       selected = val;
       elShow.style.display = 'inline-flex';
+      clearTimer();
     }
 
     elShow.addEventListener('click', () => {
       const q = todays[idx];
       if (!q || !selected) return;
-      reveal(q);
+      reveal(q, /*timedOut=*/false);
     });
 
-    function reveal(q, timedOut = false) {
-      const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
+    function reveal(q, timedOut=false){
+      const isCorrect = !timedOut && norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
       const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
-      elFB.innerHTML = timedOut
-        ? `<div class="wrong">⏰ Time's up! Correct: <strong>${q.Answer}</strong> ${expl}</div>`
-        : isCorrect
-          ? `<div class="correct">✅ Correct! ${expl}</div>`
-          : `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer}</strong> ${expl}</div>`;
-      clearTimer();
+      if (isCorrect){
+        elFB.innerHTML = `<div class="correct">⚡ Correct! ${expl}</div>`;
+      } else if (timedOut){
+        elFB.innerHTML = `<div class="wrong">⏱️ Time’s up! Correct: <strong>${q.Answer}</strong> ${expl}</div>`;
+      } else {
+        elFB.innerHTML = `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer}</strong> ${expl}</div>`;
+      }
       setTimeout(() => {
-        if (isCorrect && !timedOut) { score++; idx++; }
+        if (isCorrect) { score++; idx++; }
         else { idx = 0; score = 0; }
         updateMeta();
         showQuestion();
-      }, 1000);
+      }, 900);
     }
 
-    // === Timer ===
-    function startTimer() {
-      clearTimer();
-      timeLeft = 10;
-      updateTimerUI();
-      timerId = setInterval(() => {
-        timeLeft = Math.max(0, timeLeft - 0.1);
-        updateTimerUI();
-        if (timeLeft <= 0) {
-          clearTimer();
-          const q = todays[idx];
-          if (q) reveal(q, true);
-        }
-      }, 100);
+    // ====== START/SHUFFLE/SHARE ======
+    async function start(shuffle=false){
+      isShuffled = !!shuffle;
+      resetUI();
+      elMetaText.innerHTML = "Loading questions…";
+      try{
+        const { rows, source } = await loadRows();
+        allRows = rows;
+        // Prefer today's set if dates exist; otherwise first 12
+        todays = rows.filter(r => norm(r.Date) === todayKey);
+        if (!todays.length) todays = rows.slice(0, 12);
+        if (isShuffled) todays = shuffleArray(todays);
+        status(`Ready (${todays.length} Qs) from ${source}`);
+        showQuestion();
+      }catch(err){
+        console.error(err);
+        status("Couldn’t load CSV. Ensure the sheet is shared or published to the web.");
+        elMetaText.textContent = "Error fetching CSV. Add ?sheet=<ID> or set DEFAULT_SHEET_ID.";
+      }
     }
 
-    function clearTimer() {
-      if (timerId) { clearInterval(timerId); timerId = null; }
-      timerFill.style.width = '0%';
+    function shuffleArray(arr){
+      const a = arr.slice();
+      for (let i=a.length-1; i>0; i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
     }
 
-    function updateTimerUI() {
-      const pct = (timeLeft / 10) * 100;
-      timerFill.style.width = pct + '%';
-      if (timeLeft <= 3) timerFill.classList.add('urgent');
-      else timerFill.classList.remove('urgent');
-      timerLabel.textContent = Math.ceil(timeLeft);
-    }
+    document.getElementById('startBtn').addEventListener('click', () => start(false));
+    document.getElementById('shuffleBtn').addEventListener('click', () => start(true));
 
-    // Pause/resume when tab inactive
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) clearTimer();
-      else startTimer();
-    });
-
-    // === Share button ===
+    // Share
     shareBtn.addEventListener('click', async () => {
       const shareData = {
         title: "The Daily Brain Bolt",
         text: "Can you keep your streak alive? Play today’s quiz!",
-        url: "https://YOUR-DOMAIN/"
+        url: SITE_URL
       };
-      try {
-        await navigator.share(shareData);
-      } catch (err) {
-        navigator.clipboard.writeText(shareData.url);
-        alert("Link copied! Share it with your friends.");
+      if (navigator.share){
+        try { await navigator.share(shareData); } catch (e) { /* user cancelled */ }
+      } else {
+        try {
+          await navigator.clipboard.writeText(shareData.url);
+          alert("Link copied! Share it with your friends.");
+        } catch {
+          prompt("Copy this link:", shareData.url);
+        }
       }
     });
   </script>
