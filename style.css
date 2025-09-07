@@ -240,3 +240,39 @@ body{
   .logo{ width: 40px; height: 40px; }
   .hero-inner{ padding: 18px; }
 }
+/* --- Contact card --- */
+.contact-card {
+  margin: 2rem auto;
+  padding: 1.5rem;
+  max-width: 700px;
+  text-align: center;
+  background: #102830; /* matches theme cards */
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+}
+.contact-card h2 {
+  margin-bottom: 0.5rem;
+  color: #8FE7EC;
+}
+.contact-card a {
+  color: #FFB400;
+  font-weight: 600;
+  text-decoration: none;
+}
+.contact-card a:hover { text-decoration: underline; }
+
+/* --- Footer --- */
+footer.footer {
+  margin: 2rem 0 0;
+  padding: 1rem;
+  font-size: 0.9rem;
+  text-align: center;
+  color: #ccc;
+}
+footer.footer nav a {
+  margin: 0 0.25rem;
+  color: #8FE7EC;
+  text-decoration: none;
+}
+footer.footer nav a:hover { text-decoration: underline; }
+
