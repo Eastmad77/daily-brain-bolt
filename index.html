@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <title>The Daily Brain Bolt</title>
+  <title>The Daily BrainBolt</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,13 +22,13 @@
   <meta name="theme-color" content="#0B1C21">
 
   <!-- Primary Meta -->
-  <meta name="title" content="The Daily Brain Bolt">
+  <meta name="title" content="The Daily BrainBolt">
   <meta name="description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
 
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://incomparable-smakager-64c5de.netlify.app/">
-  <meta property="og:title" content="The Daily Brain Bolt">
+  <meta property="og:title" content="The Daily BrainBolt">
   <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
   <meta property="og:image" content="https://incomparable-smakager-64c5de.netlify.app/og-image-dark.png?v=1">
   <meta property="og:image:width" content="1200">
@@ -37,7 +37,7 @@
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://incomparable-smakager-64c5de.netlify.app/">
-  <meta name="twitter:title" content="The Daily Brain Bolt">
+  <meta name="twitter:title" content="The Daily BrainBolt">
   <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
   <meta name="twitter:image" content="https://incomparable-smakager-64c5de.netlify.app/og-image-dark.png?v=1">
 
@@ -48,7 +48,7 @@
 
   <header class="hero">
     <div class="hero-inner">
-      <h1>The Daily Brain Bolt</h1>
+      <h1>The Daily BrainBolt</h1>
       <p class="subtitle">Shock your synapses. Keep the streak alive!</p>
       <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
         <button id="startBtn" class="btn primary">Start Quiz</button>
@@ -92,16 +92,16 @@
     </section>
   </main>
 
-  <footer class="footer">© 2025 The Daily Brain Bolt</footer>
+  <footer class="footer">© 2025 The Daily BrainBolt</footer>
 
   <script>
     // ====== CONFIG ======
     const SITE_URL = "https://incomparable-smakager-64c5de.netlify.app/";
 
-    // Published-to-web key you provided (works with /d/e/.../pub endpoints)
+    // Published-to-web key you provided (Apps Script verified)
     const DEFAULT_SHEET_ID = "2PACX-1vRrjRRrlWpb8tC3iMA6S0hEFLMpkg2cAxLKFqE9Vy-aVQCwv1D5WKYCxHuwo9edF1M_0sBdJEsQ96-c";
 
-    // Tab gids you shared earlier
+    // Tab gids (check if your new copy changed these; update if needed)
     const LIVE_GID = "1410250735";   // 'live'
     const BANK_GID = "2009978011";   // 'bank'
 
@@ -355,13 +355,13 @@
       return a;
     }
 
-    document.getElementById('startBtn').addEventListener('click', () => start(false));
-    document.getElementById('shuffleBtn').addEventListener('click', () => start(true));
+    btnStart.addEventListener('click', () => start(false));
+    btnShuffle.addEventListener('click', () => start(true));
 
     // Share
     shareBtn.addEventListener('click', async () => {
       const shareData = {
-        title: "The Daily Brain Bolt",
+        title: "The Daily BrainBolt",
         text: "Can you keep your streak alive? Play today’s quiz!",
         url: SITE_URL
       };
