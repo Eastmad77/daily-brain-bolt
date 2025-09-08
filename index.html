@@ -32,6 +32,15 @@
 
   <!-- CSV Parser -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+
+  <!-- Firebase (Compat SDKs for simplicity) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js" defer></script>
+
+  <!-- Your Firebase config (edit this file with your real keys) -->
+  <script src="/firebase-config.js" defer></script>
 </head>
 <body>
 
@@ -41,10 +50,23 @@
       <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
       <h1 class="brand-title">The Daily BrainBolt</h1>
       <p class="subtitle">Shock your synapses and keep your streak alive!</p>
+
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
+      </div>
+
+      <!-- Auth / Notifications row -->
+      <div class="auth-row">
+        <button id="signInBtn" class="btn auth google">Sign in with Google</button>
+        <button id="signOutBtn" class="btn auth ghost" style="display:none;">Sign out</button>
+        <button id="notifyBtn" class="btn notify outline" title="Enable daily reminders">Enable Notifications</button>
+
+        <div id="userBadge" class="user-badge" style="display:none;">
+          <img id="userPhoto" class="user-photo" alt="" />
+          <span id="userName" class="user-name"></span>
+        </div>
       </div>
     </div>
   </header>
@@ -64,8 +86,6 @@
           <div id="timerBar" class="timer-bar"></div>
         </div>
         <span id="timerText" class="timer-text">10s</span>
-
-        <!-- NEW: elapsed quiz timer chip -->
         <span id="elapsedChip" class="elapsed-chip" title="Elapsed time">00:00</span>
       </div>
     </section>
@@ -103,8 +123,8 @@
     </div>
   </footer>
 
-  <!-- App logic -->
-  <script src="/app.js?v=20250911-1" defer></script>
+  <!-- App logic (must load after Firebase scripts & config) -->
+  <script src="/app.js?v=20250911-auth1" defer></script>
 
   <!-- Service Worker -->
   <script>
