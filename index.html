@@ -28,19 +28,15 @@
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
-
-  <!-- CSV Parser -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
 </head>
 <body>
 
+  <!-- Hero -->
   <header class="hero">
-    <div class="hero-overlay"></div>
     <div class="hero-inner">
       <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
       <h1 class="brand-title">The Daily BrainBolt</h1>
       <p class="subtitle">Shock your synapses and keep your streak alive!</p>
-
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn ghost">Shuffle</button>
@@ -49,6 +45,7 @@
     </div>
   </header>
 
+  <!-- Main -->
   <main class="container">
     <section class="card bar-card">
       <div class="bar-top">
@@ -70,7 +67,7 @@
         <span id="today" class="meta-date"></span>
       </div>
 
-      <!-- Hidden CSV/debug status (for you, not users) -->
+      <!-- Hidden CSV/debug status -->
       <div id="statusline" class="sr-only" aria-hidden="true"></div>
 
       <div id="question" class="question">Press “Start Quiz” to begin.</div>
@@ -85,6 +82,7 @@
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
     <div class="foot-inner">
       <div>© <span id="year"></span> The Daily BrainBolt</div>
@@ -98,9 +96,9 @@
   </footer>
 
   <!-- App logic (with cache-buster) -->
-  <script src="/app.js?v=20250908"></script>
+  <script src="/app.js?v=20250909"></script>
 
-  <!-- Service Worker registration -->
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
