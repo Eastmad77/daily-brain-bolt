@@ -1,3 +1,43 @@
+/* ---- Firebase early init (compat) ---- */
+(function initFirebaseEarly() {
+  try {
+    // Make sure the SDK and config are present
+    if (!window.FB_CONFIG) {
+      console.warn('[Firebase] FB_CONFIG missing. Is /firebase-config.js included before /app.js?');
+      return;
+    }
+    if (!window.firebase || !firebase.initializeApp) {
+      console.warn('[Firebase] SDK not loaded yet. Will retry on DOMContentLoaded.');
+      document.addEventListener('DOMContentLoaded', attemptInitOnce, { once: true });
+      return;
+    }
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp(window.FB_CONFIG);
+      console.log('[Firebase] Initialized [DEFAULT]');
+    }
+    // Optional globals if you want quick access elsewhere
+    window._db = firebase.firestore();
+    window._auth = firebase.auth ? firebase.auth() : null;
+
+  } catch (e) {
+    console.error('[Firebase] Init error:', e);
+  }
+
+  function attemptInitOnce() {
+    try {
+      if (!window.FB_CONFIG || !window.firebase || !firebase.initializeApp) return;
+      if (!firebase.apps.length) {
+        firebase.initializeApp(window.FB_CONFIG);
+        console.log('[Firebase] Initialized on DOMContentLoaded');
+      }
+      window._db = firebase.firestore();
+      window._auth = firebase.auth ? firebase.auth() : null;
+    } catch (e) {
+      console.error('[Firebase] Delayed init error:', e);
+    }
+  }
+})();
 /** The Daily BrainBolt — app.js (auth + notifications + save sessions) */
 
 /* Google Sheet publish ID + gids */
