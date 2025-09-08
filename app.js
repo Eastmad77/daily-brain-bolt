@@ -1,6 +1,6 @@
-/** The Daily BrainBolt — app.js */
+/** The Daily BrainBolt — app.js (auto-reveal, smooth 10s timer, live/bank fallback) */
 
-/* Google Sheet publish ID */
+/* Google Sheet publish ID + gids */
 const SHEET_ID = "2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG";
 const LIVE_GID = "1410250735";
 const BANK_GID = "2009978011";
@@ -11,7 +11,6 @@ const CSV_URL_BANK = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?o
 /* DOM refs */
 const elQ = document.getElementById('question');
 const elOpts = document.getElementById('options');
-/* REMOVED: const elShow = document.getElementById('showAnswerBtn'); */
 const elFB = document.getElementById('feedback');
 const elMetaText = document.getElementById('metaText');
 const elToday = document.getElementById('today');
@@ -27,7 +26,7 @@ const elTimerWrap = document.getElementById('timerWrap');
 const elTimerBar = document.getElementById('timerBar');
 const elTimerText = document.getElementById('timerText');
 
-/* Today */
+/* Today stamp */
 const todayKey = new Date().toISOString().slice(0,10);
 elToday.textContent = todayKey;
 
@@ -35,21 +34,15 @@ elToday.textContent = todayKey;
 let allRows = [], todays = [], idx = 0, score = 0, selected = null;
 let timer = null, timeLeft = 10;
 
-/* Helpers */
-function log(msg){ console.log(msg); elStatus.textContent = msg; }
+/* Utils */
+function log(m){ console.log('[BB]', m); elStatus.textContent = m; }
 const norm = s => String(s ?? '').trim();
 
-/* Ready helpers */
-function ready(cb){
-  if (document.readyState === 'complete' || document.readyState === 'interactive') cb();
-  else document.addEventListener('DOMContentLoaded', cb);
-}
-function whenPapa(cb){
-  if (window.Papa) cb();
-  else setTimeout(() => whenPapa(cb), 30);
-}
+/* DOM ready and Papa ready */
+function ready(cb){ (document.readyState === 'complete' || document.readyState === 'interactive') ? cb() : document.addEventListener('DOMContentLoaded', cb); }
+function whenPapa(cb){ if (window.Papa) cb(); else setTimeout(()=>whenPapa(cb), 30); }
 
-/* Normalize row keys */
+/* Row normalization */
 function g(row, names){
   for (const name of names){ if (row[name] != null) return row[name]; }
   const keys = Object.keys(row);
@@ -89,14 +82,14 @@ function loadCSV(url, cb){
     skipEmptyLines: true,
     complete: ({data}) => {
       const rows = normalizeRows(data);
-      log(`Parsed ${rows.length} rows from ${url}`);
+      log(`Parsed ${rows.length} rows from CSV`);
       cb(null, rows);
     },
     error: (err) => cb(err || new Error('CSV error'))
   });
 }
 
-/* Init */
+/* App init */
 function init(){
   elStart.addEventListener('click', resetAndStart);
   elShuffle.addEventListener('click', () => {
@@ -106,22 +99,24 @@ function init(){
   });
   elShare.addEventListener('click', async () => {
     const shareData = { title: 'The Daily BrainBolt', text: 'Try today’s quiz!', url: window.location.href };
-    try {
+    try{
       if (navigator.share) await navigator.share(shareData);
       else { await navigator.clipboard.writeText(shareData.url); alert('Link copied!'); }
-    } catch(e){ console.error('Share failed:', e); }
+    }catch(e){ console.error('Share failed:', e); }
   });
 
   loadCSV(CSV_URL_LIVE, (errLive, liveRows) => {
     if (!errLive && liveRows.length){
       allRows = liveRows.slice(); todays = liveRows.slice();
-      log(`Using LIVE: ${todays.length} rows`); initUI();
+      log(`Using LIVE (${todays.length})`);
+      initUI();
     } else {
       log('LIVE empty/failed; trying BANK…');
       loadCSV(CSV_URL_BANK, (errBank, bankRows) => {
         if (!errBank && bankRows.length){
           allRows = bankRows.slice(); todays = bankRows.slice(0,12);
-          log(`Using BANK fallback: ${todays.length} rows`); initUI();
+          log(`Using BANK fallback (${todays.length})`);
+          initUI();
         } else {
           elQ.textContent = "Couldn’t load questions."; log('BANK also empty/failed.');
         }
@@ -133,7 +128,8 @@ function init(){
 function initUI(){
   idx = 0; score = 0; selected = null;
   updateMeta();
-  elFB.innerHTML = ''; /* elShow no longer used */ elPlayAgain.style.display = 'none';
+  elFB.innerHTML = '';
+  elPlayAgain.style.display = 'none';
   elTimerWrap.style.display = 'none';
   elQ.textContent = "Press “Start Quiz” to begin.";
   elOpts.innerHTML = '';
@@ -161,7 +157,8 @@ function showQuestion(){
     elPlayAgain.onclick = resetAndStart; return;
   }
   selected = null;
-  elFB.innerHTML = ''; elPlayAgain.style.display = 'none';
+  elFB.innerHTML = '';
+  elPlayAgain.style.display = 'none';
 
   elMetaText.textContent = `${q.Difficulty || '—'} • ${q.Category || 'Quiz'}`;
   elQ.textContent = q.Question || '—';
@@ -181,15 +178,11 @@ function showQuestion(){
 /* Auto-reveal after selection */
 function onSelect(btn, val, q){
   if (!q) return;
-  // Lock choice UI
   document.querySelectorAll('.choice').forEach(b => { b.classList.remove('selected'); b.classList.add('disabled'); b.disabled = true; });
   btn.classList.add('selected');
   selected = val;
 
-  // Stop the timer animation now that the answer is chosen
   clearTimer();
-
-  // Small delay for feedback feel
   setTimeout(() => reveal(q), 300);
 }
 
@@ -203,15 +196,13 @@ function reveal(q){
   if (isCorrect){ score++; idx++; }
   updateMeta();
 
-  // brief pause then advance
   setTimeout(() => {
-    // re-enable option buttons for next q
     document.querySelectorAll('.choice').forEach(b => { b.classList.remove('disabled','selected'); b.disabled = false; });
     showQuestion();
   }, 900);
 }
 
-/* Smooth Timer (10s) */
+/* Smooth 10s timer */
 function startTimer(){
   timeLeft = 10;
   elTimerWrap.style.display = 'block';
@@ -244,11 +235,10 @@ function clearTimer(){
   elTimerBar.style.right = '0%';
 }
 
+/* utils */
 function shuffleArray(arr){
-  return arr.map(v => ({v, r: Math.random()}))
-           .sort((a,b)=>a.r-b.r)
-           .map(o=>o.v);
+  return arr.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v);
 }
 
-/* Boot */
+/* boot */
 ready(() => whenPapa(init));
