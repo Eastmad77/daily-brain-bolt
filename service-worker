@@ -1,14 +1,13 @@
 /* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.8'; // ⬅ bump on each deploy to force refresh
+const VERSION = 'v1.0.9'; // bump this on every redeploy
 const STATIC_CACHE = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 
-// files we want cached for offline/fast loads
 const PRECACHE_URLS = [
-  '/',                // root
+  '/',
   '/index.html',
   '/style.css',
-  '/app.js?v=20250908', // keep the same query here as in index.html
+  '/app.js?v=20250909',  // update to match index.html
   '/site.webmanifest',
   '/favicon.svg',
   '/app-icon.svg',
@@ -39,17 +38,15 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
-// network-first for app shell, cache-first for everything else
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // never try to cache Google Sheets CSV (always fresh)
+  // Don’t cache Google Sheets CSV
   if (url.hostname.includes('docs.google.com')) return;
 
-  // HTML pages → network first (so updates show)
   const isHTML = request.destination === 'document' ||
-                 (request.headers.get('accept') || '').includes('text/html');
+    (request.headers.get('accept') || '').includes('text/html');
 
   if (isHTML) {
     event.respondWith((async () => {
@@ -66,11 +63,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // other requests → cache first, then network
   event.respondWith((async () => {
     const cached = await caches.match(request);
     if (cached) return cached;
-
     try {
       const network = await fetch(request);
       const cache = await caches.open(RUNTIME_CACHE);
