@@ -1,13 +1,10 @@
 <!-- /favicon.svg -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
   <defs>
-    <!-- Bolt fill: neon blue -->
     <linearGradient id="boltFill" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%"  stop-color="rgb(56,255,249)"/>
       <stop offset="100%" stop-color="rgb(74,201,255)"/>
     </linearGradient>
-
-    <!-- Dark teal sphere gradient -->
     <radialGradient id="sphere" cx="50%" cy="50%" r="60%">
       <stop offset="0%"  stop-color="rgb(66,180,170)" stop-opacity="0.95"/>
       <stop offset="60%" stop-color="rgb(52,138,131)" stop-opacity="0.75"/>
@@ -15,13 +12,8 @@
     </radialGradient>
   </defs>
 
-  <!-- deep background panel -->
-  <rect width="256" height="256" rx="56" fill="#0D2430"/>
-
-  <!-- teal sphere -->
+  <rect width="256" height="256" rx="56" fill="rgb(38,104,98)"/>
   <circle cx="128" cy="128" r="110" fill="url(#sphere)"/>
-
-  <!-- lightning bolt: blue fill + orange outline -->
   <path d="M150 38 L94 128 L142 128 L112 218 L190 122 L140 122 Z"
         fill="url(#boltFill)"
         stroke="rgb(255,140,0)"
@@ -29,5 +21,3 @@
         style="filter: drop-shadow(0 8px 14px rgba(255,140,0,.35))
                         drop-shadow(0 14px 28px rgba(56,255,249,.25));"/>
 </svg>
-
-
