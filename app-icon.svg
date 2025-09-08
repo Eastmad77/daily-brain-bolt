@@ -1,8 +1,9 @@
+<!-- /app-icon.svg -->
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#2C2C2C"/>
-      <stop offset="100%" stop-color="#232323"/>
+      <stop offset="0%" stop-color="#0D2430"/>
+      <stop offset="100%" stop-color="#08161D"/>
     </linearGradient>
     <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#4AC9FF"/>
@@ -10,17 +11,20 @@
     </linearGradient>
   </defs>
 
-  <!-- Rounded square -->
+  <!-- Rounded square base (matches header colors) -->
   <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
 
-  <!-- Brain outline (accent) -->
+  <!-- Subtle circuit dots/lines impression (very faint) -->
+  <g opacity="0.12" stroke="#4AC9FF" stroke-width="6" stroke-linecap="round">
+    <path d="M220 280h90m40 0h70m-40 200h120m60 120h140" />
+    <circle cx="340" cy="280" r="6"/><circle cx="520" cy="480" r="6"/><circle cx="760" cy="680" r="6"/>
+  </g>
+
+  <!-- Accent brain contour (soft) -->
   <path fill="none" stroke="#FF8C00" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"
         d="M370 340c-60 10-110 70-110 135 0 33 10 63 30 88-20 25-30 55-30 88 0 80 65 145 145 145h95
            m194-456c60 10 110 70 110 135 0 33-10 63-30 88 20 25 30 55 30 88 0 80-65 145-145 145h-90"/>
 
-  <!-- Lightning bolt (primary) -->
+  <!-- Lightning bolt -->
   <path fill="url(#bolt)" d="M540 260l-120 220h90l-30 180l120-220h-90z" />
-
-  <!-- Glow -->
-  <circle cx="520" cy="460" r="220" fill="#4AC9FF" opacity="0.08"/>
 </svg>
