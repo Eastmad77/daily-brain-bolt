@@ -15,8 +15,8 @@
     </radialGradient>
   </defs>
 
-  <!-- deep background panel -->
-  <rect width="256" height="256" rx="56" fill="#0D2430"/>
+  <!-- updated deep background panel -->
+  <rect width="256" height="256" rx="56" fill="rgb(44,44,44)"/>
 
   <!-- teal sphere -->
   <circle cx="128" cy="128" r="110" fill="url(#sphere)"/>
