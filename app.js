@@ -1,4 +1,4 @@
-/** The Daily BrainBolt — app.js (orange timer + elapsed chip + button-style feedback) */
+/** The Daily BrainBolt — app.js (auth + notifications + save sessions) */
 
 /* Google Sheet publish ID + gids */
 const SHEET_ID = "2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG";
@@ -27,6 +27,13 @@ const elTimerBar = document.getElementById('timerBar');
 const elTimerText = document.getElementById('timerText');
 const elElapsed = document.getElementById('elapsedChip');
 
+const elSignIn = document.getElementById('signInBtn');
+const elSignOut = document.getElementById('signOutBtn');
+const elNotify = document.getElementById('notifyBtn');
+const elUserBadge = document.getElementById('userBadge');
+const elUserPhoto = document.getElementById('userPhoto');
+const elUserName = document.getElementById('userName');
+
 /* Today */
 const todayKey = new Date().toISOString().slice(0,10);
 elToday.textContent = todayKey;
@@ -35,7 +42,7 @@ elToday.textContent = todayKey;
 let allRows = [], todays = [], idx = 0, score = 0, selected = null;
 let timer = null, timeLeft = 10;
 
-/* NEW: elapsed quiz timer */
+/* Elapsed timer */
 let elapsedSec = 0, elapsedInterval = null;
 
 /* Utils */
@@ -47,6 +54,7 @@ const mmss = (s) => {
   const m = Math.floor(s/60), r = s % 60;
   return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
 };
+function shuffleArray(arr){ return arr.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
 
 /* Normalize row helpers */
 function g(row, names){
@@ -78,6 +86,104 @@ function normalizeRows(data){
     }));
 }
 
+/* =========================
+   Firebase Init (Compat)
+   ========================= */
+let fbApp, auth, db, messaging;
+function initFirebase(){
+  if (!window.FB_CONFIG || !window.firebase) {
+    console.error('Firebase config missing. Add your config to /firebase-config.js');
+    return;
+  }
+  fbApp = firebase.initializeApp(window.FB_CONFIG);
+  auth = firebase.auth();
+  db = firebase.firestore();
+  messaging = firebase.messaging.isSupported() ? firebase.messaging() : null;
+
+  // Auth state listener
+  auth.onAuthStateChanged((user) => {
+    if (user) {
+      elSignIn.style.display = 'none';
+      elSignOut.style.display = 'inline-flex';
+      elUserBadge.style.display = 'inline-flex';
+      elUserName.textContent = user.displayName || user.email || 'Signed in';
+      if (user.photoURL) { elUserPhoto.src = user.photoURL; elUserPhoto.alt = user.displayName || 'User'; }
+      else { elUserPhoto.src = '/icon-192.png'; elUserPhoto.alt = 'User'; }
+    } else {
+      elSignIn.style.display = 'inline-flex';
+      elSignOut.style.display = 'none';
+      elUserBadge.style.display = 'none';
+    }
+  });
+
+  // Sign-in/out handlers
+  elSignIn.addEventListener('click', async () => {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await auth.signInWithPopup(provider);
+    } catch (e) {
+      console.error('Sign-in failed:', e);
+      alert('Sign-in failed. See console for details.');
+    }
+  });
+  elSignOut.addEventListener('click', async () => {
+    try {
+      await auth.signOut();
+    } catch (e) {
+      console.error('Sign-out failed:', e);
+    }
+  });
+
+  // Notifications
+  elNotify.addEventListener('click', async () => {
+    if (!messaging) { alert('Notifications are not supported in this browser.'); return; }
+    try {
+      const status = await Notification.requestPermission();
+      if (status !== 'granted') { alert('Notifications permission denied.'); return; }
+
+      // REPLACE with your FCM Web Push key (VAPID) from Firebase Console
+      const vapidKey = 'REPLACE_WITH_YOUR_VAPID_KEY';
+      const token = await messaging.getToken({ vapidKey });
+      console.log('FCM token:', token);
+      alert('Notifications enabled!');
+
+      // Optionally save token with user
+      const user = auth.currentUser;
+      if (user) {
+        await db.collection('users').doc(user.uid).set({
+          fcmToken: token,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.error('Enable notifications failed:', e);
+      alert('Could not enable notifications. Check console.');
+    }
+  });
+}
+
+/* Save session to Firestore when quiz completes */
+async function saveSession(){
+  try {
+    const user = auth && auth.currentUser;
+    const payload = {
+      date: todayKey,
+      score,
+      elapsedSec,
+      finishedAt: new Date(),
+      uid: user ? user.uid : null,
+      anon: !user,
+    };
+    if (!db) return; // If Firebase not configured, simply skip
+    await db.collection('sessions').add(payload);
+  } catch (e) {
+    console.error('Failed to save session:', e);
+  }
+}
+
+/* =========================
+   App (Quiz) logic
+   ========================= */
 /* CSV loader */
 function loadCSV(url, cb){
   const withBust = url + (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
@@ -95,7 +201,7 @@ function loadCSV(url, cb){
   });
 }
 
-/* Elapsed timer controls */
+/* Elapsed timer */
 function startElapsed(){
   stopElapsed();
   elapsedSec = 0;
@@ -109,8 +215,8 @@ function stopElapsed(){
   if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval = null; }
 }
 
-/* App init */
-function init(){
+/* Init quiz */
+function initQuiz(){
   elStart.addEventListener('click', resetAndStart);
   elShuffle.addEventListener('click', () => {
     if (!allRows.length) return;
@@ -176,6 +282,8 @@ function showQuestion(){
     elFB.innerHTML = "<div class='feedback-banner ok'>🎉 Done for now!</div>";
     elPlayAgain.style.display = 'inline-flex';
     elPlayAgain.onclick = () => { stopElapsed(); resetAndStart(); };
+    // quiz finished — save session
+    saveSession();
     return;
   }
   selected = null;
@@ -208,7 +316,6 @@ function onSelect(btn, val, q){
   setTimeout(() => reveal(q), 300);
 }
 
-/* Feedback */
 function reveal(q){
   const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
   const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
@@ -264,8 +371,10 @@ function clearTimer(){
   elTimerBar.style.transform = 'scaleX(1)';
 }
 
-/* utils */
-function shuffleArray(arr){ return arr.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
-
-/* boot */
-ready(() => whenPapa(init));
+/* Boot */
+ready(() => {
+  whenPapa(() => {
+    initFirebase();
+    initQuiz();
+  });
+});
