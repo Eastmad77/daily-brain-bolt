@@ -25,8 +25,6 @@
   <meta property="og:title" content="⚡ The Daily BrainBolt" />
   <meta property="og:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
   <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
-  <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="⚡ The Daily BrainBolt" />
   <meta name="twitter:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
@@ -75,14 +73,14 @@
         <span id="today" class="meta-date"></span>
       </div>
 
-      <!-- Hidden CSV/debug status -->
+      <!-- Hidden CSV/debug status (screen-reader only) -->
       <div id="statusline" class="sr-only" aria-hidden="true"></div>
 
       <div id="question" class="question">Press “Start Quiz” to begin.</div>
       <div id="options" class="options"></div>
 
       <div class="actions">
-        <!-- Show Answer button removed (auto-reveal on selection now) -->
+        <!-- Auto-reveal now; no more Show Answer button -->
         <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
       </div>
 
@@ -104,7 +102,7 @@
   </footer>
 
   <!-- App logic -->
-  <script src="/app.js?v=20250910-2" defer></script>
+  <script src="/app.js?v=20250910-3" defer></script>
 
   <!-- Service Worker -->
   <script>
@@ -117,4 +115,3 @@
   </script>
 </body>
 </html>
-
