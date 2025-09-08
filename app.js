@@ -11,7 +11,7 @@ const CSV_URL_BANK = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?o
 /* DOM refs */
 const elQ = document.getElementById('question');
 const elOpts = document.getElementById('options');
-const elShow = document.getElementById('showAnswerBtn');
+/* REMOVED: const elShow = document.getElementById('showAnswerBtn'); */
 const elFB = document.getElementById('feedback');
 const elMetaText = document.getElementById('metaText');
 const elToday = document.getElementById('today');
@@ -39,7 +39,7 @@ let timer = null, timeLeft = 10;
 function log(msg){ console.log(msg); elStatus.textContent = msg; }
 const norm = s => String(s ?? '').trim();
 
-/* Wait until DOM + Papa ready */
+/* Ready helpers */
 function ready(cb){
   if (document.readyState === 'complete' || document.readyState === 'interactive') cb();
   else document.addEventListener('DOMContentLoaded', cb);
@@ -133,7 +133,7 @@ function init(){
 function initUI(){
   idx = 0; score = 0; selected = null;
   updateMeta();
-  elFB.innerHTML = ''; elShow.style.display = 'none'; elPlayAgain.style.display = 'none';
+  elFB.innerHTML = ''; /* elShow no longer used */ elPlayAgain.style.display = 'none';
   elTimerWrap.style.display = 'none';
   elQ.textContent = "Press “Start Quiz” to begin.";
   elOpts.innerHTML = '';
@@ -161,7 +161,7 @@ function showQuestion(){
     elPlayAgain.onclick = resetAndStart; return;
   }
   selected = null;
-  elFB.innerHTML = ''; elShow.style.display = 'none'; elPlayAgain.style.display = 'none';
+  elFB.innerHTML = ''; elPlayAgain.style.display = 'none';
 
   elMetaText.textContent = `${q.Difficulty || '—'} • ${q.Category || 'Quiz'}`;
   elQ.textContent = q.Question || '—';
@@ -171,43 +171,57 @@ function showQuestion(){
   opts.forEach(optText => {
     const btn = document.createElement('button');
     btn.className = 'choice'; btn.textContent = optText;
-    btn.onclick = () => onSelect(btn, optText);
+    btn.onclick = () => onSelect(btn, optText, q);
     elOpts.appendChild(btn);
   });
 
   startTimer();
 }
 
-function onSelect(btn, val){
-  document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected'); selected = val; elShow.style.display = 'inline-flex';
+/* Auto-reveal after selection */
+function onSelect(btn, val, q){
+  if (!q) return;
+  // Lock choice UI
+  document.querySelectorAll('.choice').forEach(b => { b.classList.remove('selected'); b.classList.add('disabled'); b.disabled = true; });
+  btn.classList.add('selected');
+  selected = val;
+
+  // Stop the timer animation now that the answer is chosen
+  clearTimer();
+
+  // Small delay for feedback feel
+  setTimeout(() => reveal(q), 300);
 }
-elShow.addEventListener('click', () => {
-  const q = todays[idx]; if (!q || !selected) return;
+
+function reveal(q){
   const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
   const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
   elFB.innerHTML = isCorrect
     ? `<div class="correct">✅ Correct! ${expl}</div>`
     : `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
+
   if (isCorrect){ score++; idx++; }
   updateMeta();
-  setTimeout(showQuestion, 900);
-});
+
+  // brief pause then advance
+  setTimeout(() => {
+    // re-enable option buttons for next q
+    document.querySelectorAll('.choice').forEach(b => { b.classList.remove('disabled','selected'); b.disabled = false; });
+    showQuestion();
+  }, 900);
+}
 
 /* Smooth Timer (10s) */
 function startTimer(){
   timeLeft = 10;
   elTimerWrap.style.display = 'block';
-  // reset bar instantly
   elTimerBar.style.transition = 'none';
   elTimerBar.style.right = '0%';
   elTimerText.textContent = timeLeft + 's';
-  // force reflow then animate smoothly
   void elTimerBar.offsetWidth;
   elTimerBar.style.transition = 'right 10s linear';
   elTimerBar.style.right = '100%';
 
-  // update label once per second
   timer = setInterval(() => {
     timeLeft--;
     elTimerText.textContent = Math.max(0, timeLeft) + 's';
@@ -217,7 +231,6 @@ function startTimer(){
       if (q){
         const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
         elFB.innerHTML = `<div class="wrong">⌛ Time’s up! Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
-        elShow.style.display = 'none';
         elPlayAgain.style.display = 'inline-flex';
         elPlayAgain.onclick = resetAndStart;
       }
