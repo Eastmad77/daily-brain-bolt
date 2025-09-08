@@ -13,20 +13,18 @@
   <!-- Styles -->
   <link rel="stylesheet" href="style.css">
 
-  <!-- Metadata / Icons -->
+  <!-- PWA / Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#2C2C2C">
+  <meta name="theme-color" content="#2B2B2B">
 
-  <!-- Open Graph -->
+  <!-- Social -->
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://dailybrainbolt.com/">
   <meta property="og:title" content="The Daily BrainBolt">
   <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
   <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png">
-
-  <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:url" content="https://dailybrainbolt.com/">
   <meta name="twitter:title" content="The Daily BrainBolt">
@@ -35,14 +33,56 @@
 </head>
 <body>
 
-  <header class="hero">
-    <div class="hero-overlay"></div>
+  <!-- Top bar with hamburger -->
+  <header class="topbar">
+    <button id="menuToggle" class="icon-btn" aria-label="Open menu" aria-controls="menuPanel" aria-expanded="false">
+      <!-- Hamburger icon -->
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 6h18M3 12h18M3 18h18" stroke="#EAFBFF" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="brand">
+      <img src="/app-icon.svg" alt="BrainBolt" class="brand-logo">
+      <span class="brand-name">The Daily BrainBolt</span>
+    </div>
+    <span id="userBadge" class="user-badge">Guest</span>
+  </header>
+
+  <!-- Slide-out menu panel -->
+  <aside id="menuPanel" class="menu-panel" aria-hidden="true">
+    <div class="menu-header">
+      <span>Menu</span>
+      <button id="menuClose" class="icon-btn" aria-label="Close menu">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M6 6l12 12M18 6L6 18" stroke="#EAFBFF" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="menu-content">
+      <div class="menu-actions">
+        <button id="btnSignIn" class="btn ghost full">Sign in with Google</button>
+        <button id="btnSignOut" class="btn ghost full">Sign out</button>
+        <button id="btnNotify" class="btn outline full">Enable Notifications</button>
+      </div>
+
+      <nav class="menu-links">
+        <a href="/about.html" class="menu-link">About</a>
+        <a href="/terms.html" class="menu-link">Terms</a>
+        <a href="/privacy.html" class="menu-link">Privacy</a>
+        <a href="/contact.html" class="menu-link">Contact</a>
+      </nav>
+    </div>
+  </aside>
+
+  <!-- Site hero (simple, no gradient) -->
+  <section class="hero">
     <div class="hero-inner">
       <img src="/app-icon.svg" alt="BrainBolt Logo" class="hero-logo">
       <h1>The Daily BrainBolt</h1>
       <p class="subtitle">Test your knowledge and keep your streak alive!</p>
     </div>
-  </header>
+  </section>
 
   <main class="container">
     <!-- Score + Progress -->
@@ -77,8 +117,6 @@
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <!-- 👇 New Enable Notifications button -->
-        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
       </div>
 
       <button id="playAgain" class="btn ghost" style="display:none;">Play Again</button>
@@ -102,7 +140,7 @@
   <!-- Firebase config (before app.js) -->
   <script src="/firebase-config.js"></script>
 
-  <!-- Your app logic -->
+  <!-- App -->
   <script src="/app.js" defer></script>
 </body>
 </html>
