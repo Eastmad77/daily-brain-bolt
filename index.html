@@ -3,139 +3,106 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚡ The Daily BrainBolt</title>
+  <title>The Daily BrainBolt</title>
 
   <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="style.css">
 
-  <!-- PWA / Icons -->
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="theme-color" content="#266862" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <!-- Metadata / Icons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#2C2C2C">
 
-  <!-- Social -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dailybrainbolt.com/" />
-  <meta property="og:title" content="⚡ The Daily BrainBolt" />
-  <meta property="og:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
-  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="⚡ The Daily BrainBolt" />
-  <meta name="twitter:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
-  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png" />
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dailybrainbolt.com/">
+  <meta property="og:title" content="The Daily BrainBolt">
+  <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
+  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png">
 
-  <!-- CSV Parser -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://dailybrainbolt.com/">
+  <meta name="twitter:title" content="The Daily BrainBolt">
+  <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
+  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png">
+</head>
+<body>
 
- <!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
-
-<!-- Your Firebase config -->
-<script src="/firebase-config.js"></script>
-
-<!-- Your app logic -->
-<script src="/app.js" defer></script>
-
-  <!-- Hero -->
   <header class="hero">
+    <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
-      <h1 class="brand-title">The Daily BrainBolt</h1>
-      <p class="subtitle">Shock your synapses and keep your streak alive!</p>
+      <img src="/app-icon.svg" alt="BrainBolt Logo" class="hero-logo">
+      <h1>The Daily BrainBolt</h1>
+      <p class="subtitle">Test your knowledge and keep your streak alive!</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Score + Progress -->
+    <section class="card bar-card">
+      <div class="bar-top">
+        <div><strong>Score:</strong> <span id="score">0</span></div>
+        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+      </div>
+      <div class="progress">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+      <div class="progress timer">
+        <div id="timerFill" class="progress-fill timer-fill"></div>
+      </div>
+    </section>
+
+    <!-- Quiz card -->
+    <section class="card" id="quiz-card">
+      <div class="meta">
+        <span id="metaText" class="meta-text">Loading…</span>
+        <span class="spacer"></span>
+        <span id="today" class="meta-date"></span>
+      </div>
+      <div id="statusline" class="statusline"></div>
+
+      <div id="question" class="question">Loading…</div>
+      <div id="options" class="options"></div>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
 
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
+        <!-- 👇 New Enable Notifications button -->
+        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
       </div>
 
-      <!-- Auth / Notifications row -->
-      <div class="auth-row">
-        <button id="signInBtn" class="btn auth google">Sign in with Google</button>
-        <button id="signOutBtn" class="btn auth ghost" style="display:none;">Sign out</button>
-        <button id="notifyBtn" class="btn notify outline" title="Enable daily reminders">Enable Notifications</button>
-
-        <div id="userBadge" class="user-badge" style="display:none;">
-          <img id="userPhoto" class="user-photo" alt="" />
-          <span id="userName" class="user-name"></span>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!-- Main -->
-  <main class="container">
-    <section class="card bar-card">
-      <div class="bar-top">
-        <div><strong>Score:</strong> <span id="score">0</span></div>
-        <div class="bar-spacer"></div>
-        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
-      </div>
-      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
-
-      <div class="timer-row">
-        <div id="timerWrap" class="timer-wrap" aria-hidden="true">
-          <div id="timerBar" class="timer-bar"></div>
-        </div>
-        <span id="timerText" class="timer-text">10s</span>
-        <span id="elapsedChip" class="elapsed-chip" title="Elapsed time">00:00</span>
-      </div>
-    </section>
-
-    <section class="card" id="quiz-card" aria-live="polite">
-      <div class="meta">
-        <span id="metaText" class="meta-text">Daily set</span>
-        <span class="spacer"></span>
-        <span id="today" class="meta-date"></span>
-      </div>
-
-      <div id="statusline" class="sr-only" aria-hidden="true"></div>
-
-      <div id="question" class="question">Press “Start Quiz” to begin.</div>
-      <div id="options" class="options"></div>
-
-      <div class="actions">
-        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
-      </div>
-
-      <div id="feedback" class="feedback" aria-live="polite"></div>
+      <button id="playAgain" class="btn ghost" style="display:none;">Play Again</button>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
-    <div class="foot-inner">
-      <div>© <span id="year"></span> The Daily BrainBolt</div>
-      <nav class="foot-nav">
-        <a href="/about.html">About</a>
-        <a href="/terms.html">Terms</a>
-        <a href="/privacy.html">Privacy</a>
-        <a href="/contact.html">Contact</a>
-      </nav>
-    </div>
+    © 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- App logic (must load after Firebase scripts & config) -->
-  <script src="/app.js?v=20250911-auth1" defer></script>
+  <!-- Firebase SDKs (compat for global namespace) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
-  <!-- Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-      });
-    }
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
+  <!-- Firebase config (before app.js) -->
+  <script src="/firebase-config.js"></script>
+
+  <!-- Your app logic -->
+  <script src="/app.js" defer></script>
 </body>
 </html>
-
