@@ -12,12 +12,12 @@
   --choice: #122835;
   --choice-hover: #1B3B4D;
 
-  --ok: #19D27A;       /* correct green */
+  --ok: #19D27A;
   --ok-ink: #0b5f3c;
-  --no: #FF5A5F;       /* wrong red */
+  --no: #FF5A5F;
   --no-ink: #5e1517;
 
-  --theme: #266862;    /* teal for bars/meta */
+  --theme: #266862;
 }
 
 /* ===== Reset / Base ===== */
@@ -45,6 +45,23 @@ body{
 .brand-title{ font-size:clamp(28px, 4vw + 6px, 48px); margin:0 0 6px 0; font-weight:800; }
 .subtitle{ margin:0 auto 14px; max-width:680px; color:var(--muted); }
 .cta-row{ display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+/* Auth row */
+.auth-row{
+  display:flex; gap:10px; justify-content:center; align-items:center; flex-wrap:wrap;
+  margin-top:12px;
+}
+.btn.auth.google{
+  background:#fff; color:#111; border-color: rgba(0,0,0,0.12);
+}
+.btn.auth.google:hover{ filter: brightness(0.98); }
+.btn.notify{ border-color: rgba(255,255,255,0.28); color:#fff; }
+.user-badge{
+  display:inline-flex; align-items:center; gap:8px; padding:6px 10px;
+  border-radius:999px; background: rgba(38,104,98,0.25); border:1px solid rgba(38,104,98,0.6);
+}
+.user-photo{ width:24px; height:24px; border-radius:999px; }
+.user-name{ font-weight:700; color:#cdebe7; }
 
 /* ===== Buttons ===== */
 .btn{
@@ -95,15 +112,14 @@ body{
 }
 .timer-bar{
   position:absolute; top:0; left:0; bottom:0; width:100%;
-  /* SOLID ORANGE */
-  background: var(--brand-orange);
+  background: var(--brand-orange); /* solid orange */
   box-shadow: 0 0 10px rgba(255,140,0,0.35), 0 0 10px rgba(56,255,249,0.15) inset;
   transform-origin: left center;
-  transform: scaleX(1); /* JS animates to scaleX(0) */
+  transform: scaleX(1);
 }
 .timer-text{ min-width:36px; text-align:right; color:var(--muted); }
 
-/* NEW: elapsed chip */
+/* Elapsed chip */
 .elapsed-chip{
   display:inline-flex; align-items:center; justify-content:center;
   padding:6px 10px; border-radius:999px;
@@ -141,7 +157,7 @@ body{
 .choice.disabled:hover{ background: var(--choice); }
 @media (min-width:680px){ .options{ grid-template-columns:1fr 1fr; } }
 
-/* ===== Feedback banners (button-like) ===== */
+/* Feedback banners */
 .feedback{ margin-top:12px; }
 .feedback-banner{
   display:inline-flex; align-items:center; gap:10px;
