@@ -1,78 +1,61 @@
 /* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.9'; // bump this on every redeploy
+const VERSION = 'v1.0.8'; // bumped for new favicon/theme
 const STATIC_CACHE = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 
-const PRECACHE_URLS = [
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/style.css',
-  '/app.js?v=20250909',  // update to match index.html
-  '/site.webmanifest',
+  '/app.js',
   '/favicon.svg',
-  '/app-icon.svg',
   '/icon-192.png',
   '/icon-512.png',
-  '/apple-touch-icon.png',
-  '/header-graphic.svg'
+  '/app-icon.svg',
+  '/site.webmanifest'
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(PRECACHE_URLS))
-      .then(() => self.skipWaiting())
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil((async () => {
-    const keys = await caches.keys();
-    await Promise.all(
-      keys.map((key) => {
-        if (key !== STATIC_CACHE && key !== RUNTIME_CACHE) {
-          return caches.delete(key);
-        }
-      })
-    );
-    await self.clients.claim();
-  })());
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(k => (k === STATIC_CACHE || k === RUNTIME_CACHE) ? null : caches.delete(k)))
+    )
+  );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
+self.addEventListener('fetch', (e) => {
+  const { request } = e;
   const url = new URL(request.url);
 
-  // Don’t cache Google Sheets CSV
-  if (url.hostname.includes('docs.google.com')) return;
-
-  const isHTML = request.destination === 'document' ||
-    (request.headers.get('accept') || '').includes('text/html');
-
-  if (isHTML) {
-    event.respondWith((async () => {
-      try {
-        const fresh = await fetch(request);
-        const cache = await caches.open(STATIC_CACHE);
-        cache.put(request, fresh.clone());
-        return fresh;
-      } catch {
-        const cached = await caches.match(request);
-        return cached || caches.match('/index.html');
-      }
-    })());
+  if (url.href.includes('docs.google.com/spreadsheets')) {
+    e.respondWith(
+      fetch(request).then(res => {
+        const copy = res.clone();
+        caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+        return res;
+      }).catch(() => caches.match(request))
+    );
     return;
   }
 
-  event.respondWith((async () => {
-    const cached = await caches.match(request);
-    if (cached) return cached;
-    try {
-      const network = await fetch(request);
-      const cache = await caches.open(RUNTIME_CACHE);
-      cache.put(request, network.clone());
-      return network;
-    } catch {
-      return new Response('Offline', { status: 503, statusText: 'Offline' });
-    }
-  })());
+  if (url.origin === location.origin) {
+    e.respondWith(
+      caches.match(request).then(cached => cached || fetch(request).then(res => {
+        const copy = res.clone();
+        caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+        return res;
+      }))
+    );
+    return;
+  }
+
+  e.respondWith(fetch(request).catch(() => caches.match(request)));
 });
