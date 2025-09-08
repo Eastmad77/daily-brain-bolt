@@ -12,12 +12,12 @@
   --choice: #122835;
   --choice-hover: #1B3B4D;
 
-  --ok: #19D27A;     /* correct green */
+  --ok: #19D27A;       /* correct green */
   --ok-ink: #0b5f3c;
-  --no: #FF5A5F;     /* wrong red */
+  --no: #FF5A5F;       /* wrong red */
   --no-ink: #5e1517;
 
-  --theme: #266862;  /* teal for bars/meta */
+  --theme: #266862;    /* teal for bars/meta */
 }
 
 /* ===== Reset / Base ===== */
@@ -57,7 +57,6 @@ body{
 .btn.primary{ background: var(--brand-blue-soft); color:#00151C; border-color: rgba(74,201,255,0.35); }
 .btn.ghost{ background: transparent; color:#fff; border-color: rgba(255,255,255,0.18); }
 .btn.outline{ background: transparent; color: var(--brand-orange); border-color: var(--brand-orange); }
-/* Filled Shuffle (distinct from Start) */
 .btn.shuffle{ background: var(--brand-orange); color: #1a1200; border-color: rgba(255,140,0,0.55); }
 .btn.shuffle:hover{ filter: brightness(1.05); }
 
@@ -87,22 +86,32 @@ body{
   transition: width .25s ease;
 }
 
-/* Timer (SMOOTH) */
-.timer-row{ margin-top:10px; display:flex; align-items:center; gap:10px; }
+/* Timer row */
+.timer-row{ margin-top:10px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .timer-wrap{
   position:relative; flex:1; height:10px; border-radius:999px; overflow:hidden;
   background: rgba(255,255,255,0.10);
   border: 1px solid rgba(255,255,255,0.12);
 }
 .timer-bar{
-  position:absolute; top:0; left:0; bottom:0;
-  width:100%;
-  background: linear-gradient(90deg, var(--brand-orange), var(--brand-blue));
-  box-shadow: 0 0 10px rgba(255,140,0,0.35), 0 0 10px rgba(56,255,249,0.25) inset;
+  position:absolute; top:0; left:0; bottom:0; width:100%;
+  /* SOLID ORANGE */
+  background: var(--brand-orange);
+  box-shadow: 0 0 10px rgba(255,140,0,0.35), 0 0 10px rgba(56,255,249,0.15) inset;
   transform-origin: left center;
-  transform: scaleX(1);              /* JS transitions this to scaleX(0) over 10s */
+  transform: scaleX(1); /* JS animates to scaleX(0) */
 }
 .timer-text{ min-width:36px; text-align:right; color:var(--muted); }
+
+/* NEW: elapsed chip */
+.elapsed-chip{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:6px 10px; border-radius:999px;
+  background: rgba(38,104,98,0.25);
+  border: 1px solid rgba(38,104,98,0.6);
+  color:#cdebe7; font-weight:800; letter-spacing:.5px;
+  min-width:62px; text-align:center;
+}
 
 /* ===== Meta / Question / Options ===== */
 .meta{ display:flex; align-items:center; gap:10px; color:var(--muted); margin-bottom:6px; }
@@ -130,7 +139,6 @@ body{
 .choice.selected{ outline:2px solid var(--brand-blue-soft); filter: saturate(1.1) brightness(1.02); }
 .choice.disabled{ opacity: .6; cursor:not-allowed; filter: grayscale(.2); }
 .choice.disabled:hover{ background: var(--choice); }
-
 @media (min-width:680px){ .options{ grid-template-columns:1fr 1fr; } }
 
 /* ===== Feedback banners (button-like) ===== */
@@ -162,7 +170,7 @@ body{
 .foot-nav a{ color:var(--muted); text-decoration:none; }
 .foot-nav a:hover{ color:#fff; }
 
-/* ===== A11y helpers ===== */
+/* ===== A11y ===== */
 .sr-only{
   position:absolute !important; width:1px; height:1px;
   padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
