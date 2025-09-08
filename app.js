@@ -117,7 +117,6 @@ function init(){
       allRows = liveRows.slice(); todays = liveRows.slice();
       log(`Using LIVE: ${todays.length} rows`); initUI();
     } else {
-      log('LIVE empty/failed; trying BANK…');
       loadCSV(CSV_URL_BANK, (errBank, bankRows) => {
         if (!errBank && bankRows.length){
           allRows = bankRows.slice(); todays = bankRows.slice(0,12);
@@ -198,16 +197,10 @@ elShow.addEventListener('click', () => {
 function startTimer(){
   timeLeft = 10;
   elTimerWrap.style.display = 'block';
-  // reset bar instantly
-  elTimerBar.style.transition = 'none';
-  elTimerBar.style.right = '0%';
+  elTimerBar.style.transition = 'none'; elTimerBar.style.right = '0%';
   elTimerText.textContent = timeLeft + 's';
-  // force reflow then animate smoothly
   void elTimerBar.offsetWidth;
-  elTimerBar.style.transition = 'right 10s linear';
-  elTimerBar.style.right = '100%';
-
-  // update label once per second
+  elTimerBar.style.transition = 'right 10s linear'; elTimerBar.style.right = '100%';
   timer = setInterval(() => {
     timeLeft--;
     elTimerText.textContent = Math.max(0, timeLeft) + 's';
@@ -217,25 +210,11 @@ function startTimer(){
       if (q){
         const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
         elFB.innerHTML = `<div class="wrong">⌛ Time’s up! Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
-        elShow.style.display = 'none';
-        elPlayAgain.style.display = 'inline-flex';
-        elPlayAgain.onclick = resetAndStart;
+        elShow.style.display = 'none'; elPlayAgain.style.display = 'inline-flex'; elPlayAgain.onclick = resetAndStart;
       }
     }
   }, 1000);
 }
-function clearTimer(){
-  if (timer) clearInterval(timer);
-  timer = null;
-  elTimerBar.style.transition = 'none';
-  elTimerBar.style.right = '0%';
-}
+function clearTimer(){ if (timer) clearInterval(timer); timer = null; elTimerBar.style.transition = 'none'; elTimerBar.style.right = '0%'; }
 
-function shuffleArray(arr){
-  return arr.map(v => ({v, r: Math.random()}))
-           .sort((a,b)=>a.r-b.r)
-           .map(o=>o.v);
-}
-
-/* Boot */
-ready(() => whenPapa(init));
+function shuffleArray(arr){ return arr.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r
