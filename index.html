@@ -13,13 +13,13 @@
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css" />
 
-  <!-- PWA Meta & Icons -->
+  <!-- PWA / Icons -->
   <link rel="manifest" href="/site.webmanifest" />
-  <meta name="theme-color" content="#2C2C2C" />
+  <meta name="theme-color" content="#0D2430" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-  <!-- Open Graph / Social -->
+  <!-- Social -->
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://dailybrainbolt.com/" />
   <meta property="og:title" content="The Daily BrainBolt" />
@@ -27,15 +27,9 @@
   <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-
-  <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:url" content="https://dailybrainbolt.com/" />
-  <meta name="twitter:title" content="The Daily BrainBolt" />
-  <meta name="twitter:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
-  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png" />
 
-  <!-- PapaParse for CSV -->
+  <!-- CSV Parser -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
 </head>
 <body>
@@ -45,7 +39,7 @@
     <div class="hero-inner">
       <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
       <h1 class="brand-title">The Daily BrainBolt</h1>
-      <p class="subtitle">Shock your synapses with a daily dose of trivia ⚡</p>
+      <p class="subtitle">Shock your synapses and keep your streak alive!</p>
 
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
@@ -60,6 +54,7 @@
       <div class="bar-top">
         <div><strong>Score:</strong> <span id="score">0</span></div>
         <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+
         <div id="timerWrap" class="timer-wrap" aria-hidden="true">
           <div id="timerBar" class="timer-bar"></div>
           <span id="timerText" class="timer-text">10s</span>
@@ -75,7 +70,7 @@
         <span id="today" class="meta-date"></span>
       </div>
 
-      <!-- CSV status (hidden from users, only for debugging) -->
+      <!-- Hidden CSV/debug status (won’t show to users) -->
       <div id="statusline" class="sr-only" aria-hidden="true"></div>
 
       <div id="question" class="question">Press “Start Quiz” to begin.</div>
@@ -102,7 +97,7 @@
     </div>
   </footer>
 
-  <!-- App logic -->
+  <!-- Your app logic -->
   <script src="/app.js"></script>
 
   <!-- Service Worker registration -->
