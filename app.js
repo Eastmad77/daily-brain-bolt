@@ -1,4 +1,4 @@
-/** The Daily BrainBolt — app.js (auto-reveal, smooth 10s timer, live/bank fallback) */
+/** The Daily BrainBolt — app.js (smooth timer visible + button-like feedback) */
 
 /* Google Sheet publish ID + gids */
 const SHEET_ID = "2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG";
@@ -37,12 +37,10 @@ let timer = null, timeLeft = 10;
 /* Utils */
 function log(m){ console.log('[BB]', m); elStatus.textContent = m; }
 const norm = s => String(s ?? '').trim();
-
-/* DOM ready and Papa ready */
 function ready(cb){ (document.readyState === 'complete' || document.readyState === 'interactive') ? cb() : document.addEventListener('DOMContentLoaded', cb); }
 function whenPapa(cb){ if (window.Papa) cb(); else setTimeout(()=>whenPapa(cb), 30); }
 
-/* Row normalization */
+/* Normalize row */
 function g(row, names){
   for (const name of names){ if (row[name] != null) return row[name]; }
   const keys = Object.keys(row);
@@ -108,15 +106,13 @@ function init(){
   loadCSV(CSV_URL_LIVE, (errLive, liveRows) => {
     if (!errLive && liveRows.length){
       allRows = liveRows.slice(); todays = liveRows.slice();
-      log(`Using LIVE (${todays.length})`);
-      initUI();
+      log(`Using LIVE (${todays.length})`); initUI();
     } else {
       log('LIVE empty/failed; trying BANK…');
       loadCSV(CSV_URL_BANK, (errBank, bankRows) => {
         if (!errBank && bankRows.length){
           allRows = bankRows.slice(); todays = bankRows.slice(0,12);
-          log(`Using BANK fallback (${todays.length})`);
-          initUI();
+          log(`Using BANK fallback (${todays.length})`); initUI();
         } else {
           elQ.textContent = "Couldn’t load questions."; log('BANK also empty/failed.');
         }
@@ -130,7 +126,7 @@ function initUI(){
   updateMeta();
   elFB.innerHTML = '';
   elPlayAgain.style.display = 'none';
-  elTimerWrap.style.display = 'none';
+  elTimerWrap.style.display = 'none';          // hidden until question starts
   elQ.textContent = "Press “Start Quiz” to begin.";
   elOpts.innerHTML = '';
 }
@@ -152,7 +148,7 @@ function showQuestion(){
   clearTimer();
   const q = todays[idx];
   if (!q){
-    elFB.innerHTML = "<div class='correct'>🎉 Done for now!</div>";
+    elFB.innerHTML = "<div class='feedback-banner ok'>🎉 Done for now!</div>";
     elPlayAgain.style.display = 'inline-flex';
     elPlayAgain.onclick = resetAndStart; return;
   }
@@ -186,12 +182,13 @@ function onSelect(btn, val, q){
   setTimeout(() => reveal(q), 300);
 }
 
+/* Button-like feedback banners */
 function reveal(q){
   const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
   const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
   elFB.innerHTML = isCorrect
-    ? `<div class="correct">✅ Correct! ${expl}</div>`
-    : `<div class="wrong">❌ Not quite. Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
+    ? `<div class="feedback-banner ok">✅ Correct! ${expl}</div>`
+    : `<div class="feedback-banner no">❌ Not quite. Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
 
   if (isCorrect){ score++; idx++; }
   updateMeta();
@@ -202,16 +199,22 @@ function reveal(q){
   }, 900);
 }
 
-/* Smooth 10s timer */
+/* Smooth 10s timer using scaleX */
 function startTimer(){
   timeLeft = 10;
   elTimerWrap.style.display = 'block';
+
+  // reset instantly
   elTimerBar.style.transition = 'none';
-  elTimerBar.style.right = '0%';
+  elTimerBar.style.transform = 'scaleX(1)';
   elTimerText.textContent = timeLeft + 's';
+
+  // force reflow before starting transition
   void elTimerBar.offsetWidth;
-  elTimerBar.style.transition = 'right 10s linear';
-  elTimerBar.style.right = '100%';
+
+  // animate to zero over 10s (smooth)
+  elTimerBar.style.transition = 'transform 10s linear';
+  elTimerBar.style.transform = 'scaleX(0)';
 
   timer = setInterval(() => {
     timeLeft--;
@@ -221,7 +224,7 @@ function startTimer(){
       const q = todays[idx];
       if (q){
         const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
-        elFB.innerHTML = `<div class="wrong">⌛ Time’s up! Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
+        elFB.innerHTML = `<div class="feedback-banner no">⌛ Time’s up! Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
         elPlayAgain.style.display = 'inline-flex';
         elPlayAgain.onclick = resetAndStart;
       }
@@ -232,13 +235,11 @@ function clearTimer(){
   if (timer) clearInterval(timer);
   timer = null;
   elTimerBar.style.transition = 'none';
-  elTimerBar.style.right = '0%';
+  elTimerBar.style.transform = 'scaleX(1)';
 }
 
 /* utils */
-function shuffleArray(arr){
-  return arr.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v);
-}
+function shuffleArray(arr){ return arr.map(v => ({v, r: Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
 
 /* boot */
 ready(() => whenPapa(init));
