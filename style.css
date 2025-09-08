@@ -4,7 +4,7 @@
   --card: #1f1f1f;
   --ink: #EAFBFF;                 /* light ink */
   --muted: #A8C8CE;
-  --blue: rgb(56,255,249);        /* R56 G255 B249 */
+  --blue: rgb(56,255,249);        /* R56 G255 B249 (progress) */
   --accent: rgb(255,140,0);       /* timer/orange */
   --outline: rgba(234,251,255,0.12);
   --choice: rgba(234,251,255,0.06);
@@ -37,21 +37,24 @@ body{
 }
 .user-badge.signed-in{ color:#caffbf; }
 
-/* =============== MENU PANEL (SLIDE-OUT) =============== */
+/* =============== MENU PANEL (SLIDE-OUT FROM LEFT) =============== */
 .menu-panel{
-  position: fixed; inset:0; display:grid; grid-template-columns: 1fr min(92vw,380px);
+  position: fixed; inset:0; display:grid;
+  grid-template-columns: min(92vw,380px) 1fr;   /* LEFT panel, then overlay */
   background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
-  transform: translateX(100%); transition: transform .28s ease; z-index:50;
+  transform: translateX(-100%);                /* start hidden to LEFT */
+  transition: transform .28s ease; z-index:50;
 }
 .menu-panel.open{ transform: translateX(0); }
 .menu-panel[aria-hidden="true"]{ pointer-events:none; }
 
+/* The panel content sits in column 1 now */
 .menu-header{
-  grid-column:2; display:flex; align-items:center; justify-content:space-between;
+  grid-column:1; display:flex; align-items:center; justify-content:space-between;
   padding:16px; border-bottom:1px solid var(--outline); background: var(--bg);
 }
 .menu-content{
-  grid-column:2; display:flex; flex-direction:column; gap:20px; padding:16px; background: var(--bg);
+  grid-column:1; display:flex; flex-direction:column; gap:20px; padding:16px; background: var(--bg);
 }
 .menu-actions .btn{ margin-bottom:10px; }
 .menu-links{ display:flex; flex-direction:column; gap:8px; }
@@ -92,7 +95,7 @@ body{
 }
 .timer .progress-fill{
   background: var(--accent);       /* Timer bar is ORANGE */
-  transition: width .06s linear;   /* snappier; rAF drives smoothness */
+  transition: width .06s linear;   /* rAF drives smoothness */
 }
 
 /* =============== META =============== */
