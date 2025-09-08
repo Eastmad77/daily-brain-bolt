@@ -26,7 +26,7 @@ body {
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  -moz-osx-smoothing: grayscale;
   line-height: 1.55;
 }
 
@@ -46,7 +46,7 @@ a:hover { text-decoration: underline; }
     radial-gradient(800px 400px at 15% 10%, rgba(74,201,255,0.18), rgba(74,201,255,0) 60%),
     radial-gradient(900px 500px at 85% 0%, rgba(255,140,0,0.12), rgba(255,140,0,0) 60%),
     linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%),
-    url('/header-graphic.svg');
+    url('/header-graphic.svg'); /* New graphic */
   background-repeat: no-repeat;
   background-position: top right;
   background-size: 40%;
