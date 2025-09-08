@@ -2,7 +2,7 @@
    The Daily BrainBolt — app.js (Firebase + Quiz + FCM)
    ========================================================= */
 
-// small helpers
+/* small helpers */
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
@@ -69,7 +69,6 @@ async function enableNotifications() {
       return;
     }
 
-    // register the messaging SW at the ROOT path
     const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
 
     const messaging = firebase.messaging();
@@ -84,7 +83,6 @@ async function enableNotifications() {
       return;
     }
 
-    // optionally save token under /users/{uid}
     const uid = firebase.auth()?.currentUser?.uid || null;
     if (uid) {
       await firebase.firestore().collection("users").doc(uid).set(
@@ -165,12 +163,25 @@ const els = {
   progressFill: $("#progressFill"),
   timerFill: $("#timerFill"),
   status: $("#statusline"),
-  btnStart: $("#btnStart") || $("#startQuiz") || $("#start"),
-  btnShuffle: $("#btnShuffle"),
-  btnShare: $("#btnShare"),
+
+  // Buttons (your IDs)
+  btnStart: $("#startBtn") || $("#btnStart") || $("#startQuiz"),
+  btnShuffle: $("#shuffleBtn") || $("#btnShuffle"),
+  btnShare: $("#shareBtn") || $("#btnShare"),
+
+  // Menu items
   btnNotify: $("#btnNotify"),
+  btnSignIn: $("#btnSignIn"),
+  btnSignOut: $("#btnSignOut"),
+
+  // Legacy
   btnShowAnswer: $("#showAnswerBtn"),
   btnPlayAgain: $("#playAgain"),
+
+  // Menu elements
+  menuToggle: $("#menuToggle"),
+  menuPanel: $("#menuPanel"),
+  menuClose: $("#menuClose")
 };
 
 function logStatus(msg) { if (els.status) els.status.textContent = msg; console.log("[Quiz]", msg); }
@@ -258,7 +269,7 @@ function reveal(q, isCorrect, isTimeout) {
   else { updateBars(); }
 }
 
-/* Smooth 10s timer bar */
+/* Smooth 10s timer */
 function startTimer(onTimeout) {
   stopTimer();
   state.ticking = true;
@@ -296,10 +307,12 @@ async function shareLink() {
   } catch (e) { console.warn("Share canceled/failed:", e); }
 }
 
-/* Load data (live first, fallback bank) */
+/* Load data (live then bank) */
 function bootQuiz() {
   whenPapa(() => {
-    if ($("#today")) $("#today").textContent = state.todayKey;
+    const today = state.todayKey;
+    if (els.today) els.today.textContent = today;
+
     logStatus("Loading live…");
     loadCSV(CSV_LIVE, (live) => {
       logStatus(`Live loaded: ${live.length} rows`);
@@ -310,12 +323,12 @@ function bootQuiz() {
         loadCSV(CSV_BANK, (bank) => {
           state.allRows = bank;
           state.todays = pickTodays(bank);
-          if ($("#metaText")) $("#metaText").textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
+          if (els.metaText) els.metaText.textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
           updateBars();
         }, (e) => { console.error("Bank CSV error", e); logStatus("Error loading bank CSV."); });
         return;
       }
-      if ($("#metaText")) $("#metaText").textContent = "Ready. Click Start.";
+      if (els.metaText) els.metaText.textContent = "Ready. Click Start.";
       updateBars();
     }, (e) => {
       console.error("Live CSV error", e);
@@ -323,7 +336,7 @@ function bootQuiz() {
       loadCSV(CSV_BANK, (bank) => {
         state.allRows = bank;
         state.todays = pickTodays(bank);
-        if ($("#metaText")) $("#metaText").textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
+        if (els.metaText) els.metaText.textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
         updateBars();
       }, (e2) => { console.error("Bank CSV error", e2); logStatus("Error loading CSV. Check publish settings and access."); });
     });
@@ -341,17 +354,46 @@ async function saveSession(score, elapsedSec) {
   } catch (e) { console.warn("[Session] save failed:", e); }
 }
 
+/* Menu wiring */
+function openMenu() {
+  if (!els.menuPanel) return;
+  els.menuPanel.classList.add("open");
+  els.menuPanel.setAttribute("aria-hidden","false");
+  if (els.menuToggle) els.menuToggle.setAttribute("aria-expanded","true");
+}
+function closeMenu() {
+  if (!els.menuPanel) return;
+  els.menuPanel.classList.remove("open");
+  els.menuPanel.setAttribute("aria-hidden","true");
+  if (els.menuToggle) els.menuToggle.setAttribute("aria-expanded","false");
+}
+
 /* Wire + boot */
 function wireUI() {
-  on($("#btnStart") || $("#startQuiz") || $("#start"), "click", startQuiz);
-  on($("#btnShuffle"), "click", shuffleSet);
-  on($("#btnShare"), "click", shareLink);
-  on($("#btnNotify"), "click", enableNotifications);
-  on($("#showAnswerBtn"), "click", () => {
+  on(els.btnStart, "click", startQuiz);
+  on(els.btnShuffle, "click", shuffleSet);
+  on(els.btnShare, "click", shareLink);
+
+  on(els.btnNotify, "click", enableNotifications);
+  on(els.btnSignIn, "click", signInWithGoogle);
+  on(els.btnSignOut, "click", signOut);
+
+  on(els.menuToggle, "click", openMenu);
+  on(els.menuClose, "click", closeMenu);
+  // click outside to close
+  on(els.menuPanel, "click", (e) => {
+    if (e.target === els.menuPanel) closeMenu();
+  });
+
+  on(els.btnShowAnswer, "click", () => {
     const q = state.todays[state.idx];
     if (!q || !state.selected) return;
     const ok = norm(state.selected).toLowerCase() === norm(q.Answer).toLowerCase();
     reveal(q, ok, false);
   });
 }
-document.addEventListener("DOMContentLoaded", () => { wireUI(); bootQuiz(); });
+
+document.addEventListener("DOMContentLoaded", () => {
+  wireUI();
+  bootQuiz();
+});
