@@ -1,9 +1,9 @@
 /* ========== Root theme ========== */
 :root {
-  --brand-blue: rgb(56, 255, 249);   /* Neon blue for bars/questions */
-  --brand-blue-soft: rgb(74, 201, 255); 
-  --brand-orange: rgb(255, 140, 0);  /* Accent */
-  --bg: #0D2430;                     
+  --brand-blue: rgb(56, 255, 249);
+  --brand-blue-soft: rgb(74, 201, 255);
+  --brand-orange: rgb(255, 140, 0);
+  --bg: #0D2430;
   --bg-2: #08161D;
   --text: #f4f4f4;
   --muted: #BFD7E3;
@@ -13,86 +13,44 @@
   --wrong: #FF5A5F;
 }
 
-/* Reset */
-* { box-sizing: border-box; }
-html, body {
-  margin: 0; padding: 0;
-  font-family: 'Inter', sans-serif;
-  background: var(--bg); color: var(--text);
-  min-height: 100%;
-  display: flex; flex-direction: column;
+/* Reset & base omitted for brevity — keep your existing base rules */
+
+/* Buttons */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 16px; border-radius: 12px;
+  border: 1px solid transparent; cursor: pointer;
+  font-weight: 700;
+  transition: transform .06s ease, background .22s ease, border-color .22s ease, color .22s ease;
+}
+.btn:hover { transform: translateY(-1px); }
+.btn.primary {
+  background: var(--brand-blue-soft);
+  color: #00151C;
+  border-color: rgba(74,201,255,0.35);
+}
+.btn.ghost {
+  background: transparent;
+  border-color: rgba(255,255,255,0.18);
+  color: #fff;
+}
+.btn.outline {
+  background: transparent;
+  border-color: var(--brand-orange);
+  color: var(--brand-orange);
 }
 
-/* Header */
-.hero {
-  position: relative;
-  text-align: center;
-  background:
-    radial-gradient(800px 400px at 15% 10%, rgba(74,201,255,0.18), rgba(74,201,255,0) 60%),
-    radial-gradient(900px 500px at 85% 0%, rgba(255,140,0,0.12), rgba(255,140,0,0) 60%),
-    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%),
-    url('/header-graphic.svg');
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: cover;
-  padding: 72px 16px 56px;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+/* NEW: Shuffle filled style (distinct from Start) */
+.btn.shuffle {
+  background: var(--brand-orange);
+  color: #1a1200;
+  border-color: rgba(255,140,0,0.55);
 }
-.hero-inner {
-  max-width: 980px; margin: 0 auto;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
-.brand-mark { width: 80px; height: 80px; margin: 0 auto 10px; }
-.brand-title { font-size: clamp(28px, 4.5vw, 42px); font-weight: 800; margin: 0; }
-.subtitle { color: var(--muted); margin: 8px 0 18px; }
-.cta-row { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-
-/* Container / Cards */
-.container {
-  flex: 1;
-  width: min(1200px, 96vw);
-  margin: 26px auto 64px;
-}
-.card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-  border: 1px solid rgba(255,255,255,0.10);
-  border-radius: 16px;
-  padding: 18px;
-  margin-bottom: 22px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.30);
+.btn.shuffle:hover {
+  filter: brightness(1.05);
 }
 
-/* Bar card */
-.bar-card { padding: 18px; }
-.bar-top {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center; gap: 14px;
-  margin-bottom: 10px;
-}
-.progress {
-  width: 100%; height: 12px;
-  background: #0F1E26;
-  border-radius: 999px; overflow: hidden;
-}
-.progress-fill {
-  width: 0%; height: 100%;
-  background: var(--brand-blue);
-  transition: width .3s ease;
-}
-.timer-row {
-  display: grid; grid-template-columns: 1fr auto; gap: 12px; align-items: center;
-  margin-top: 8px;
-}
-.timer-wrap {
-  position: relative; width: 100%; height: 10px;
-  background: #0F1E26; border-radius: 999px; overflow: hidden;
-  display: none;
-}
-.timer-bar { position: absolute; inset: 0 100% 0 0; background: var(--brand-orange); }
-.timer-text { font-size: 12px; color: var(--muted); }
-
-/* Question box (neon blue) */
+/* Question box (keep your existing neon styles) */
 .question {
   margin: 14px 0 12px;
   padding: 16px;
@@ -106,49 +64,4 @@ html, body {
 }
 .question strong { color: var(--brand-blue); }
 
-/* Options */
-.options { display: grid; gap: 10px; }
-@media (min-width: 760px) { .options { grid-template-columns: 1fr 1fr; } }
-.choice {
-  background: var(--choice); border: 1px solid rgba(255,255,255,0.12);
-  color: var(--text); padding: 12px 14px;
-  border-radius: 12px; cursor: pointer; font-weight: 600;
-  transition: background .2s ease, transform .06s ease, border-color .2s ease;
-}
-.choice:hover { background: var(--choice-hover); transform: translateY(-1px); }
-.choice.selected { background: #0F3A48; border-color: rgba(56,255,249,0.45); }
-.choice.disabled { opacity: .6; cursor: not-allowed; filter: grayscale(.2); }
-
-/* Feedback */
-.feedback { margin-top: 10px; text-align: center; }
-.feedback .correct { color: var(--correct); font-weight: 700; }
-.feedback .wrong { color: var(--wrong); font-weight: 700; }
-.expl { margin-top: 6px; color: var(--muted); }
-
-/* Buttons */
-.btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 10px 16px; border-radius: 12px;
-  border: 1px solid transparent; cursor: pointer;
-  font-weight: 700;
-  transition: transform .06s ease, background .22s ease, border-color .22s ease;
-}
-.btn:hover { transform: translateY(-1px); }
-.btn.primary { background: var(--brand-blue-soft); color: #00151C; border-color: rgba(74,201,255,0.35); }
-.btn.ghost { background: transparent; border-color: rgba(255,255,255,0.18); color: #fff; }
-.btn.outline { background: transparent; border-color: var(--brand-orange); color: var(--brand-orange); }
-
-/* Footer */
-.footer {
-  border-top: 1px solid rgba(255,255,255,0.09);
-  padding: 16px; margin-top: auto;
-  color: var(--muted);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.04));
-}
-.foot-inner { display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap; max-width: 1200px; margin: 0 auto; }
-.foot-nav { display: flex; gap: 14px; flex-wrap: wrap; }
-.foot-nav a { color: var(--text); opacity: .85; text-decoration: none; }
-.foot-nav a:hover { opacity: 1; text-decoration: underline; }
-
-/* Accessibility */
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+/* Timer bar: no change needed for smoothness; the JS handles transitions */
