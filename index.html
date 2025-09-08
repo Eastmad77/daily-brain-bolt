@@ -58,11 +58,15 @@
         <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
       </div>
       <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+
       <div class="timer-row">
         <div id="timerWrap" class="timer-wrap" aria-hidden="true">
           <div id="timerBar" class="timer-bar"></div>
         </div>
         <span id="timerText" class="timer-text">10s</span>
+
+        <!-- NEW: elapsed quiz timer chip -->
+        <span id="elapsedChip" class="elapsed-chip" title="Elapsed time">00:00</span>
       </div>
     </section>
 
@@ -73,14 +77,12 @@
         <span id="today" class="meta-date"></span>
       </div>
 
-      <!-- Hidden CSV/debug status (screen-reader only) -->
       <div id="statusline" class="sr-only" aria-hidden="true"></div>
 
       <div id="question" class="question">Press “Start Quiz” to begin.</div>
       <div id="options" class="options"></div>
 
       <div class="actions">
-        <!-- Auto-reveal now; no more Show Answer button -->
         <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
       </div>
 
@@ -102,7 +104,7 @@
   </footer>
 
   <!-- App logic -->
-  <script src="/app.js?v=20250910-3" defer></script>
+  <script src="/app.js?v=20250911-1" defer></script>
 
   <!-- Service Worker -->
   <script>
