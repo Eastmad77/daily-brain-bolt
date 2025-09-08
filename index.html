@@ -70,7 +70,6 @@
         <span id="today" class="meta-date"></span>
       </div>
 
-      <!-- Hidden CSV/debug status (won’t show to users) -->
       <div id="statusline" class="sr-only" aria-hidden="true"></div>
 
       <div id="question" class="question">Press “Start Quiz” to begin.</div>
@@ -97,10 +96,7 @@
     </div>
   </footer>
 
-  <!-- Your app logic -->
   <script src="/app.js"></script>
-
-  <!-- Service Worker registration -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
