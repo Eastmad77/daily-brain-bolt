@@ -2,16 +2,13 @@
    The Daily BrainBolt — app.js (Firebase + Quiz + FCM)
    ========================================================= */
 
-/* -----------------------------
-   0) SMALL UTILITIES
------------------------------- */
-const $ = (sel) => document.querySelector(sel);
-const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+// small helpers
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
 const on = (el, ev, fn) => el && el.addEventListener(ev, fn);
 const fmtDateKey = (d = new Date()) =>
   [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
 
-// simple loader for Papa if needed (most builds already include Papa from CDN in index.html)
 function whenPapa(cb) {
   if (window.Papa) return cb();
   const s = document.createElement("script");
@@ -20,9 +17,7 @@ function whenPapa(cb) {
   document.head.appendChild(s);
 }
 
-/* -----------------------------------------
-   1) FIREBASE: EARLY INIT (compat SDKs)
------------------------------------------- */
+/* 1) Firebase early init */
 (function initFirebaseEarly() {
   try {
     if (!window.FB_CONFIG) {
@@ -59,10 +54,8 @@ function whenPapa(cb) {
   }
 })();
 
-/* -----------------------------------------
-   2) FCM (Web Push): VAPID + enable button
------------------------------------------- */
-const vapidKey = 'BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY'; // ✅ your key
+/* 2) Push Notifications (FCM) */
+const vapidKey = 'BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY';
 
 async function enableNotifications() {
   try {
@@ -76,10 +69,10 @@ async function enableNotifications() {
       return;
     }
 
-    // ensure SW at the ROOT: /firebase-messaging-sw.js
+    // register the messaging SW at the ROOT path
     const swReg = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-    const messaging = firebase.messaging();
 
+    const messaging = firebase.messaging();
     const token = await messaging.getToken({
       vapidKey,
       serviceWorkerRegistration: swReg,
@@ -91,21 +84,17 @@ async function enableNotifications() {
       return;
     }
 
-    // Save token under /users/{uid} if signed in
-    try {
-      const uid = firebase.auth()?.currentUser?.uid || null;
-      if (uid) {
-        await firebase.firestore().collection("users").doc(uid).set(
-          {
-            fcmToken: token,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-          },
-          { merge: true }
-        );
-        console.log("[FCM] token saved for user", uid);
-      }
-    } catch (e) {
-      console.warn("[FCM] token save skipped/failed:", e);
+    // optionally save token under /users/{uid}
+    const uid = firebase.auth()?.currentUser?.uid || null;
+    if (uid) {
+      await firebase.firestore().collection("users").doc(uid).set(
+        {
+          fcmToken: token,
+          updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      console.log("[FCM] token saved for user", uid);
     }
 
     alert("Notifications enabled ✅");
@@ -115,9 +104,7 @@ async function enableNotifications() {
   }
 }
 
-/* -----------------------------------------
-   3) AUTH (optional: Google sign in/out)
------------------------------------------- */
+/* 3) Auth (optional) */
 async function signInWithGoogle() {
   try {
     const provider = new firebase.auth.GoogleAuthProvider();
@@ -146,15 +133,11 @@ firebase.auth?.().onAuthStateChanged?.((user) => {
   }
 });
 
-/* -----------------------------------------
-   4) QUIZ: Google Sheets CSV -> questions
------------------------------------------- */
-// Update with your sheet + gids
+/* 4) Quiz from Google Sheets */
 const SHEET_PUB_BASE =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv";
 const LIVE_GID = "1410250735";
 const BANK_GID = "2009978011";
-
 const CSV_LIVE = `${SHEET_PUB_BASE}&gid=${LIVE_GID}`;
 const CSV_BANK = `${SHEET_PUB_BASE}&gid=${BANK_GID}`;
 
@@ -180,39 +163,29 @@ const els = {
   score: $("#score"),
   progressText: $("#progressText"),
   progressFill: $("#progressFill"),
-  timerFill: $("#timerFill"), // width-based smooth bar
+  timerFill: $("#timerFill"),
   status: $("#statusline"),
-
-  btnStart: $("#btnStart") || $("#startQuiz") || $("#start"), // tolerate naming variants
+  btnStart: $("#btnStart") || $("#startQuiz") || $("#start"),
   btnShuffle: $("#btnShuffle"),
   btnShare: $("#btnShare"),
   btnNotify: $("#btnNotify"),
-
-  btnShowAnswer: $("#showAnswerBtn"), // may exist in some templates
+  btnShowAnswer: $("#showAnswerBtn"),
   btnPlayAgain: $("#playAgain"),
 };
 
-function logStatus(msg) {
-  if (els.status) els.status.textContent = msg;
-  console.log("[Quiz]", msg);
-}
-function norm(s) {
-  return String(s || "").trim();
-}
+function logStatus(msg) { if (els.status) els.status.textContent = msg; console.log("[Quiz]", msg); }
+function norm(s) { return String(s || "").trim(); }
 
-function loadCSV(url, cbOk, cbErr) {
+function loadCSV(url, ok, err) {
   Papa.parse(url + "&cb=" + Date.now(), {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: ({ data }) => cbOk(data || []),
-    error: (err) => cbErr(err),
+    download: true, header: true, skipEmptyLines: true,
+    complete: ({ data }) => ok(data || []),
+    error: (e) => err(e),
   });
 }
-
 function pickTodays(rows) {
-  const good = rows.filter((r) => r && r.Date && r.Question);
-  const todays = good.filter((r) => norm(r.Date) === state.todayKey);
+  const good = rows.filter(r => r && r.Date && r.Question);
+  const todays = good.filter(r => norm(r.Date) === state.todayKey);
   return todays.length ? todays : good.slice(0, 12);
 }
 
@@ -244,7 +217,6 @@ function showQuestion() {
     stopTimer();
     return;
   }
-
   state.selected = null;
   if (els.feedback) els.feedback.innerHTML = "";
   if (els.btnShowAnswer) els.btnShowAnswer.style.display = "none";
@@ -259,18 +231,13 @@ function showQuestion() {
     opts.forEach((t) => els.options.appendChild(buildChoice(t)));
   }
 
-  // (Re)start smooth timer
-  startTimer(() => {
-    // time’s up → reveal wrong (if no selection)
-    if (!state.selected) reveal(q, false, true);
-  });
+  startTimer(() => { if (!state.selected) reveal(q, false, true); });
 }
 
 function onSelect(btn, val) {
   $$(".choice").forEach((b) => b.classList.remove("selected"));
   btn.classList.add("selected");
   state.selected = val;
-  // auto-reveal after a short delay
   setTimeout(() => {
     const q = state.todays[state.idx];
     if (!q) return;
@@ -280,35 +247,18 @@ function onSelect(btn, val) {
 
 function reveal(q, isCorrect, isTimeout) {
   stopTimer();
-
-  // disable buttons to prevent more clicks in this round
-  $$(".choice").forEach((b) => {
-    b.classList.add("disabled");
-    b.disabled = true;
-  });
-
+  $$(".choice").forEach((b) => { b.classList.add("disabled"); b.disabled = true; });
   const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : "";
   if (els.feedback) {
     els.feedback.innerHTML = isCorrect
       ? `<div class="banner ok">Correct!${expl}</div>`
       : `<div class="banner bad">${isTimeout ? "Time’s up!" : "Not quite."} <span class="answer">Correct: <strong>${q.Answer}</strong></span>${expl}</div>`;
   }
-
-  // scoring + move next (or stop on wrong – earlier behavior was to stop and require Start/Shuffle)
-  if (isCorrect) {
-    state.score++;
-    state.idx++;
-  } else {
-    // stop here; let user click Start or Shuffle to continue, per your preference
-  }
-  updateBars();
-  // Only advance automatically if correct:
-  if (isCorrect) setTimeout(showQuestion, 900);
+  if (isCorrect) { state.score++; state.idx++; updateBars(); setTimeout(showQuestion, 900); }
+  else { updateBars(); }
 }
 
-/* -----------------------------
-   Smooth 10s timer bar
------------------------------- */
+/* Smooth 10s timer bar */
 function startTimer(onTimeout) {
   stopTimer();
   state.ticking = true;
@@ -317,163 +267,91 @@ function startTimer(onTimeout) {
 
   const tick = (ts) => {
     if (!state.ticking) return;
-    const elapsed = ts - state.timerStart;
-    const t = Math.min(1, elapsed / dur);
-    if (els.timerFill) els.timerFill.style.width = `${(1 - t) * 100}%`; // count-down left→right
-    if (t >= 1) {
-      state.ticking = false;
-      onTimeout?.();
-      return;
-    }
+    const t = Math.min(1, (ts - state.timerStart) / dur);
+    if (els.timerFill) els.timerFill.style.width = `${(1 - t) * 100}%`;
+    if (t >= 1) { state.ticking = false; onTimeout?.(); return; }
     state.timerReq = requestAnimationFrame(tick);
   };
   state.timerReq = requestAnimationFrame(tick);
 }
-
 function stopTimer() {
   state.ticking = false;
   if (state.timerReq) cancelAnimationFrame(state.timerReq);
   state.timerReq = 0;
 }
 
-/* -----------------------------
-   Flow: Start / Shuffle / Share
------------------------------- */
-function startQuiz() {
-  state.idx = 0;
-  state.score = 0;
-  updateBars();
-  showQuestion();
-}
-
+/* Start / Shuffle / Share */
+function startQuiz() { state.idx = 0; state.score = 0; updateBars(); showQuestion(); }
 function shuffleSet() {
-  // reshuffle today's set (or take a random 12 from bank)
   if (state.allRows?.length) {
-    // take 12 random from bank:
     const rand = [...state.allRows].sort(() => Math.random() - 0.5).slice(0, 12);
-    state.todays = rand;
-    startQuiz();
+    state.todays = rand; startQuiz();
   }
 }
-
 async function shareLink() {
-  const shareData = {
-    title: "The Daily BrainBolt",
-    text: "Try today’s Daily BrainBolt quiz!",
-    url: location.href,
-  };
+  const data = { title: "The Daily BrainBolt", text: "Try today’s Daily BrainBolt quiz!", url: location.href };
   try {
-    if (navigator.share) {
-      await navigator.share(shareData);
-    } else {
-      await navigator.clipboard.writeText(shareData.url);
-      alert("Link copied!");
-    }
-  } catch (e) {
-    console.warn("Share canceled/failed:", e);
-  }
+    if (navigator.share) await navigator.share(data);
+    else { await navigator.clipboard.writeText(data.url); alert("Link copied!"); }
+  } catch (e) { console.warn("Share canceled/failed:", e); }
 }
 
-/* -----------------------------
-   Load data (live first, fallback bank)
------------------------------- */
+/* Load data (live first, fallback bank) */
 function bootQuiz() {
   whenPapa(() => {
-    const today = fmtDateKey();
-    if (els.today) els.today.textContent = today;
-
+    if ($("#today")) $("#today").textContent = state.todayKey;
     logStatus("Loading live…");
-    loadCSV(
-      CSV_LIVE,
-      (liveRows) => {
-        logStatus(`Live loaded: ${liveRows.length} rows`);
-        state.allRows = liveRows;
-        state.todays = pickTodays(liveRows);
-        if (!state.todays.length) {
-          // fallback to bank
-          logStatus("No live rows for today. Loading bank…");
-          loadCSV(
-            CSV_BANK,
-            (bankRows) => {
-              state.allRows = bankRows;
-              state.todays = pickTodays(bankRows);
-              if (!state.todays.length) {
-                logStatus("No quiz rows found in live or bank.");
-                if (els.metaText) els.metaText.textContent = "No quiz rows found.";
-                return;
-              }
-              if (els.metaText) els.metaText.textContent = "Ready. Click Start.";
-              updateBars();
-            },
-            (err) => {
-              console.error("Bank CSV error", err);
-              logStatus("Error loading bank CSV.");
-            }
-          );
-          return;
-        }
-        if (els.metaText) els.metaText.textContent = "Ready. Click Start.";
-        updateBars();
-      },
-      (err) => {
-        console.error("Live CSV error", err);
-        logStatus("Couldn’t load CSV. Ensure the sheet is Published to the web and gid is correct.");
-        // try bank anyway
-        loadCSV(
-          CSV_BANK,
-          (bankRows) => {
-            state.allRows = bankRows;
-            state.todays = pickTodays(bankRows);
-            if (els.metaText) els.metaText.textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
-            updateBars();
-          },
-          (err2) => {
-            console.error("Bank CSV error", err2);
-            logStatus("Error loading CSV. Check publish settings and access.");
-          }
-        );
+    loadCSV(CSV_LIVE, (live) => {
+      logStatus(`Live loaded: ${live.length} rows`);
+      state.allRows = live;
+      state.todays = pickTodays(live);
+      if (!state.todays.length) {
+        logStatus("No live rows for today. Loading bank…");
+        loadCSV(CSV_BANK, (bank) => {
+          state.allRows = bank;
+          state.todays = pickTodays(bank);
+          if ($("#metaText")) $("#metaText").textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
+          updateBars();
+        }, (e) => { console.error("Bank CSV error", e); logStatus("Error loading bank CSV."); });
+        return;
       }
-    );
+      if ($("#metaText")) $("#metaText").textContent = "Ready. Click Start.";
+      updateBars();
+    }, (e) => {
+      console.error("Live CSV error", e);
+      logStatus("Couldn’t load CSV. Ensure the sheet is Published and gid is correct.");
+      loadCSV(CSV_BANK, (bank) => {
+        state.allRows = bank;
+        state.todays = pickTodays(bank);
+        if ($("#metaText")) $("#metaText").textContent = state.todays.length ? "Ready. Click Start." : "No quiz rows found.";
+        updateBars();
+      }, (e2) => { console.error("Bank CSV error", e2); logStatus("Error loading CSV. Check publish settings and access."); });
+    });
   });
 }
 
-/* -----------------------------
-   Save session to Firestore
------------------------------- */
+/* Save session (optional) */
 async function saveSession(score, elapsedSec) {
   try {
     const uid = firebase.auth()?.currentUser?.uid || null;
     await firebase.firestore().collection("sessions").add({
-      date: state.todayKey,
-      score,
-      elapsedSec,
-      uid,
+      date: state.todayKey, score, elapsedSec, uid,
       createdAt: firebase.firestore.FieldValue.serverTimestamp(),
     });
-  } catch (e) {
-    console.warn("[Session] save failed:", e);
-  }
+  } catch (e) { console.warn("[Session] save failed:", e); }
 }
 
-/* -----------------------------
-   Wire buttons + boot
------------------------------- */
+/* Wire + boot */
 function wireUI() {
-  on(els.btnStart, "click", startQuiz);
-  on(els.btnShuffle, "click", shuffleSet);
-  on(els.btnShare, "click", shareLink);
-  on(els.btnNotify, "click", enableNotifications);
-
-  // Legacy “Show Answer” button (kept for older templates)
-  on(els.btnShowAnswer, "click", () => {
+  on($("#btnStart") || $("#startQuiz") || $("#start"), "click", startQuiz);
+  on($("#btnShuffle"), "click", shuffleSet);
+  on($("#btnShare"), "click", shareLink);
+  on($("#btnNotify"), "click", enableNotifications);
+  on($("#showAnswerBtn"), "click", () => {
     const q = state.todays[state.idx];
     if (!q || !state.selected) return;
-    const isCorrect = norm(state.selected).toLowerCase() === norm(q.Answer).toLowerCase();
-    reveal(q, isCorrect, false);
+    const ok = norm(state.selected).toLowerCase() === norm(q.Answer).toLowerCase();
+    reveal(q, ok, false);
   });
 }
-
-document.addEventListener("DOMContentLoaded", () => {
-  wireUI();
-  bootQuiz();
-});
+document.addEventListener("DOMContentLoaded", () => { wireUI(); bootQuiz(); });
