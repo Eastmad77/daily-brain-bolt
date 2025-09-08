@@ -3,48 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>About • The Daily BrainBolt</title>
+  <title>About — The Daily BrainBolt</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/style.css" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#0D2430" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dailybrainbolt.com/about.html" />
+  <meta property="og:title" content="About — The Daily BrainBolt" />
+  <meta property="og:description" content="What is The Daily BrainBolt and how does it work?" />
+  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
+  <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <header class="hero">
-    <div class="hero-overlay"></div>
     <div class="hero-inner">
+      <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
       <h1 class="brand-title">About The Daily BrainBolt</h1>
-      <p class="subtitle">A quick, daily brain jolt — keep your streak alive.</p>
-      <a class="btn primary" href="/">← Back to Home</a>
+      <p class="subtitle">Quick daily quizzes to keep your mind sharp and your streak alive.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="/">Back to quiz</a>
+      </div>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2 style="margin-bottom:.5rem;">What is BrainBolt?</h2>
-      <p style="margin-bottom:1rem;">
-        The Daily BrainBolt is a bite-sized quiz that blends world trivia, logic, language, science, and more —
-        designed to be fun, fast, and replayable. No accounts. No friction. Just a quick spark ⚡ every day.
+      <h2>What is BrainBolt?</h2>
+      <p>
+        The Daily BrainBolt is a lightweight, fast quiz you can take in under a minute. Questions are pulled
+        from a curated bank and surfaced each day — so you can build knowledge and keep a streak going.
       </p>
-
-      <h2 style="margin-bottom:.5rem;">How it works</h2>
-      <ul style="margin-left:1rem; margin-bottom:1rem;">
-        <li>Tap <strong>Start Quiz</strong> to begin today’s set.</li>
-        <li>A 10-second timer keeps each question snappy.</li>
-        <li>Instant feedback with short explanations.</li>
-        <li>Share with friends and compare scores.</li>
+      <h3>How it works</h3>
+      <ul>
+        <li>A fresh set of questions is published daily.</li>
+        <li>You get a 10-second timer per question (with smooth progress).</li>
+        <li>Missed a question? Review the answer and try the next.</li>
       </ul>
-
-      <h2 style="margin-bottom:.5rem;">Where do questions come from?</h2>
-      <p style="margin-bottom:1rem;">
-        Questions refresh daily from a curated bank maintained by the BrainBolt team.
-        We aim for a balance of difficulty and variety so there’s always something fresh to learn.
+      <p>
+        Built as a modern PWA, BrainBolt works great on mobile and can be installed to your home screen.
       </p>
+    </section>
 
-      <h2 style="margin-bottom:.5rem;">Contact</h2>
-      <p>Got feedback or ideas? Email us at <a href="mailto:info@dailybrainbolt.com">info@dailybrainbolt.com</a>.</p>
+    <section class="card">
+      <h2>Contact</h2>
+      <p>Questions, ideas, or feedback? We’d love to hear from you.</p>
+      <p><a class="btn outline" href="mailto:info@dailybrainbolt.com">info@dailybrainbolt.com</a></p>
     </section>
   </main>
 
@@ -59,6 +70,14 @@
       </nav>
     </div>
   </footer>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+      });
+    }
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
