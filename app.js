@@ -1,4 +1,4 @@
-/** The Daily BrainBolt — app.js (smooth timer visible + button-like feedback) */
+/** The Daily BrainBolt — app.js (orange timer + elapsed chip + button-style feedback) */
 
 /* Google Sheet publish ID + gids */
 const SHEET_ID = "2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG";
@@ -25,8 +25,9 @@ const elShare = document.getElementById('shareBtn');
 const elTimerWrap = document.getElementById('timerWrap');
 const elTimerBar = document.getElementById('timerBar');
 const elTimerText = document.getElementById('timerText');
+const elElapsed = document.getElementById('elapsedChip');
 
-/* Today stamp */
+/* Today */
 const todayKey = new Date().toISOString().slice(0,10);
 elToday.textContent = todayKey;
 
@@ -34,13 +35,20 @@ elToday.textContent = todayKey;
 let allRows = [], todays = [], idx = 0, score = 0, selected = null;
 let timer = null, timeLeft = 10;
 
+/* NEW: elapsed quiz timer */
+let elapsedSec = 0, elapsedInterval = null;
+
 /* Utils */
 function log(m){ console.log('[BB]', m); elStatus.textContent = m; }
 const norm = s => String(s ?? '').trim();
 function ready(cb){ (document.readyState === 'complete' || document.readyState === 'interactive') ? cb() : document.addEventListener('DOMContentLoaded', cb); }
 function whenPapa(cb){ if (window.Papa) cb(); else setTimeout(()=>whenPapa(cb), 30); }
+const mmss = (s) => {
+  const m = Math.floor(s/60), r = s % 60;
+  return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`;
+};
 
-/* Normalize row */
+/* Normalize row helpers */
 function g(row, names){
   for (const name of names){ if (row[name] != null) return row[name]; }
   const keys = Object.keys(row);
@@ -87,6 +95,20 @@ function loadCSV(url, cb){
   });
 }
 
+/* Elapsed timer controls */
+function startElapsed(){
+  stopElapsed();
+  elapsedSec = 0;
+  elElapsed.textContent = mmss(elapsedSec);
+  elapsedInterval = setInterval(() => {
+    elapsedSec++;
+    elElapsed.textContent = mmss(elapsedSec);
+  }, 1000);
+}
+function stopElapsed(){
+  if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval = null; }
+}
+
 /* App init */
 function init(){
   elStart.addEventListener('click', resetAndStart);
@@ -126,7 +148,9 @@ function initUI(){
   updateMeta();
   elFB.innerHTML = '';
   elPlayAgain.style.display = 'none';
-  elTimerWrap.style.display = 'none';          // hidden until question starts
+  elTimerWrap.style.display = 'none';
+  elElapsed.textContent = '00:00';
+  stopElapsed();
   elQ.textContent = "Press “Start Quiz” to begin.";
   elOpts.innerHTML = '';
 }
@@ -134,6 +158,7 @@ function initUI(){
 function resetAndStart(){
   idx = 0; score = 0; selected = null; updateMeta();
   if (!todays.length){ elQ.textContent = "No quiz rows found."; return; }
+  startElapsed();
   showQuestion();
 }
 
@@ -150,7 +175,8 @@ function showQuestion(){
   if (!q){
     elFB.innerHTML = "<div class='feedback-banner ok'>🎉 Done for now!</div>";
     elPlayAgain.style.display = 'inline-flex';
-    elPlayAgain.onclick = resetAndStart; return;
+    elPlayAgain.onclick = () => { stopElapsed(); resetAndStart(); };
+    return;
   }
   selected = null;
   elFB.innerHTML = '';
@@ -182,7 +208,7 @@ function onSelect(btn, val, q){
   setTimeout(() => reveal(q), 300);
 }
 
-/* Button-like feedback banners */
+/* Feedback */
 function reveal(q){
   const isCorrect = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
   const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
@@ -199,7 +225,7 @@ function reveal(q){
   }, 900);
 }
 
-/* Smooth 10s timer using scaleX */
+/* Smooth 10s timer using scaleX (orange bar) */
 function startTimer(){
   timeLeft = 10;
   elTimerWrap.style.display = 'block';
@@ -209,7 +235,7 @@ function startTimer(){
   elTimerBar.style.transform = 'scaleX(1)';
   elTimerText.textContent = timeLeft + 's';
 
-  // force reflow before starting transition
+  // force reflow
   void elTimerBar.offsetWidth;
 
   // animate to zero over 10s (smooth)
@@ -226,7 +252,7 @@ function startTimer(){
         const expl = q.Explanation ? `<div class="expl">${q.Explanation}</div>` : '';
         elFB.innerHTML = `<div class="feedback-banner no">⌛ Time’s up! Correct: <strong>${q.Answer || '—'}</strong> ${expl}</div>`;
         elPlayAgain.style.display = 'inline-flex';
-        elPlayAgain.onclick = resetAndStart;
+        elPlayAgain.onclick = () => { stopElapsed(); resetAndStart(); };
       }
     }
   }, 1000);
