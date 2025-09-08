@@ -3,52 +3,84 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Terms of Use • The Daily BrainBolt</title>
+  <title>Terms — The Daily BrainBolt</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="/style.css" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#0D2430" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://dailybrainbolt.com/terms.html" />
+  <meta property="og:title" content="Terms — The Daily BrainBolt" />
+  <meta property="og:description" content="Terms of Use for The Daily BrainBolt." />
+  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
+  <meta name="twitter:card" content="summary_large_image" />
 </head>
 <body>
   <header class="hero">
-    <div class="hero-overlay"></div>
     <div class="hero-inner">
+      <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
       <h1 class="brand-title">Terms of Use</h1>
-      <p class="subtitle">Plain-language terms for using The Daily BrainBolt.</p>
-      <a class="btn primary" href="/">← Back to Home</a>
+      <p class="subtitle">Please read these terms carefully before using the site.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="/">Back to quiz</a>
+      </div>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2 style="margin-bottom:.5rem;">1. Acceptance of Terms</h2>
-      <p style="margin-bottom:1rem;">
-        By accessing or using The Daily BrainBolt (“Service”), you agree to these Terms. If you do not agree,
-        please do not use the Service.
+      <p><strong>Effective date:</strong> 2025-09-08</p>
+
+      <h2>1. Acceptance of Terms</h2>
+      <p>
+        By accessing or using The Daily BrainBolt website or app (“Service”), you agree to be bound by these Terms of Use.
+        If you do not agree, please do not use the Service.
       </p>
 
-      <h2 style="margin-bottom:.5rem;">2. Use of the Service</h2>
-      <ul style="margin-left:1rem; margin-bottom:1rem;">
-        <li>The Service is provided “as is” and “as available”.</li>
-        <li>Do not abuse, disrupt, or attempt to compromise the Service.</li>
-        <li>Content is for entertainment and educational purposes only.</li>
+      <h2>2. Use of the Service</h2>
+      <ul>
+        <li>The Service is provided for personal, non-commercial use.</li>
+        <li>You agree not to misuse or interfere with the Service or its infrastructure.</li>
+        <li>We may modify, pause, or discontinue features at any time.</li>
       </ul>
 
-      <h2 style="margin-bottom:.5rem;">3. Intellectual Property</h2>
-      <p style="margin-bottom:1rem;">
-        All branding, UI, and original content are owned by The Daily BrainBolt unless otherwise stated.
+      <h2>3. Intellectual Property</h2>
+      <p>
+        The Daily BrainBolt name, branding, interface, and content are protected by applicable intellectual property laws.
+        You may not copy, modify, or distribute materials without permission.
       </p>
 
-      <h2 style="margin-bottom:.5rem;">4. Modifications</h2>
-      <p style="margin-bottom:1rem;">
-        We may modify these Terms by updating this page. Continued use of the Service constitutes
-        acceptance of any changes.
+      <h2>4. Third-Party Links</h2>
+      <p>
+        The Service may contain links to third-party sites. We are not responsible for their content or practices.
       </p>
 
-      <h2 style="margin-bottom:.5rem;">5. Contact</h2>
-      <p>Questions? <a href="mailto:info@dailybrainbolt.com">info@dailybrainbolt.com</a></p>
+      <h2>5. Disclaimer of Warranties</h2>
+      <p>
+        The Service is provided “as is” and “as available” without warranties of any kind, express or implied.
+      </p>
+
+      <h2>6. Limitation of Liability</h2>
+      <p>
+        To the maximum extent permitted by law, we are not liable for indirect, incidental, special, consequential, or punitive damages.
+      </p>
+
+      <h2>7. Changes to Terms</h2>
+      <p>
+        We may update these Terms from time to time. Continued use after changes constitutes acceptance.
+      </p>
+
+      <h2>8. Contact</h2>
+      <p>
+        For questions about these Terms, contact <a href="mailto:info@dailybrainbolt.com">info@dailybrainbolt.com</a>.
+      </p>
     </section>
   </main>
 
@@ -63,6 +95,14 @@
       </nav>
     </div>
   </footer>
-  <script>document.getElementById('year').textContent = new Date().getFullYear();</script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+      });
+    }
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
 </body>
 </html>
