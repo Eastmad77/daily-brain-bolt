@@ -1,3 +1,5 @@
+/** The Daily BrainBolt — app.js (fixed CSV parsing & cache-busting) */
+
 /** Published Google Sheet link */
 const SHEET_ID = "2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG";
 
@@ -23,6 +25,9 @@ const elStatus = document.getElementById('statusline');
 const elTimerWrap = document.getElementById('timerWrap');
 const elTimerBar = document.getElementById('timerBar');
 const elTimerText = document.getElementById('timerText');
+const elStart = document.getElementById('startBtn');
+const elShuffle = document.getElementById('shuffleBtn');
+const elShare = document.getElementById('shareBtn');
 
 const now = new Date();
 const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
@@ -33,30 +38,56 @@ let allRows = [], todays = [], idx = 0, score = 0, selected = null, timer = null
 function status(msg) { elStatus.textContent = msg; console.log("[CSV]", msg); }
 const norm = s => String(s||'').trim();
 
+/* ========== CSV Loading (fixed filter) ========== */
 function loadCSV(url, fallbackUrl) {
-  Papa.parse(url, {
+  const bust = url.includes('?') ? '&cb=' + Date.now() : '?cb=' + Date.now();
+  status(`Loading: ${url}`);
+  Papa.parse(url + bust, {
     download: true,
     header: true,
     skipEmptyLines: true,
     complete: ({ data }) => {
-      const rows = (data || []).filter(r => r && r.Date && r.Question);
+      // ✅ Only require Question, not Date (bank often has blank Date)
+      const rows = (data || []).filter(r => r && r.Question);
+      status(`Parsed ${rows.length} rows`);
       if (!rows.length && fallbackUrl) {
+        status("No rows; trying fallback…");
         loadCSV(fallbackUrl, null);
         return;
       }
-      allRows = rows;
-      todays = rows.filter(r => norm(r.Date) === todayKey);
-      if (!todays.length) todays = rows.slice(0, 12);
-      resetAndStart();
+      handleRows(rows);
     },
     error: (err) => {
       console.error("CSV error", err);
-      if (fallbackUrl) loadCSV(fallbackUrl, null);
-      else status("Error loading CSV");
+      if (fallbackUrl) {
+        status("Primary failed; trying fallback…");
+        loadCSV(fallbackUrl, null);
+      } else {
+        status("Error loading CSV. Check Publish settings/permissions.");
+        elQ.textContent = "Couldn’t load questions.";
+      }
     }
   });
 }
 
+function handleRows(rows){
+  allRows = rows;
+  // Prefer today's set if Date matches; otherwise take first 12 as fallback
+  todays = rows.filter(r => norm(r.Date) === todayKey);
+  if (!todays.length) todays = rows.slice(0, 12);
+
+  // Don’t auto-start; prompt user
+  idx = 0; score = 0; selected = null;
+  updateMeta();
+  elFB.innerHTML = '';
+  elShow.style.display = 'none';
+  elPlayAgain.style.display = 'none';
+  elQ.textContent = "Press “Start Quiz” to begin.";
+  elOpts.innerHTML = '';
+  elTimerWrap.style.display = "none";
+}
+
+/* ========== Quiz Flow ========== */
 function resetAndStart() {
   idx = 0; score = 0; selected = null;
   updateMeta();
@@ -77,6 +108,7 @@ function showQuestion() {
   if (!q) {
     elFB.innerHTML = "<div class='correct'>Nice! Done for today.</div>";
     elPlayAgain.style.display = "inline-flex";
+    elPlayAgain.onclick = () => resetAndStart();
     return;
   }
   selected = null;
@@ -125,7 +157,7 @@ function reveal(q) {
   updateMeta();
 }
 
-// Timer
+/* ========== Timer ========== */
 function startTimer() {
   timeLeft = 10;
   elTimerWrap.style.display = "flex";
@@ -134,7 +166,7 @@ function startTimer() {
   timer = setInterval(() => {
     timeLeft--;
     elTimerBar.style.right = ((10 - timeLeft) * 10) + "%";
-    elTimerText.textContent = timeLeft + "s";
+    elTimerText.textContent = Math.max(0, timeLeft) + "s";
     if (timeLeft <= 0) {
       clearTimer();
       reveal(todays[idx]);
@@ -143,22 +175,20 @@ function startTimer() {
 }
 function clearTimer() { if (timer) clearInterval(timer); timer = null; }
 
-// Shuffle helper
+/* ========== Shuffle helper & Buttons ========== */
 function shuffleArray(arr) {
-  return arr.map(v => ({ v, sort: Math.random() }))
-    .sort((a,b) => a.sort - b.sort)
-    .map(({v}) => v);
+  return arr.map(v => ({ v, r: Math.random() }))
+            .sort((a,b) => a.r - b.r)
+            .map(o => o.v);
 }
 
-// Button actions
-document.getElementById('startBtn').addEventListener('click', () => {
-  resetAndStart();
-});
-document.getElementById('shuffleBtn').addEventListener('click', () => {
+elStart.addEventListener('click', () => resetAndStart());
+elShuffle.addEventListener('click', () => {
+  if (!allRows.length) return;            // nothing loaded yet
   todays = shuffleArray(allRows).slice(0, 12);
   resetAndStart();
 });
-document.getElementById('shareBtn').addEventListener('click', async () => {
+elShare.addEventListener('click', async () => {
   const shareData = {
     title: 'The Daily BrainBolt',
     text: 'Try today’s quiz on The Daily BrainBolt!',
@@ -166,9 +196,12 @@ document.getElementById('shareBtn').addEventListener('click', async () => {
   };
   try {
     if (navigator.share) await navigator.share(shareData);
-    else alert("Copy this link:\n" + shareData.url);
-  } catch(e) { console.error(e); }
+    else {
+      await navigator.clipboard.writeText(shareData.url);
+      alert("Link copied! Share it with your friends.");
+    }
+  } catch(e) { console.error("Share failed:", e); }
 });
 
-// Start by loading CSV
+/* ========== Kickoff (prefer live, fallback to bank) ========== */
 loadCSV(CSV_URL_LIVE, CSV_URL_BANK);
