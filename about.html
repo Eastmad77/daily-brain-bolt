@@ -5,60 +5,108 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>⚡ The Daily BrainBolt</title>
 
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
 
+  <!-- Styles -->
   <link rel="stylesheet" href="/style.css" />
+
+  <!-- PWA / Icons -->
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#0D2430" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
+  <!-- Social -->
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dailybrainbolt.com/about.html" />
-  <meta property="og:title" content="About — The Daily BrainBolt" />
-  <meta property="og:description" content="What is The Daily BrainBolt and how does it work?" />
+  <meta property="og:url" content="https://dailybrainbolt.com/" />
+  <meta property="og:title" content="⚡ The Daily BrainBolt" />
+  <meta property="og:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
   <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="⚡ The Daily BrainBolt" />
+  <meta name="twitter:description" content="Shock your synapses with a daily dose of trivia. Keep your streak alive!" />
+  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png" />
+
+  <!-- AdSense (activate once approved) -->
+  <!-- Replace YOUR-ADSENSE-ID with your actual ID (e.g., ca-pub-XXXXXXXXXXXXXXXX) -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=YOUR-ADSENSE-ID" crossorigin="anonymous"></script>
+
+  <!-- CSV Parser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
 </head>
 <body>
+
+  <!-- Hero -->
   <header class="hero">
     <div class="hero-inner">
       <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
-      <h1 class="brand-title">About The Daily BrainBolt</h1>
-      <p class="subtitle">Quick daily quizzes to keep your mind sharp and your streak alive.</p>
+      <h1 class="brand-title">The Daily BrainBolt</h1>
+      <p class="subtitle">Shock your synapses and keep your streak alive!</p>
       <div class="cta-row">
-        <a class="btn primary" href="/">Back to quiz</a>
+        <button id="startBtn" class="btn primary">Start Quiz</button>
+        <button id="shuffleBtn" class="btn ghost">Shuffle</button>
+        <button id="shareBtn" class="btn outline">Share</button>
       </div>
     </div>
   </header>
 
+  <!-- Main -->
   <main class="container">
-    <section class="card">
-      <h2>What is BrainBolt?</h2>
-      <p>
-        The Daily BrainBolt is a lightweight, fast quiz you can take in under a minute. Questions are pulled
-        from a curated bank and surfaced each day — so you can build knowledge and keep a streak going.
-      </p>
-      <h3>How it works</h3>
-      <ul>
-        <li>A fresh set of questions is published daily.</li>
-        <li>You get a 10-second timer per question (with smooth progress).</li>
-        <li>Missed a question? Review the answer and try the next.</li>
-      </ul>
-      <p>
-        Built as a modern PWA, BrainBolt works great on mobile and can be installed to your home screen.
-      </p>
+    <section class="card bar-card">
+      <div class="bar-top">
+        <div><strong>Score:</strong> <span id="score">0</span></div>
+        <div class="bar-spacer"></div>
+        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+      </div>
+      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+      <div class="timer-row">
+        <div id="timerWrap" class="timer-wrap" aria-hidden="true">
+          <div id="timerBar" class="timer-bar"></div>
+        </div>
+        <span id="timerText" class="timer-text">10s</span>
+      </div>
     </section>
 
-    <section class="card">
-      <h2>Contact</h2>
-      <p>Questions, ideas, or feedback? We’d love to hear from you.</p>
-      <p><a class="btn outline" href="mailto:info@dailybrainbolt.com">info@dailybrainbolt.com</a></p>
+    <section class="card" id="quiz-card" aria-live="polite">
+      <div class="meta">
+        <span id="metaText" class="meta-text">Daily set</span>
+        <span class="spacer"></span>
+        <span id="today" class="meta-date"></span>
+      </div>
+
+      <!-- Hidden CSV/debug status -->
+      <div id="statusline" class="sr-only" aria-hidden="true"></div>
+
+      <div id="question" class="question">Press “Start Quiz” to begin.</div>
+      <div id="options" class="options"></div>
+
+      <div class="actions">
+        <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
+        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
+      </div>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+    </section>
+
+    <!-- Ad placement (optional banner under quiz) -->
+    <!-- Replace YOUR-AD-SLOT-ID with your slot. Remove display:none once approved -->
+    <section class="card ad-card" style="display:none;">
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="YOUR-ADSENSE-ID"
+           data-ad-slot="YOUR-AD-SLOT-ID"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
     <div class="foot-inner">
       <div>© <span id="year"></span> The Daily BrainBolt</div>
@@ -66,11 +114,15 @@
         <a href="/about.html">About</a>
         <a href="/terms.html">Terms</a>
         <a href="/privacy.html">Privacy</a>
-        <a href="mailto:info@dailybrainbolt.com">Contact</a>
+        <a href="/contact.html">Contact</a>
       </nav>
     </div>
   </footer>
 
+  <!-- App logic (defer + cache-buster) -->
+  <script src="/app.js?v=20250910" defer></script>
+
+  <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
