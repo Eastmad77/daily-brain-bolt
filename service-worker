@@ -1,5 +1,5 @@
 /* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.8'; // bumped for new favicon/theme
+const VERSION = 'v1.0.8';
 const STATIC_CACHE = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 
@@ -16,9 +16,7 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+  e.waitUntil(caches.open(STATIC_CACHE).then(c => c.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
@@ -32,30 +30,30 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
-  const { request } = e;
-  const url = new URL(request.url);
+  const url = new URL(e.request.url);
 
+  // Network-first for CSV
   if (url.href.includes('docs.google.com/spreadsheets')) {
     e.respondWith(
-      fetch(request).then(res => {
-        const copy = res.clone();
-        caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+      fetch(e.request).then(res => {
+        caches.open(RUNTIME_CACHE).then(c => c.put(e.request, res.clone()));
         return res;
-      }).catch(() => caches.match(request))
+      }).catch(() => caches.match(e.request))
     );
     return;
   }
 
+  // Cache-first for same-origin static
   if (url.origin === location.origin) {
     e.respondWith(
-      caches.match(request).then(cached => cached || fetch(request).then(res => {
-        const copy = res.clone();
-        caches.open(RUNTIME_CACHE).then(c => c.put(request, copy));
+      caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
+        caches.open(RUNTIME_CACHE).then(c => c.put(e.request, res.clone()));
         return res;
       }))
     );
     return;
   }
 
-  e.respondWith(fetch(request).catch(() => caches.match(request)));
+  // Default
+  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
 });
