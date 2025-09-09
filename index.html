@@ -77,9 +77,8 @@
         <button id="startBtn" class="btn primary subtle">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-      </div>
-      <div class="cta-row">
-        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
+        <!-- Play again inline, same style as Shuffle; hidden until needed -->
+        <button id="playAgain" class="btn shuffle" style="display:none;">Play again</button>
       </div>
     </section>
   </main>
@@ -101,7 +100,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
   <script>
-    // Menu open/close (scoped variables to avoid collisions)
+    // Menu (scoped)
     (() => {
       const btn = document.getElementById('mmMenuBtn');
       const panel = document.getElementById('mmSideMenu');
@@ -143,7 +142,6 @@
         try{
           const provider = new firebase.auth.GoogleAuthProvider();
           const r = await auth.signInWithPopup(provider);
-          console.log('Signed in', r.user?.uid);
           alert(`Welcome, ${r.user.displayName}`);
         }catch(e){ console.error(e); alert('Sign-in failed. See console.'); }
       });
