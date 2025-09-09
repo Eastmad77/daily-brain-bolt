@@ -10,23 +10,26 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 
-  <!-- Icons / PWA -->
+  <!-- PWA / Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#262626">
+  <meta name="theme-color" content="#08161D">
 
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
+
+  <!-- CSV Parser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
-  <!-- Global Topbar with Hamburger -->
+  <!-- Global Topbar with Hamburger (no words/links shown here) -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
 
-  <!-- Slide-out Menu -->
+  <!-- Slide-out Menu (opened via ☰) -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
@@ -42,9 +45,11 @@
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
+      <!-- Large centered app icon (auto scales on mobile) -->
       <img src="/app-icon.svg" alt="The Daily BrainBolt App Icon" class="app-logo-lg" onerror="this.style.display='none'">
       <div class="hero-title">
-        <img src="/favicon.svg" alt="BrainBolt Mini Icon" class="app-logo-sm" onerror="this.style.display='none'">
+        <!-- Replace small favicon with the app icon (small) to match your request -->
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-logo-sm" onerror="this.style.display='none'">
         <h1>The Daily BrainBolt</h1>
       </div>
       <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
@@ -94,7 +99,7 @@
   <!-- App -->
   <script src="/app.js" defer></script>
 
-  <!-- Menu script (isolated) -->
+  <!-- Tiny menu script (isolated) -->
   <script>
     (() => {
       const btn = document.getElementById('mmMenuBtn');
