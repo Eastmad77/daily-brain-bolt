@@ -1,59 +1,77 @@
 /* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.8';
+const VERSION = 'v1.0.9';
 const STATIC_CACHE = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 
-const STATIC_ASSETS = [
-  '/',
+const CORE_ASSETS = [
+  '/',               // start_url
   '/index.html',
   '/style.css',
   '/app.js',
+  '/firebase-config.js',
+  '/site.webmanifest',
   '/favicon.svg',
   '/icon-192.png',
   '/icon-512.png',
-  '/app-icon.svg',
-  '/site.webmanifest'
+  '/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(STATIC_CACHE).then(c => c.addAll(STATIC_ASSETS)));
-  self.skipWaiting();
+  e.waitUntil(
+    caches.open(STATIC_CACHE).then(cache => cache.addAll(CORE_ASSETS))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.map(k => (k === STATIC_CACHE || k === RUNTIME_CACHE) ? null : caches.delete(k)))
-    )
+      Promise.all(keys.map(k => {
+        if (k !== STATIC_CACHE && k !== RUNTIME_CACHE) return caches.delete(k);
+      }))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-self.addEventListener('fetch', (e) => {
-  const url = new URL(e.request.url);
+// Network-first for CSV / Google Sheets; cache-first for app shell
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
 
-  // Network-first for CSV
-  if (url.href.includes('docs.google.com/spreadsheets')) {
-    e.respondWith(
-      fetch(e.request).then(res => {
-        caches.open(RUNTIME_CACHE).then(c => c.put(e.request, res.clone()));
+  // Avoid caching Google Sheets API aggressively; try network first
+  const isSheets = url.hostname.endsWith('google.com') || url.hostname.endsWith('gstatic.com');
+
+  if (isSheets) {
+    event.respondWith(
+      fetch(event.request).then(res => {
+        const resClone = res.clone();
+        caches.open(RUNTIME_CACHE).then(c => c.put(event.request, resClone));
         return res;
-      }).catch(() => caches.match(e.request))
+      }).catch(() => caches.match(event.request))
     );
     return;
   }
 
-  // Cache-first for same-origin static
+  // App shell & same-origin: cache-first
   if (url.origin === location.origin) {
-    e.respondWith(
-      caches.match(e.request).then(cached => cached || fetch(e.request).then(res => {
-        caches.open(RUNTIME_CACHE).then(c => c.put(e.request, res.clone()));
-        return res;
-      }))
+    event.respondWith(
+      caches.match(event.request).then(cached => {
+        if (cached) return cached;
+        return fetch(event.request).then(res => {
+          const resClone = res.clone();
+          caches.open(RUNTIME_CACHE).then(c => c.put(event.request, resClone));
+          return res;
+        });
+      })
     );
     return;
   }
 
-  // Default
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  // Fallback: network-first
+  event.respondWith(
+    fetch(event.request).then(res => {
+      const resClone = res.clone();
+      caches.open(RUNTIME_CACHE).then(c => c.put(event.request, resClone));
+      return res;
+    }).catch(() => caches.match(event.request))
+  );
 });
