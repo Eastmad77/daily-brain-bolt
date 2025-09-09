@@ -4,11 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About • The Daily BrainBolt</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0E1E27">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-
-  <!-- Global Topbar with Hamburger -->
+  <!-- Topbar -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
@@ -28,41 +31,33 @@
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <img src="/app-icon.svg" alt="App Icon" class="app-logo-lg" onerror="this.style.display='none'">
       <div class="hero-title">
-        <img src="/favicon.svg" alt="Mini Icon" class="app-logo-sm" onerror="this.style.display='none'">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
         <h1>About</h1>
       </div>
-      <p class="subtitle">Learn more about The Daily BrainBolt</p>
+      <p class="subtitle">What makes The Daily BrainBolt spark?</p>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <p><strong>The Daily BrainBolt</strong> is your daily dose of trivia, puzzles, and challenges designed to keep your mind sharp. Each day, you’ll face 12 carefully curated questions with a mix of difficulty levels and categories.</p>
-      <p>Play daily, track your progress, and keep your streak alive!</p>
+      <p><strong>The Daily BrainBolt</strong> delivers a sharp, fun mix of 12 questions every day across world trivia, language, logic puzzles and more. We keep difficulty balanced so anyone can play—and improve.</p>
+      <p>Keep your streak alive, challenge friends, and come back tomorrow for a fresh set.</p>
     </section>
   </main>
 
   <footer class="footer">
     © 2025 The Daily BrainBolt •
-    <a href="/index.html">Home</a> •
     <a href="/terms.html">Terms</a> •
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
 
   <script>
-    (() => {
-      const btn = document.getElementById('mmMenuBtn');
-      const panel = document.getElementById('mmSideMenu');
-      const closeX = document.getElementById('mmCloseMenu');
-      function openPanel(){ panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); }
-      function closePanel(){ panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); }
-      btn?.addEventListener('click', openPanel);
-      closeX?.addEventListener('click', closePanel);
-      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePanel(); });
-    })();
+    (()=>{const b=document.getElementById('mmMenuBtn'),p=document.getElementById('mmSideMenu'),x=document.getElementById('mmCloseMenu');
+    function o(){p?.classList.add('open');p?.setAttribute('aria-hidden','false')}
+    function c(){p?.classList.remove('open');p?.setAttribute('aria-hidden','true')}
+    b?.addEventListener('click',o);x?.addEventListener('click',c);document.addEventListener('keydown',e=>{if(e.key==='Escape')c();});})();
   </script>
 </body>
 </html>
