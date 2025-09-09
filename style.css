@@ -1,12 +1,56 @@
-/* Menu button (hamburger) */
+/* Reset & base */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: #2B2B2B;
+  color: #fff;
+  line-height: 1.6;
+}
+a { color: #38FFF9; text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* Hero */
+.hero {
+  position: relative;
+  background: #2B2B2B;
+  color: #fff;
+  padding: 3rem 1rem 2rem;
+  text-align: center;
+}
+.hero.small { padding: 2.2rem 1rem 1.4rem; }
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(1200px 600px at 50% -10%, rgba(56,255,249,0.2), rgba(56,255,249,0) 60%),
+              radial-gradient(800px 400px at 0% 0%, rgba(255,140,0,0.15), rgba(255,140,0,0) 60%);
+  z-index: 0;
+}
+.hero-inner { position: relative; z-index: 1; }
+.hero-topbar { display: flex; justify-content: flex-end; }
 .menu-btn {
   font-size: 1.8rem;
   background: none;
   border: none;
   color: #38FFF9; /* theme blue */
   cursor: pointer;
-  margin: 0.5rem 0;
+  margin: 0.25rem 0 0.5rem;
 }
+.hero-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+.hero-title h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #38FFF9;
+}
+.app-icon {
+  width: 48px;
+  height: 48px;
+}
+.subtitle { font-size: 1rem; opacity: 0.9; }
 
 /* Side menu */
 .side-menu {
@@ -42,3 +86,127 @@
   text-decoration: none;
 }
 .side-menu a:hover { color: #FF8C00; }
+
+/* Container */
+.container {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+/* Cards */
+.card {
+  background: #3a3a3a;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Score & progress */
+.bar-card { margin-bottom: 2rem; }
+.bar-top {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+.progress {
+  width: 100%;
+  height: 8px;
+  background: #444;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: rgb(255,140,0); /* orange */
+  width: 0%;
+  transition: width 0.4s ease;
+}
+
+/* Question */
+.question {
+  font-size: 1.4rem;
+  margin: 1rem 0;
+  color: #38FFF9; /* blue */
+  font-weight: 600;
+  word-wrap: break-word;
+}
+
+/* Options */
+.options { display: grid; gap: 0.6rem; }
+.choice {
+  background: #2B2B2B;
+  border: 2px solid #38FFF9;
+  border-radius: 8px;
+  padding: 0.8rem;
+  color: #fff;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+.choice:hover { background: rgba(56,255,249,0.1); }
+.choice.selected { background: rgba(56,255,249,0.2); }
+
+/* Disabled choice */
+.choice.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.2);
+}
+.choice.disabled:hover { background: inherit; }
+
+/* Feedback */
+.feedback {
+  margin-top: 1rem;
+  text-align: center;
+}
+.feedback .correct,
+.feedback .wrong {
+  display: inline-block;
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+}
+.feedback .correct {
+  background: #0a3;
+  border: 2px solid #0f5;
+}
+.feedback .wrong {
+  background: #a00;
+  border: 2px solid #f55;
+}
+
+/* Buttons */
+.btn {
+  display: inline-block;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, transform 0.1s;
+}
+.btn:active { transform: scale(0.96); }
+.btn.primary { background: #38FFF9; color: #2B2B2B; }
+.btn.shuffle { background: #FF8C00; color: #fff; }
+.btn.outline { border: 2px solid #38FFF9; color: #38FFF9; background: transparent; }
+.btn.ghost { background: transparent; border: 2px solid #aaa; color: #aaa; }
+.cta-row { margin-top: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
+
+/* Footer */
+.footer {
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+  background: #2B2B2B;
+  color: #aaa;
+}
+.footer a { color: #38FFF9; margin: 0 0.3rem; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero-title h1 { font-size: 1.6rem; }
+  .app-icon { width: 36px; height: 36px; }
+  .question { font-size: 1.2rem; }
+}
