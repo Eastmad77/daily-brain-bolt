@@ -1,10 +1,8 @@
-/* The Daily BrainBolt — App Logic (updated)
-   - Fix: clearer question text (white via CSS)
-   - Smooth 10s orange timer bar
-   - Elapsed time counter
-   - Live CSV first, Bank CSV fallback
-   - Start / Shuffle / Share
-   - Answer choice turns green/red; "Play again" inline with Shuffle
+/* The Daily BrainBolt — App Logic
+   - Smooth 10s timer bar + elapsed counter
+   - White option text
+   - First wrong => retry; Second wrong => game over + Play again
+   - Live CSV first, Bank fallback
 */
 
 /* ---------- CONFIG ---------- */
@@ -32,17 +30,17 @@ const btnShare      = $("#shareBtn");
 const btnPlayAgain  = $("#playAgain");
 
 /* ---------- STATE ---------- */
-let allRows = [];
 let todays = [];
 let idx = 0;
 let score = 0;
 
-let timerStartMs = 0;
 let timerRAF = null;
 let questionDeadline = 0;
 
 let quizStartedAt = 0;
 let elapsedRAF = null;
+
+let attemptCount = 0; // per-question attempts
 
 /* ---------- Helpers ---------- */
 function todayKey() {
@@ -68,7 +66,7 @@ async function fetchCsvRows(url){
   return new Promise((resolve, reject) => {
     Papa.parse(text, {
       header: true, skipEmptyLines: true,
-      complete: ({ data }) => resolve((data||[]).filter(r=>r&&r.Question)),
+      complete: ({ data }) => resolve((data||[]).filter(r => r && r.Question)),
       error: reject
     });
   });
@@ -79,11 +77,12 @@ async function loadData(){
   elDate && (elDate.textContent = dateKey);
   try{
     const live = await fetchCsvRows(LIVE_CSV);
-    allRows = live;
-    todays = live.filter(r => norm(r.Date) === dateKey);
-    if (!todays.length){
+    let todaysLive = live.filter(r => norm(r.Date) === dateKey);
+    if (!todaysLive.length){
       const bank = await fetchCsvRows(BANK_CSV);
       todays = bank.slice(0,12);
+    } else {
+      todays = todaysLive;
     }
     if (!todays.length){
       elMetaText && (elMetaText.textContent = "No quiz rows found.");
@@ -108,6 +107,7 @@ function showQuestion(){
   elFeedback && (elFeedback.textContent=""); elFeedback && (elFeedback.className="feedback");
   elOptions && (elOptions.innerHTML="");
   btnPlayAgain && (btnPlayAgain.style.display="none");
+  attemptCount = 0;
 
   if (!todays.length){ elQuestion && (elQuestion.textContent="No quiz rows found."); return; }
 
@@ -143,42 +143,65 @@ function onSelect(q, value, btnEl){
     btnEl.classList.add(isCorrect ? "result-correct" : "result-wrong");
   }
 
-  elFeedback && (elFeedback.className = "feedback " + (isCorrect ? "correct" : "incorrect"));
-  elFeedback && (elFeedback.textContent = isCorrect ? "Correct!" : "Incorrect");
-
-  cancelAnimationFrame(timerRAF); // stop bar
+  cancelAnimationFrame(timerRAF);
 
   if (isCorrect){
+    elFeedback && (elFeedback.className="feedback correct");
+    elFeedback && (elFeedback.textContent="Correct!");
     score++; idx++; updateMeta();
     setTimeout(showQuestion, AUTO_ADVANCE_DELAY);
   } else {
-    btnPlayAgain && (btnPlayAgain.style.display="inline-flex"); // inline with Shuffle
-    stopElapsed();
+    attemptCount += 1;
+    if (attemptCount === 1){
+      elFeedback && (elFeedback.className="feedback incorrect");
+      elFeedback && (elFeedback.textContent="Incorrect — try again");
+      setTimeout(()=>{
+        document.querySelectorAll(".choice").forEach(el =>
+          el.classList.remove("disabled","result-correct","result-wrong")
+        );
+        startQuestionTimer();
+      }, 600);
+    } else {
+      elFeedback && (elFeedback.className="feedback incorrect");
+      elFeedback && (elFeedback.textContent="Incorrect — game over");
+      btnPlayAgain && (btnPlayAgain.style.display="inline-flex");
+      stopElapsed();
+    }
   }
 }
 
 /* ---------- Timer ---------- */
 function startQuestionTimer(){
-  timerStartMs = performance.now();
-  questionDeadline = timerStartMs + SECONDS_PER_QUESTION*1000;
+  const start = performance.now();
+  const deadline = start + SECONDS_PER_QUESTION*1000;
   setTimerPercent(0);
 
   function tick(){
     const now=performance.now();
-    const total=questionDeadline-timerStartMs;
-    const remain=Math.max(0, questionDeadline-now);
+    const total=deadline-start;
+    const remain=Math.max(0, deadline-now);
     const pct=Math.min(100, ((total-remain)/total)*100);
     setTimerPercent(pct);
 
     if (remain>0){
       timerRAF=requestAnimationFrame(tick);
     } else {
-      // timeout
+      // timeout counts as a wrong attempt
       document.querySelectorAll(".choice").forEach(el => el.classList.add("disabled"));
-      elFeedback && (elFeedback.className="feedback incorrect");
-      elFeedback && (elFeedback.textContent="Time’s up");
-      btnPlayAgain && (btnPlayAgain.style.display="inline-flex");
-      stopElapsed();
+      attemptCount += 1;
+      if (attemptCount === 1){
+        elFeedback && (elFeedback.className="feedback incorrect");
+        elFeedback && (elFeedback.textContent="Time’s up — try again");
+        setTimeout(()=>{
+          document.querySelectorAll(".choice").forEach(el => el.classList.remove("disabled","result-correct","result-wrong"));
+          startQuestionTimer();
+        }, 600);
+      } else {
+        elFeedback && (elFeedback.className="feedback incorrect");
+        elFeedback && (elFeedback.textContent="Time’s up — game over");
+        btnPlayAgain && (btnPlayAgain.style.display="inline-flex");
+        stopElapsed();
+      }
     }
   }
   timerRAF=requestAnimationFrame(tick);
