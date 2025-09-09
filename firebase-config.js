@@ -1,4 +1,5 @@
 // /firebase-config.js
+// Firebase config for The Daily BrainBolt
 window.FB_CONFIG = {
   apiKey: "AIzaSyDfjcMzAl-Tll0xsHri91VHiMdTGmd7b2k",
   authDomain: "dailybrainbolt.firebaseapp.com",
