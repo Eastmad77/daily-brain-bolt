@@ -24,9 +24,12 @@
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
+      <!-- Large centered app icon -->
+      <img src="/app-icon.svg" alt="The Daily BrainBolt App Icon" class="app-logo-lg"
+           onerror="this.style.display='none'">
       <div class="hero-title">
-        <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon"
-             onerror="this.onerror=null;this.src='/favicon.svg';">
+        <img src="/favicon.svg" alt="BrainBolt Mini Icon" class="app-logo-sm"
+             onerror="this.style.display='none'">
         <h1>The Daily BrainBolt</h1>
       </div>
       <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
@@ -73,7 +76,21 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Scripts -->
+  <!-- App -->
   <script src="/app.js" defer></script>
+
+  <!-- Hamburger menu (isolated to avoid name collisions) -->
+  <script>
+    (() => {
+      const btn = document.getElementById('mmMenuBtn');
+      const panel = document.getElementById('mmSideMenu');
+      const closeX = document.getElementById('mmCloseMenu');
+      function openPanel(){ panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); }
+      function closePanel(){ panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); }
+      btn?.addEventListener('click', openPanel);
+      closeX?.addEventListener('click', closePanel);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePanel(); });
+    })();
+  </script>
 </body>
 </html>
