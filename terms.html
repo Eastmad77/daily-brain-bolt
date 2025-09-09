@@ -11,21 +11,15 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-  </div>
-
+  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/index.html">Home</a></li><li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li><li><a href="/privacy.html">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
     </ul>
   </nav>
-
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
@@ -36,29 +30,24 @@
       <p class="subtitle">Please read these terms carefully</p>
     </div>
   </header>
-
   <main class="container">
     <section class="card">
       <ul>
-        <li>The Daily BrainBolt is provided “as is” for entertainment and educational purposes.</li>
-        <li>We may update features and content at any time without notice.</li>
-        <li>We are not liable for any loss arising from app usage or downtime.</li>
-        <li>By using the app, you agree to these terms.</li>
+        <li>The app is provided “as is” for entertainment/learning.</li>
+        <li>Features/content may change without notice.</li>
+        <li>No liability for losses from use or downtime.</li>
+        <li>Using the app means you accept these terms.</li>
       </ul>
     </section>
   </main>
-
-  <footer class="footer">
-    © 2025 The Daily BrainBolt •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a> •
-    <a href="/about.html">About</a>
+  <footer class="footer">© 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
   </footer>
-
   <script>
-    (()=>{const b=document.getElementById('mmMenuBtn'),p=document.getElementById('mmSideMenu'),x=document.getElementById('mmCloseMenu');
-    function o(){p?.classList.add('open');p?.setAttribute('aria-hidden','false')}
-    function c(){p?.classList.remove('open');p?.setAttribute('aria-hidden','true')}
+    (()=>{const b=mmMenuBtn,p=mmSideMenu,x=mmCloseMenu;
+    const o=()=>{p?.classList.add('open');p?.setAttribute('aria-hidden','false')};
+    const c=()=>{p?.classList.remove('open');p?.setAttribute('aria-hidden','true')};
     b?.addEventListener('click',o);x?.addEventListener('click',c);document.addEventListener('keydown',e=>{if(e.key==='Escape')c();});})();
   </script>
 </body>
