@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin • The Daily BrainBolt</title>
+  <link rel="stylesheet" href="/style.css"/>
+</head>
+<body>
+  <main class="container">
+    <section class="static-page">
+      <h1>Admin</h1>
+      <p>Use this to manually refresh today’s <code>live</code> set from the bank.</p>
+
+      <div style="display:flex; gap:10px; align-items:center; margin-top:12px;">
+        <input id="secret" type="password" placeholder="Shared secret" style="flex:1; padding:10px; border-radius:10px; border:1px solid var(--outline); background:var(--card); color:var(--ink);" />
+        <button id="btnRun" class="btn primary">Refresh Live Now</button>
+      </div>
+
+      <p id="msg" style="margin-top:12px; color: var(--muted);"></p>
+    </section>
+  </main>
+
+  <script>
+    // TODO: replace with your Apps Script Web App URL:
+    const SCRIPT_URL = "https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYED_WEB_APP_ID/exec";
+
+    document.getElementById('btnRun').addEventListener('click', async () => {
+      const secret = document.getElementById('secret').value.trim();
+      const msg = document.getElementById('msg');
+      msg.textContent = "Running…";
+      try {
+        const res = await fetch(SCRIPT_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "buildDailyLive", secret })
+        });
+        const text = await res.text();
+        msg.textContent = res.ok ? `✅ Done: ${text}` : `❌ Error: ${text}`;
+      } catch (e) {
+        msg.textContent = `❌ Request failed: ${e.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
