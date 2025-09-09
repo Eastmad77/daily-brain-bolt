@@ -24,7 +24,7 @@
 </head>
 <body>
 
-  <!-- Global Topbar with Hamburger -->
+  <!-- Topbar (hamburger only) -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
@@ -53,8 +53,9 @@
     </div>
   </header>
 
-  <!-- Main Quiz -->
+  <!-- Main -->
   <main class="container">
+    <!-- Score/Progress -->
     <section class="card bar-card">
       <div class="bar-top">
         <div><strong>Score:</strong> <span id="score">0</span></div>
@@ -63,29 +64,36 @@
       <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
     </section>
 
+    <!-- Quiz Card -->
     <section class="card" id="quiz-card">
       <div class="meta">
         <span id="today" class="meta-date">—</span>
         <span id="statusBadge" class="status-badge ready">Press Start Quiz</span>
       </div>
 
-      <div id="timerBar" style="width:0;"></div>
+      <!-- Timer row -->
+      <div class="timer-row">
+        <div id="timerBar"></div>
+        <span id="elapsed" class="elapsed">00:00</span>
+      </div>
 
+      <!-- Question chip -->
       <div id="question" class="question"></div>
       <div id="options" class="options"></div>
 
-      <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
-
       <div id="feedback" class="feedback" aria-live="polite"></div>
+
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
       </div>
+
       <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
     © 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
@@ -94,7 +102,10 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
+  <!-- App -->
   <script src="/app.js" defer></script>
+
+  <!-- Menu script -->
   <script>
     (() => {
       const btn = document.getElementById('mmMenuBtn');
