@@ -20,16 +20,31 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
+
+  <!-- Global Topbar with Hamburger -->
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
+  <!-- Slide-out Menu -->
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
   <!-- Header -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <!-- Large centered app icon -->
-      <img src="/app-icon.svg" alt="The Daily BrainBolt App Icon" class="app-logo-lg"
-           onerror="this.style.display='none'">
+      <img src="/app-icon.svg" alt="The Daily BrainBolt App Icon" class="app-logo-lg" onerror="this.style.display='none'">
       <div class="hero-title">
-        <img src="/favicon.svg" alt="BrainBolt Mini Icon" class="app-logo-sm"
-             onerror="this.style.display='none'">
+        <img src="/favicon.svg" alt="BrainBolt Mini Icon" class="app-logo-sm" onerror="this.style.display='none'">
         <h1>The Daily BrainBolt</h1>
       </div>
       <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
@@ -79,7 +94,7 @@
   <!-- App -->
   <script src="/app.js" defer></script>
 
-  <!-- Hamburger menu (isolated to avoid name collisions) -->
+  <!-- Menu script (isolated) -->
   <script>
     (() => {
       const btn = document.getElementById('mmMenuBtn');
