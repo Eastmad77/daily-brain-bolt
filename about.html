@@ -4,14 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About • The Daily BrainBolt</title>
+
+  <!-- Icons / PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
+
+  <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Topbar -->
+  <!-- Topbar (hamburger) -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
@@ -28,6 +32,7 @@
     </ul>
   </nav>
 
+  <!-- Header -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
@@ -39,25 +44,35 @@
     </div>
   </header>
 
+  <!-- Main content (YOUR SNIPPET GOES HERE) -->
   <main class="container">
     <section class="card">
-      <p><strong>The Daily BrainBolt</strong> delivers a sharp, fun mix of 12 questions every day across world trivia, language, logic puzzles and more. We keep difficulty balanced so anyone can play—and improve.</p>
-      <p>Keep your streak alive, challenge friends, and come back tomorrow for a fresh set.</p>
+      <p><strong>The Daily BrainBolt</strong> delivers 12 fresh questions per day spanning world trivia, language, and logic. Difficulty is balanced so anyone can play—and improve.</p>
+      <p>Keep your streak, challenge friends, come back daily.</p>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
     © 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> •
     <a href="/terms.html">Terms</a> •
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
 
+  <!-- Menu script -->
   <script>
-    (()=>{const b=document.getElementById('mmMenuBtn'),p=document.getElementById('mmSideMenu'),x=document.getElementById('mmCloseMenu');
-    function o(){p?.classList.add('open');p?.setAttribute('aria-hidden','false')}
-    function c(){p?.classList.remove('open');p?.setAttribute('aria-hidden','true')}
-    b?.addEventListener('click',o);x?.addEventListener('click',c);document.addEventListener('keydown',e=>{if(e.key==='Escape')c();});})();
+    (() => {
+      const b = document.getElementById('mmMenuBtn');
+      const p = document.getElementById('mmSideMenu');
+      const x = document.getElementById('mmCloseMenu');
+      const open = () => { p?.classList.add('open'); p?.setAttribute('aria-hidden','false'); };
+      const close = () => { p?.classList.remove('open'); p?.setAttribute('aria-hidden','true'); };
+      b?.addEventListener('click', open);
+      x?.addEventListener('click', close);
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    })();
   </script>
 </body>
 </html>
