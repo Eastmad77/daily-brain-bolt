@@ -13,6 +13,8 @@
 
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
+
+  <!-- PapaParse -->
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
@@ -77,7 +79,6 @@
         <button id="startBtn" class="btn primary subtle">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <!-- Play again inline, same style as Shuffle; hidden until needed -->
         <button id="playAgain" class="btn shuffle" style="display:none;">Play again</button>
       </div>
     </section>
@@ -92,33 +93,32 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase + App -->
+  <!-- Firebase (config + compat SDKs) -->
   <script src="/firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
+  <!-- Menu & Firebase UI wiring (scoped, avoids duplicate IDs) -->
   <script>
-    // Menu (scoped)
-    (() => {
+    (function initMenu(){
       const btn = document.getElementById('mmMenuBtn');
       const panel = document.getElementById('mmSideMenu');
       const closeBtn = document.getElementById('mmCloseMenu');
-      const open = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden','false'); };
-      const close = () => { panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); };
+      const open = () => { panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); };
+      const close = () => { panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); };
       btn?.addEventListener('click', open);
       closeBtn?.addEventListener('click', close);
       document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     })();
 
-    // Firebase init + topbar user indicator + menu actions
     (function initFirebaseUI(){
-      if (!window.FB_CONFIG) return;
+      if (!window.FB_CONFIG) return;                 // expects /firebase-config.js
       if (!firebase.apps.length) firebase.initializeApp(window.FB_CONFIG);
       const auth = firebase.auth();
-      const db = firebase.firestore();
-      const messaging = firebase.messaging();
+      const db   = firebase.firestore();
+      const msg  = firebase.messaging();
 
       function renderUser(user){
         const wrap = document.getElementById('userInfo');
@@ -141,14 +141,17 @@
       document.getElementById('btnSignIn')?.addEventListener('click', async ()=>{
         try{
           const provider = new firebase.auth.GoogleAuthProvider();
-          const r = await auth.signInWithPopup(provider);
-          alert(`Welcome, ${r.user.displayName}`);
-        }catch(e){ console.error(e); alert('Sign-in failed. See console.'); }
+          await auth.signInWithPopup(provider);
+          alert('Signed in!');
+        }catch(e){
+          console.error(e);
+          alert('Sign-in failed. See console.');
+        }
       });
 
       document.getElementById('btnNotify')?.addEventListener('click', async ()=>{
         try{
-          const token = await messaging.getToken({
+          const token = await msg.getToken({
             vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY"
           });
           alert('Notifications enabled!');
@@ -157,8 +160,17 @@
         }catch(e){ console.error(e); alert('Notifications setup failed.'); }
       });
     })();
+
+    // Service worker register
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .catch(err => console.log('SW reg failed', err));
+      });
+    }
   </script>
 
+  <!-- App logic -->
   <script src="/app.js"></script>
 </body>
 </html>
