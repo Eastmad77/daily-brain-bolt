@@ -14,7 +14,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#08161D">
+  <meta name="theme-color" content="#0E1E27">
 
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
@@ -24,12 +24,12 @@
 </head>
 <body>
 
-  <!-- Global Topbar with Hamburger (no words/links shown here) -->
+  <!-- Global Topbar with Hamburger -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
 
-  <!-- Slide-out Menu (opened via ☰) -->
+  <!-- Slide-out Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
@@ -45,11 +45,8 @@
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <!-- Large centered app icon (auto scales on mobile) -->
-      <img src="/app-icon.svg" alt="The Daily BrainBolt App Icon" class="app-logo-lg" onerror="this.style.display='none'">
       <div class="hero-title">
-        <!-- Replace small favicon with the app icon (small) to match your request -->
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-logo-sm" onerror="this.style.display='none'">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
         <h1>The Daily BrainBolt</h1>
       </div>
       <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
@@ -72,6 +69,8 @@
         <span id="statusBadge" class="status-badge ready">Press Start Quiz</span>
       </div>
 
+      <div id="timerBar" style="width:0;"></div>
+
       <div id="question" class="question"></div>
       <div id="options" class="options"></div>
 
@@ -87,7 +86,6 @@
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     © 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
@@ -96,10 +94,7 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- App -->
   <script src="/app.js" defer></script>
-
-  <!-- Tiny menu script (isolated) -->
   <script>
     (() => {
       const btn = document.getElementById('mmMenuBtn');
