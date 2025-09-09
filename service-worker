@@ -1,19 +1,12 @@
-/* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.9';
+/* The Daily BrainBolt – Service Worker (minimal) */
+const VERSION = 'v1.1.0';
 const STATIC_CACHE = `dbb-static-${VERSION}`;
-const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
-
 const CORE_ASSETS = [
-  '/',               // start_url
-  '/index.html',
-  '/style.css',
-  '/app.js',
+  '/', '/index.html',
+  '/style.css', '/app.js',
   '/firebase-config.js',
   '/site.webmanifest',
-  '/favicon.svg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png'
+  '/favicon.svg', '/icon-192.png', '/icon-512.png', '/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (e) => {
@@ -25,53 +18,31 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(k => {
-        if (k !== STATIC_CACHE && k !== RUNTIME_CACHE) return caches.delete(k);
-      }))
-    ).then(() => self.clients.claim())
+    caches.keys().then(keys => Promise.all(keys.map(k => {
+      if (k !== STATIC_CACHE) return caches.delete(k);
+    }))).then(() => self.clients.claim())
   );
 });
 
-// Network-first for CSV / Google Sheets; cache-first for app shell
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-
-  // Avoid caching Google Sheets API aggressively; try network first
+  // Network-first for Google endpoints
   const isSheets = url.hostname.endsWith('google.com') || url.hostname.endsWith('gstatic.com');
-
   if (isSheets) {
     event.respondWith(
-      fetch(event.request).then(res => {
-        const resClone = res.clone();
-        caches.open(RUNTIME_CACHE).then(c => c.put(event.request, resClone));
-        return res;
-      }).catch(() => caches.match(event.request))
+      fetch(event.request).catch(() => caches.match(event.request))
     );
     return;
   }
-
-  // App shell & same-origin: cache-first
-  if (url.origin === location.origin) {
-    event.respondWith(
-      caches.match(event.request).then(cached => {
-        if (cached) return cached;
-        return fetch(event.request).then(res => {
-          const resClone = res.clone();
-          caches.open(RUNTIME_CACHE).then(c => c.put(event.request, resClone));
-          return res;
-        });
-      })
-    );
-    return;
-  }
-
-  // Fallback: network-first
+  // Cache-first for our app
   event.respondWith(
-    fetch(event.request).then(res => {
-      const resClone = res.clone();
-      caches.open(RUNTIME_CACHE).then(c => c.put(event.request, resClone));
-      return res;
-    }).catch(() => caches.match(event.request))
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+      return fetch(event.request).then(res => {
+        const resClone = res.clone();
+        caches.open(STATIC_CACHE).then(c => c.put(event.request, resClone));
+        return res;
+      });
+    })
   );
 });
