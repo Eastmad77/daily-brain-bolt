@@ -7,30 +7,35 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="hero small">
+
+  <!-- Global Topbar with Hamburger -->
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
+  <!-- Slide-out Menu -->
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <div class="hero-topbar">
-        <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-      </div>
+      <img src="/app-icon.svg" alt="App Icon" class="app-logo-lg" onerror="this.style.display='none'">
       <div class="hero-title">
-        <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon">
+        <img src="/favicon.svg" alt="Mini Icon" class="app-logo-sm" onerror="this.style.display='none'">
         <h1>Privacy Policy</h1>
       </div>
       <p class="subtitle">How we handle your data</p>
     </div>
   </header>
-
-  <nav id="sideMenu" class="side-menu" aria-hidden="true">
-    <button id="closeMenu" class="close-btn" aria-label="Close menu">✕</button>
-    <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><a href="#" id="menuSignIn">Sign In</a></li>
-      <li><a href="#" id="menuNotify">Enable Notifications</a></li>
-    </ul>
-  </nav>
 
   <main class="container">
     <section class="card">
@@ -48,19 +53,16 @@
   </footer>
 
   <script>
-    const menuBtn = document.getElementById('menuBtn');
-    const sideMenu = document.getElementById('sideMenu');
-    const closeMenu = document.getElementById('closeMenu');
-    function openMenu(){ sideMenu.classList.add('open'); sideMenu.setAttribute('aria-hidden','false'); }
-    function closeMenuFn(){ sideMenu.classList.remove('open'); sideMenu.setAttribute('aria-hidden','true'); }
-    menuBtn.addEventListener('click', openMenu);
-    closeMenu.addEventListener('click', closeMenuFn);
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenuFn(); });
-
-    const menuSignIn = document.getElementById('menuSignIn');
-    const menuNotify = document.getElementById('menuNotify');
-    menuSignIn.addEventListener('click', (e)=>{ e.preventDefault(); if (window.signInWithGoogle) window.signInWithGoogle(); else window.location.href='/'; });
-    menuNotify.addEventListener('click', (e)=>{ e.preventDefault(); if (window.requestNotify) window.requestNotify(); else window.location.href='/'; });
+    (() => {
+      const btn = document.getElementById('mmMenuBtn');
+      const panel = document.getElementById('mmSideMenu');
+      const closeX = document.getElementById('mmCloseMenu');
+      function openPanel(){ panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); }
+      function closePanel(){ panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); }
+      btn?.addEventListener('click', openPanel);
+      closeX?.addEventListener('click', closePanel);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePanel(); });
+    })();
   </script>
 </body>
 </html>
