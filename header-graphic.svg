@@ -1,5 +1,39 @@
-.hero-overlay {
-  position: absolute; inset: 0;
-  background: url('/header-graphic.svg') center/cover no-repeat, var(--header);
-  z-index: 0; opacity: .95;
-}
+<!-- /header-graphic.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 400" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#08161D"/>
+      <stop offset="100%" stop-color="#0D2430"/>
+    </linearGradient>
+    <radialGradient id="blue" cx="20%" cy="30%" r="60%">
+      <stop offset="0%" stop-color="#37FFF9" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#37FFF9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orange" cx="80%" cy="70%" r="60%">
+      <stop offset="0%" stop-color="#FF8C00" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#FF8C00" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- background -->
+  <rect width="1440" height="400" fill="url(#bg)"/>
+
+  <!-- soft glows -->
+  <rect width="1440" height="400" fill="url(#blue)"/>
+  <rect width="1440" height="400" fill="url(#orange)"/>
+
+  <!-- subtle lines -->
+  <g stroke="#37FFF9" stroke-opacity="0.12" stroke-width="2" fill="none">
+    <path d="M0 110 Q360 160 720 110 T1440 110"/>
+    <path d="M0 210 Q360 260 720 210 T1440 210"/>
+    <path d="M0 310 Q360 360 720 310 T1440 310"/>
+  </g>
+
+  <!-- tiny dots -->
+  <g fill="#FF8C00" fill-opacity="0.22">
+    <circle cx="120" cy="80" r="4"/>
+    <circle cx="420" cy="180" r="3"/>
+    <circle cx="960" cy="120" r="5"/>
+    <circle cx="1260" cy="260" r="3"/>
+  </g>
+</svg>
