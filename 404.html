@@ -9,6 +9,9 @@
 <body>
   <header class="hero small">
     <div class="hero-inner">
+      <div class="hero-topbar">
+        <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+      </div>
       <div class="hero-title">
         <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon">
         <h1>Page Not Found</h1>
@@ -17,12 +20,23 @@
     </div>
   </header>
 
+  <nav id="sideMenu" class="side-menu" aria-hidden="true">
+    <button id="closeMenu" class="close-btn" aria-label="Close menu">✕</button>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="#" id="menuSignIn">Sign In</a></li>
+      <li><a href="#" id="menuNotify">Enable Notifications</a></li>
+    </ul>
+  </nav>
+
   <main class="container">
-    <section class="card">
-      <p>
-        The page you’re looking for might have been moved or deleted.  
-        <a href="/index.html" class="btn primary">Go Back Home</a>
-      </p>
+    <section class="card" style="text-align:center">
+      <p>The page you’re looking for might have been moved or deleted.</p>
+      <p><a href="/index.html" class="btn primary" style="margin-top:1rem;">Go Back Home</a></p>
     </section>
   </main>
 
@@ -34,5 +48,21 @@
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
+
+  <script>
+    const menuBtn = document.getElementById('menuBtn');
+    const sideMenu = document.getElementById('sideMenu');
+    const closeMenu = document.getElementById('closeMenu');
+    function openMenu(){ sideMenu.classList.add('open'); sideMenu.setAttribute('aria-hidden','false'); }
+    function closeMenuFn(){ sideMenu.classList.remove('open'); sideMenu.setAttribute('aria-hidden','true'); }
+    menuBtn.addEventListener('click', openMenu);
+    closeMenu.addEventListener('click', closeMenuFn);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenuFn(); });
+
+    const menuSignIn = document.getElementById('menuSignIn');
+    const menuNotify = document.getElementById('menuNotify');
+    menuSignIn.addEventListener('click', (e)=>{ e.preventDefault(); if (window.signInWithGoogle) window.signInWithGoogle(); else window.location.href='/'; });
+    menuNotify.addEventListener('click', (e)=>{ e.preventDefault(); if (window.requestNotify) window.requestNotify(); else window.location.href='/'; });
+  </script>
 </body>
 </html>
