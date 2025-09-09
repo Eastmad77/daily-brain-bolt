@@ -1,42 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Daily BrainBolt</title>
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
-
-  <!-- Icons / PWA -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#2B2B2B">
-
-  <!-- Social -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://dailybrainbolt.com/">
-  <meta property="og:title" content="The Daily BrainBolt">
-  <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://dailybrainbolt.com/">
-  <meta name="twitter:title" content="The Daily BrainBolt">
-  <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png">
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css">
-</head>
 <body>
-
-  <!-- Hero -->
+  <!-- Header -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
+      <div class="hero-topbar">
+        <button id="menuBtn" class="menu-btn">☰</button>
+      </div>
       <div class="hero-title">
         <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon">
         <h1>The Daily BrainBolt</h1>
@@ -45,69 +14,15 @@
     </div>
   </header>
 
-  <!-- Main Quiz -->
-  <main class="container">
-    <section class="card bar-card">
-      <div class="bar-top">
-        <div><strong>Score:</strong> <span id="score">0</span></div>
-        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
-      </div>
-      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
-    </section>
-
-    <section class="card" id="quiz-card">
-      <div class="meta">
-        <span id="metaText" class="meta-text">Loading…</span>
-        <span class="spacer"></span>
-        <span id="today" class="meta-date"></span>
-      </div>
-      <div id="statusline" class="statusline"></div>
-
-      <div id="question" class="question">Loading…</div>
-      <div id="options" class="options"></div>
-
-      <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
-
-      <div id="feedback" class="feedback" aria-live="polite"></div>
-      <div class="cta-row">
-        <button id="startBtn" class="btn primary">Start Quiz</button>
-        <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
-        <button id="shareBtn" class="btn outline">Share</button>
-        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
-      </div>
-      <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    © 2025 The Daily BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
-  </footer>
-
-  <!-- Firebase compat SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-
-  <!-- Firebase config -->
-  <script src="/firebase-config.js"></script>
-
-  <!-- App -->
-  <script src="/app.js" defer></script>
-
-  <!-- Register Service Worker -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW reg failed', e));
-        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
-      });
-    }
-  </script>
-</body>
-</html>
+  <!-- Slide-out Menu -->
+  <nav id="sideMenu" class="side-menu">
+    <button id="closeMenu" class="close-btn">✕</button>
+    <ul>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="#" id="menuSignIn">Sign In</a></li>
+      <li><a href="#" id="menuNotify">Enable Notifications</a></li>
+    </ul>
+  </nav>
