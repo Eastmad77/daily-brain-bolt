@@ -28,12 +28,58 @@
   <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
   <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png">
 
+  <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
-  <!-- your existing body / app markup goes here -->
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <div class="hero-title">
+        <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon">
+        <h1>The Daily BrainBolt</h1>
+      </div>
+      <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
+    </div>
+  </header>
 
+  <!-- Main Quiz -->
+  <main class="container">
+    <section class="card bar-card">
+      <div class="bar-top">
+        <div><strong>Score:</strong> <span id="score">0</span></div>
+        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+      </div>
+      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+    </section>
+
+    <section class="card" id="quiz-card">
+      <div class="meta">
+        <span id="metaText" class="meta-text">Loading…</span>
+        <span class="spacer"></span>
+        <span id="today" class="meta-date"></span>
+      </div>
+      <div id="statusline" class="statusline"></div>
+
+      <div id="question" class="question">Loading…</div>
+      <div id="options" class="options"></div>
+
+      <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
+      <div class="cta-row">
+        <button id="startBtn" class="btn primary">Start Quiz</button>
+        <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
+        <button id="shareBtn" class="btn outline">Share</button>
+        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
+      </div>
+      <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
+    </section>
+  </main>
+
+  <!-- Footer -->
   <footer class="footer">
     © 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
@@ -42,27 +88,24 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase compat SDKs (if using Firebase) -->
+  <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
-  <!-- Your Firebase config -->
+  <!-- Firebase config -->
   <script src="/firebase-config.js"></script>
 
-  <!-- Your app -->
+  <!-- App -->
   <script src="/app.js" defer></script>
 
-  <!-- Register SW -->
+  <!-- Register Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW reg failed', e));
-        // Optional: register messaging SW (if using FCM) – must live at root
-        if (navigator.serviceWorker.controller) {
-          navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
-        }
+        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
       });
     }
   </script>
