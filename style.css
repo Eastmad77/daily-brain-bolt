@@ -17,9 +17,7 @@
   --shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
 
-/* ===========================
-   Reset + Base
-=========================== */
+/* Reset + Base */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   height: 100%;
@@ -30,9 +28,7 @@ html, body {
 a { color: var(--accent-blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* ===========================
-   Layout
-=========================== */
+/* Layout */
 .topbar {
   display: flex; justify-content: space-between; align-items: center;
   padding: .75rem 1rem; background: var(--header); box-shadow: var(--shadow);
@@ -54,9 +50,7 @@ a:hover { text-decoration: underline; }
 }
 .side-menu a:hover, .side-menu button:hover { background: var(--accent-blue); color: var(--bg); }
 
-/* ===========================
-   Hero
-=========================== */
+/* Hero */
 .hero { position: relative; background: var(--header); padding: 2rem 1rem 4rem; text-align: center; }
 .hero-overlay { background: url('/header-graphic.svg') center/cover no-repeat, var(--header); opacity: 0.6; position: absolute; inset: 0; }
 .hero-inner { position: relative; z-index: 1; }
@@ -65,9 +59,7 @@ a:hover { text-decoration: underline; }
 .hero h1 { font-size: 2rem; color: #fff; }
 .subtitle { color: var(--text-muted); margin-top: .25rem; }
 
-/* ===========================
-   Main
-=========================== */
+/* Main */
 .container { max-width: 720px; margin: -2rem auto 2rem; padding: 1rem; }
 .card { background: var(--bg-light); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
 
@@ -81,9 +73,7 @@ a:hover { text-decoration: underline; }
 #timerBar::after { content: ""; display: block; height: 6px; width: var(--tw, 0%); background: var(--accent-orange); transition: width linear; }
 .elapsed { font-size: .85rem; color: var(--text-muted); }
 
-/* ===========================
-   Quiz
-=========================== */
+/* Quiz */
 .meta { display: flex; justify-content: space-between; margin-bottom: 1rem; }
 .meta-text, .meta-date { font-size: .9rem; }
 .question {
@@ -91,15 +81,16 @@ a:hover { text-decoration: underline; }
   padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;
   font-size: 1.1rem; text-align: center; color: #fff; /* ensure white text */
 }
+
 .options { display: grid; gap: .5rem; margin-bottom: 1rem; }
 .choice {
   background: var(--bg-light); border: 2px solid var(--accent-blue);
   padding: .75rem; border-radius: var(--radius); cursor: pointer;
   transition: background var(--transition), color var(--transition), transform var(--transition);
+  color: #fff;  /* ensure white text in options */
 }
 .choice:hover { background: var(--accent-blue); color: var(--bg); transform: translateY(-2px); }
 .choice.disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(0.2); }
-/* Color the clicked choice based on correctness */
 .choice.result-correct { background: var(--good) !important; color: var(--bg) !important; border-color: var(--good) !important; }
 .choice.result-wrong   { background: var(--bad)  !important; color: var(--bg) !important; border-color: var(--bad)  !important; }
 
@@ -113,9 +104,7 @@ a:hover { text-decoration: underline; }
 
 .cta-row { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
 
-/* ===========================
-   Buttons
-=========================== */
+/* Buttons */
 .btn {
   padding: .6rem 1.2rem; border-radius: var(--radius); cursor: pointer; border: none;
   font-weight: 600; transition: background var(--transition), color var(--transition);
@@ -127,8 +116,6 @@ a:hover { text-decoration: underline; }
 .btn.ghost { background: none; border: 2px dashed var(--accent-blue); color: var(--accent-blue); }
 .btn:hover { opacity: 0.9; }
 
-/* ===========================
-   Footer
-=========================== */
+/* Footer */
 .footer { text-align: center; padding: 1rem; font-size: .9rem; background: var(--header); color: var(--text-muted); }
 .footer a { color: var(--accent-teal); }
