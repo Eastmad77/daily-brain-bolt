@@ -3,126 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>⚡ Privacy — The Daily BrainBolt</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
-
-  <link rel="stylesheet" href="/style.css" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="theme-color" content="#0D2430" />
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-
-  <!-- Social -->
-  <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://dailybrainbolt.com/privacy.html" />
-  <meta property="og:title" content="⚡ Privacy — The Daily BrainBolt" />
-  <meta property="og:description" content="Privacy Policy for The Daily BrainBolt." />
-  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="⚡ Privacy — The Daily BrainBolt" />
-  <meta name="twitter:description" content="Privacy Policy for The Daily BrainBolt." />
-  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png" />
+  <title>Privacy • The Daily BrainBolt</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <header class="hero">
+  <header class="hero small">
     <div class="hero-inner">
-      <img class="brand-mark" src="/app-icon.svg" alt="BrainBolt icon" />
-      <h1 class="brand-title">Privacy Policy</h1>
-      <p class="subtitle">Your privacy matters. Here’s how we handle your data.</p>
-      <div class="cta-row">
-        <a class="btn primary" href="/">Back to quiz</a>
+      <div class="hero-title">
+        <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon">
+        <h1>Privacy Policy</h1>
       </div>
+      <p class="subtitle">How we handle your data</p>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <p><strong>Effective date:</strong> 2025-09-08</p>
-
-      <h2>Information We Collect</h2>
       <p>
-        By default, we do not collect personal information such as your name or email.
-        Basic, non-identifying analytics (e.g., page views) may be collected to improve the Service.
+        Your privacy is important to us. The Daily BrainBolt may collect minimal data
+        for analytics and performance improvements. If you sign in, your data is stored securely using Firebase.
       </p>
-
-      <h2>How We Use Information</h2>
-      <ul>
-        <li>To provide, maintain, and improve the quiz experience.</li>
-        <li>To monitor usage and performance.</li>
-      </ul>
-
-      <h2>Cookies & Local Storage</h2>
       <p>
-        The site may use local storage or cookies for functionality (e.g., progress, settings).
-        You can clear this data via your browser settings.
+        We do not sell your data to third parties. You may request deletion of your account
+        and associated data at any time.
       </p>
-
-      <h2>Third-Party Services</h2>
-      <p>
-        We may use third-party services for hosting, analytics, or error reporting.
-        These services have their own privacy policies.
-      </p>
-
-      <h2>Data Security</h2>
-      <p>
-        We use reasonable measures to protect data. However, no method of transmission or storage is 100% secure.
-      </p>
-
-      <h2>Children’s Privacy</h2>
-      <p>
-        The Service is not directed to children under the age of 13. If you believe a child has provided us
-        with personal information, please contact us to delete it.
-      </p>
-
-      <h2>Your Rights</h2>
-      <p>
-        You may request to access or delete any personal information we may hold by contacting us at
-        <a href="mailto:privacy@dailybrainbolt.com">privacy@dailybrainbolt.com</a>.
-      </p>
-
-      <h2>Changes to This Policy</h2>
-      <p>
-        We may update this Privacy Policy from time to time. Updates will be posted on this page.
-      </p>
-
-      <h2>Contact</h2>
-      <p>Questions or concerns? Email <a href="mailto:privacy@dailybrainbolt.com">privacy@dailybrainbolt.com</a>.</p>
-    </section>
-
-    <!-- Optional ad placement -->
-    <section class="card ad-card" style="display:none;">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="YOUR-ADSENSE-ID"
-           data-ad-slot="YOUR-AD-SLOT-ID"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
     </section>
   </main>
 
   <footer class="footer">
-    <div class="foot-inner">
-      <div>© <span id="year"></span> The Daily BrainBolt</div>
-      <nav class="foot-nav">
-        <a href="/about.html">About</a>
-        <a href="/terms.html">Terms</a>
-        <a href="/privacy.html">Privacy</a>
-        <a href="/contact.html">Contact</a>
-      </nav>
-    </div>
+    © 2025 The Daily BrainBolt •
+    <a href="/index.html">Home</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/about.html">About</a> •
+    <a href="/contact.html">Contact</a>
   </footer>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-      });
-    }
-    document.getElementById('year').textContent = new Date().getFullYear();
-  </script>
 </body>
 </html>
