@@ -38,10 +38,11 @@
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-topbar">
-        <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+        <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
       </div>
       <div class="hero-title">
-        <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon">
+        <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon"
+             onerror="this.onerror=null;this.src='/favicon.svg';this.style.background='transparent';">
         <h1>The Daily BrainBolt</h1>
       </div>
       <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
@@ -49,8 +50,8 @@
   </header>
 
   <!-- Slide-out Menu -->
-  <nav id="sideMenu" class="side-menu" aria-hidden="true">
-    <button id="closeMenu" class="close-btn" aria-label="Close menu">✕</button>
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
@@ -116,52 +117,55 @@
   <!-- App -->
   <script src="/app.js" defer></script>
 
-  <!-- Register Service Worker -->
+  <!-- Register Service Worker (guarded) -->
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(e => console.log('SW reg failed', e));
-        navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(()=>{});
-      });
-    }
+    (async () => {
+      if ('serviceWorker' in navigator) {
+        try {
+          // Check if the file exists before trying to register to avoid 404 errors
+          const swHead = await fetch('/service-worker.js', { method: 'HEAD' });
+          if (swHead.ok) {
+            await navigator.serviceWorker.register('/service-worker.js');
+          } else {
+            console.warn('service-worker.js not found at root; skipping SW registration.');
+          }
+          const fcmHead = await fetch('/firebase-messaging-sw.js', { method: 'HEAD' });
+          if (fcmHead.ok) {
+            await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          }
+        } catch (e) {
+          console.log('SW reg failed', e);
+        }
+      }
+    })();
   </script>
 
-  <!-- Menu Script -->
+  <!-- Menu Script (isolated to avoid name collisions) -->
   <script>
-    const menuBtn = document.getElementById('menuBtn');
-    const sideMenu = document.getElementById('sideMenu');
-    const closeMenu = document.getElementById('closeMenu');
+    (() => {
+      const btn = document.getElementById('mmMenuBtn');
+      const panel = document.getElementById('mmSideMenu');
+      const closeX = document.getElementById('mmCloseMenu');
 
-    function openMenu() {
-      sideMenu.classList.add('open');
-      sideMenu.setAttribute('aria-hidden', 'false');
-    }
-    function closeMenuFn() {
-      sideMenu.classList.remove('open');
-      sideMenu.setAttribute('aria-hidden', 'true');
-    }
+      function openPanel() {
+        panel.classList.add('open');
+        panel.setAttribute('aria-hidden','false');
+      }
+      function closePanel() {
+        panel.classList.remove('open');
+        panel.setAttribute('aria-hidden','true');
+      }
 
-    menuBtn.addEventListener('click', openMenu);
-    closeMenu.addEventListener('click', closeMenuFn);
+      btn?.addEventListener('click', openPanel);
+      closeX?.addEventListener('click', closePanel);
+      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePanel(); });
 
-    // Optional: close on ESC
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeMenuFn();
-    });
-
-    // Menu actions that call app functions if present
-    const menuSignIn = document.getElementById('menuSignIn');
-    const menuNotify = document.getElementById('menuNotify');
-    menuSignIn.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (window.signInWithGoogle) { window.signInWithGoogle(); }
-      else { window.location.href = '/'; }
-    });
-    menuNotify.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (window.requestNotify) { window.requestNotify(); }
-      else { window.location.href = '/'; }
-    });
+      // Menu actions that call app functions if present
+      const menuSignIn = document.getElementById('menuSignIn');
+      const menuNotify = document.getElementById('menuNotify');
+      menuSignIn?.addEventListener('click', (e)=>{ e.preventDefault(); if (window.signInWithGoogle) window.signInWithGoogle(); else window.location.href='/'; });
+      menuNotify?.addEventListener('click', (e)=>{ e.preventDefault(); if (window.requestNotify) window.requestNotify(); else window.location.href='/'; });
+    })();
   </script>
 </body>
 </html>
