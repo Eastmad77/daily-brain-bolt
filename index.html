@@ -14,53 +14,24 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#2B2B2B">
-
-  <!-- Social -->
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://dailybrainbolt.com/">
-  <meta property="og:title" content="The Daily BrainBolt">
-  <meta property="og:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:url" content="https://dailybrainbolt.com/">
-  <meta name="twitter:title" content="The Daily BrainBolt">
-  <meta name="twitter:description" content="Shock your synapses with a 60-second dose of trivia. Keep your streak alive.">
-  <meta name="twitter:image" content="https://dailybrainbolt.com/og-image-dark.png">
+  <meta name="theme-color" content="#262626">
 
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-
   <!-- Header -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <div class="hero-topbar">
-        <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-      </div>
       <div class="hero-title">
         <img src="/icon-192.png" alt="BrainBolt Icon" class="app-icon"
-             onerror="this.onerror=null;this.src='/favicon.svg';this.style.background='transparent';">
+             onerror="this.onerror=null;this.src='/favicon.svg';">
         <h1>The Daily BrainBolt</h1>
       </div>
       <p class="subtitle">Shock your synapses with a 60-second dose of trivia. Keep your streak alive!</p>
     </div>
   </header>
-
-  <!-- Slide-out Menu -->
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
-    <ul>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><a href="#" id="menuSignIn">Sign In</a></li>
-      <li><a href="#" id="menuNotify">Enable Notifications</a></li>
-    </ul>
-  </nav>
 
   <!-- Main Quiz -->
   <main class="container">
@@ -74,13 +45,11 @@
 
     <section class="card" id="quiz-card">
       <div class="meta">
-        <span id="metaText" class="meta-text">Loading…</span>
-        <span class="spacer"></span>
-        <span id="today" class="meta-date"></span>
+        <span id="today" class="meta-date">—</span>
+        <span id="statusBadge" class="status-badge ready">Press Start Quiz</span>
       </div>
-      <div id="statusline" class="statusline"></div>
 
-      <div id="question" class="question">Loading…</div>
+      <div id="question" class="question"></div>
       <div id="options" class="options"></div>
 
       <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
@@ -90,7 +59,6 @@
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
       </div>
       <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
     </section>
@@ -105,67 +73,7 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase SDKs (if you use Firebase on home page) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
-
-  <!-- Firebase config -->
-  <script src="/firebase-config.js"></script>
-
-  <!-- App -->
+  <!-- Scripts -->
   <script src="/app.js" defer></script>
-
-  <!-- Register Service Worker (guarded) -->
-  <script>
-    (async () => {
-      if ('serviceWorker' in navigator) {
-        try {
-          // Check if the file exists before trying to register to avoid 404 errors
-          const swHead = await fetch('/service-worker.js', { method: 'HEAD' });
-          if (swHead.ok) {
-            await navigator.serviceWorker.register('/service-worker.js');
-          } else {
-            console.warn('service-worker.js not found at root; skipping SW registration.');
-          }
-          const fcmHead = await fetch('/firebase-messaging-sw.js', { method: 'HEAD' });
-          if (fcmHead.ok) {
-            await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-          }
-        } catch (e) {
-          console.log('SW reg failed', e);
-        }
-      }
-    })();
-  </script>
-
-  <!-- Menu Script (isolated to avoid name collisions) -->
-  <script>
-    (() => {
-      const btn = document.getElementById('mmMenuBtn');
-      const panel = document.getElementById('mmSideMenu');
-      const closeX = document.getElementById('mmCloseMenu');
-
-      function openPanel() {
-        panel.classList.add('open');
-        panel.setAttribute('aria-hidden','false');
-      }
-      function closePanel() {
-        panel.classList.remove('open');
-        panel.setAttribute('aria-hidden','true');
-      }
-
-      btn?.addEventListener('click', openPanel);
-      closeX?.addEventListener('click', closePanel);
-      document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closePanel(); });
-
-      // Menu actions that call app functions if present
-      const menuSignIn = document.getElementById('menuSignIn');
-      const menuNotify = document.getElementById('menuNotify');
-      menuSignIn?.addEventListener('click', (e)=>{ e.preventDefault(); if (window.signInWithGoogle) window.signInWithGoogle(); else window.location.href='/'; });
-      menuNotify?.addEventListener('click', (e)=>{ e.preventDefault(); if (window.requestNotify) window.requestNotify(); else window.location.href='/'; });
-    })();
-  </script>
 </body>
 </html>
