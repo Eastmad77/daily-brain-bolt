@@ -166,7 +166,7 @@ a:hover { text-decoration: underline; }
   content: "";
   display: block;
   height: 6px;
-  width: 0%;
+  width: var(--tw, 0%);   /* << use CSS variable that app.js updates */
   background: var(--accent-orange);
   transition: width linear;
 }
@@ -293,3 +293,4 @@ a:hover { text-decoration: underline; }
 .footer a {
   color: var(--accent-teal);
 }
+
