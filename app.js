@@ -18,6 +18,8 @@ const elShare = document.getElementById('shareBtn');
 const elPlayAgain = document.getElementById('playAgain');
 const elTimerBar = document.getElementById('timerBar');
 const elElapsed = document.getElementById('elapsed');
+const btnSignIn = document.getElementById('btnSignIn');
+const btnNotify = document.getElementById('btnNotify');
 
 // Date
 const now = new Date();
@@ -28,6 +30,19 @@ if (elToday) elToday.textContent = todayKey;
 let allRows = [], todays = [], idx = 0, score = 0, wrongCount = 0;
 let startTime, elapsedInterval, timerInterval;
 let timerSeconds = 10; // keep at 10s
+
+// Firebase init (compat)
+let app, auth, firestore, messaging;
+try{
+  if (window.FB_CONFIG && firebase?.apps?.length === 0) {
+    app = firebase.initializeApp(window.FB_CONFIG);
+  } else if (window.FB_CONFIG && firebase?.apps?.length > 0) {
+    app = firebase.app();
+  }
+  auth = firebase.auth?.() || null;
+  firestore = firebase.firestore?.() || null;
+  messaging = firebase.messaging?.() || null;
+}catch(e){ console.warn('Firebase init warn:', e); }
 
 // Helpers
 const norm = s => String(s||'').trim();
@@ -63,8 +78,7 @@ function playSound(type) {
       osc.frequency.value = 520;
       gain.gain.value = 0.08;
       osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.15);
+      osc.start(); osc.stop(ctx.currentTime + 0.15);
     } else if (type === 'wrong' && navigator.vibrate) {
       navigator.vibrate(140);
     }
@@ -94,7 +108,7 @@ function stopTimer() {
   elTimerBar?.style.setProperty('--tw', '0%');
 }
 
-// Load CSV (DOES NOT AUTO-START QUIZ)
+// Load CSV (wait for Start)
 function loadCSV() {
   Papa.parse(LIVE_URL, {
     download: true,
@@ -108,8 +122,7 @@ function loadCSV() {
       let todaysRows = rows.filter(r => norm(r.Date) === todayKey);
       if (!todaysRows.length) todaysRows = rows.slice(0,12);
       todays = todaysRows;
-      allRows = rows; // keep for shuffle source
-      // Do NOT start here. Wait for Start button.
+      allRows = rows;
       elQ.textContent = "Ready";
       elOpts.innerHTML = '';
       clearFB();
@@ -153,26 +166,15 @@ function showQuestion() {
     btn.onclick = () => handleChoice(btn, q, optText);
     elOpts.appendChild(btn);
   });
-  // start the timer only when question is shown
   startTimer(() => handleChoice(null, q, null));
 }
 
 function handleChoice(btn, q, val) {
   stopTimer();
-  // if expired (val == null) count as wrong attempt
   const isCorrect = (val != null) && (norm(val).toLowerCase() === norm(q.Answer).toLowerCase());
 
-  // lock choices + decorate
-  document.querySelectorAll('.choice').forEach(b => {
-    b.classList.add('disabled');
-  });
-
-  if (btn) {
-    if (isCorrect) { btn.classList.add('result-correct'); }
-    else          { btn.classList.add('result-wrong'); }
-  } else {
-    // time ran out -> mark none explicitly; still count as wrong
-  }
+  document.querySelectorAll('.choice').forEach(b => b.classList.add('disabled'));
+  if (btn) btn.classList.add(isCorrect ? 'result-correct' : 'result-wrong');
 
   if (isCorrect) {
     playSound('correct');
@@ -188,7 +190,6 @@ function handleChoice(btn, q, val) {
       elPlayAgain.style.display = 'inline-flex';
       elPlayAgain.classList.add('pulse');
     } else {
-      // auto restart same question: do NOT reveal correct answer
       setTimeout(()=>showQuestion(), 900);
     }
   }
@@ -213,6 +214,44 @@ elShare?.addEventListener('click', () => {
   }
 });
 elPlayAgain?.addEventListener('click', startSession);
+
+// Sign-in (popup)
+btnSignIn?.addEventListener('click', async () => {
+  if (!auth) return alert('Auth not available.');
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(provider);
+    alert('Signed in!');
+  } catch (e) {
+    console.error(e);
+    alert('Sign in failed. See console.');
+  }
+});
+
+// Notifications (FCM)
+btnNotify?.addEventListener('click', async () => {
+  try{
+    if (!('Notification' in window)) return alert('Notifications not supported.');
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return alert('Permission denied.');
+    // Prefer using the main SW so the app stays PWA-friendly
+    const swReg = await navigator.serviceWorker.getRegistration();
+    if (!messaging) return alert('Messaging not available.');
+    const token = await messaging.getToken({
+      vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
+      serviceWorkerRegistration: swReg || undefined
+    });
+    if (token) {
+      console.log('FCM token:', token);
+      alert('Notifications enabled!');
+    } else {
+      alert('Unable to get notification token.');
+    }
+  }catch(e){
+    console.error('Notify error', e);
+    alert('Notifications error. See console.');
+  }
+});
 
 // Init (load data only; no auto-start)
 loadCSV();
