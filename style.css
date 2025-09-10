@@ -6,7 +6,6 @@
   --accent-blue-2: rgb(55,255,249);
   --accent-orange: rgb(255,140,0);
   --accent-teal: rgb(66,180,170);
-  --accent-orange-text: rgb(255,140,0);
   --text: #fff;
   --text-muted: #aaa;
   --good: rgb(40,200,120);
@@ -24,7 +23,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,s
 .topbar{padding:.75rem 1rem;background:var(--header);box-shadow:var(--shadow)}
 .menu-btn{font-size:1.6rem;background:none;border:none;color:var(--accent-blue);cursor:pointer}
 
-/* Side Menu (orange links, centered items, auto-hide handled by JS) */
+/* Side Menu */
 .side-menu{position:fixed;top:0;left:-260px;width:260px;height:100%;background:var(--bg-light);box-shadow:var(--shadow);padding:2rem 1rem;transition:left var(--transition);z-index:9999}
 .side-menu.open{left:0}
 .side-menu ul{list-style:none;text-align:center}
@@ -82,6 +81,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,s
   padding:1rem;border-radius:var(--radius);margin-bottom:1rem;
   text-align:center;color:#fff;font-size:1.1rem;
 }
+.question.gameover{
+  background:var(--bad);
+  border-color:var(--bad);
+  color:#111;
+  font-weight:800;
+}
 
 /* Options */
 .options{display:grid;gap:.5rem;margin-bottom:1rem}
@@ -108,12 +113,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,s
 .btn.ghost{border:2px dashed var(--accent-blue);background:none;color:var(--accent-blue)}
 .btn:hover{opacity:.9}
 
-/* Game Over button (premium feel) */
-.btn.gameover{
-  display:inline-flex;align-items:center;gap:.5rem;
-  background:linear-gradient(180deg,#ffb366 0%, #ff8c00 100%);color:#111;border:none;
-  box-shadow:0 6px 18px rgba(255,140,0,.35);border-radius:14px;padding:.7rem 1.3rem;
+/* Play again: same size vibe as Shuffle, but match question’s fill/outline */
+.btn.playagain{
+  background:var(--bg);
+  color:#fff;
+  border:2px solid var(--accent-blue);
 }
+
+/* Game Over button (if you want pulse when visible) */
 .btn.pulse{ animation:pulseBtn 1.2s ease-in-out infinite; }
 @keyframes pulseBtn{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 
@@ -122,10 +129,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:Inter,s
 .footer a{color:var(--accent-orange);text-decoration:none}
 .footer a:hover{text-decoration:underline}
 
-/* Long-text pages */
+/* Long-text pages: orange links for specific phrases & justified text */
 .card p,.card li{ text-align: justify; }
+.accent-link, .legal a, .contact a, .mailto-orange{ color: var(--accent-orange); text-decoration: none; }
+.accent-link:hover, .legal a:hover, .contact a:hover, .mailto-orange:hover{ text-decoration: underline; }
 
-/* SPLASH: logo → title swap + sparkly vibe */
+/* SPLASH */
 .splash-screen{
   position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
   background: radial-gradient(1200px 600px at 50% -10%, rgba(74,201,255,.25), rgba(74,201,255,0) 60%), var(--header);
