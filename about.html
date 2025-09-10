@@ -4,20 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About • The Daily BrainBolt</title>
-
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
-
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div id="userInfo" class="user-info" style="display:none"></div>
-  </div>
-
+  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
@@ -44,78 +38,51 @@
 
   <main class="container">
     <section class="card">
-      <p><strong>The Daily BrainBolt</strong> delivers 12 fresh questions per day across world trivia, language, and logic. Difficulty is balanced to keep it fun yet challenging.</p>
-      <p>Keep your streak, challenge friends, and come back daily for a new set.</p>
+      <p><strong>The Daily BrainBolt</strong> delivers 12 fresh questions every day across world trivia, language, and logic. We balance difficulty so anyone can play—and improve.</p>
+      <p>Keep your streak, challenge friends, and come back daily.</p>
     </section>
   </main>
 
-  <footer class="footer">
-    © 2025 The Daily BrainBolt •
+  <footer class="footer">© 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
     <a href="/terms.html">Terms</a> •
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
 
+  <!-- Firebase + Menu wiring -->
   <script src="/firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <script>
-    (() => {
+    (function initMenu(){
       const btn = document.getElementById('mmMenuBtn');
       const panel = document.getElementById('mmSideMenu');
       const closeBtn = document.getElementById('mmCloseMenu');
-      const open = () => { panel.classList.add('open'); panel.setAttribute('aria-hidden','false'); };
-      const close = () => { panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); };
+      const open = () => { panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); };
+      const close = () => { panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); };
       btn?.addEventListener('click', open);
       closeBtn?.addEventListener('click', close);
       document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
     })();
-
     (function initFirebaseUI(){
       if (!window.FB_CONFIG) return;
       if (!firebase.apps.length) firebase.initializeApp(window.FB_CONFIG);
       const auth = firebase.auth();
-      const db = firebase.firestore();
-      const messaging = firebase.messaging();
-
-      function renderUser(user){
-        const wrap = document.getElementById('userInfo');
-        if (!wrap) return;
-        if (user){
-          wrap.innerHTML = `
-            <img src="${user.photoURL}" alt="User" style="width:32px;height:32px;border-radius:50%">
-            <span>${user.displayName||'Signed in'}</span>
-            <button id="btnSignOutTop" class="signout-btn" style="background:none;border:none;color:#FF8C00;cursor:pointer">Sign out</button>
-          `;
-          wrap.style.display = 'flex';
-          document.getElementById('btnSignOutTop')?.addEventListener('click', ()=>auth.signOut());
-        } else {
-          wrap.innerHTML = '';
-          wrap.style.display = 'none';
-        }
-      }
-      auth.onAuthStateChanged(renderUser);
-
+      const db   = firebase.firestore();
+      const msg  = firebase.messaging();
       document.getElementById('btnSignIn')?.addEventListener('click', async ()=>{
-        try{
-          const provider = new firebase.auth.GoogleAuthProvider();
-          const r = await auth.signInWithPopup(provider);
-          alert(`Welcome, ${r.user.displayName}`);
-        }catch(e){ console.error(e); alert('Sign-in failed. See console.'); }
+        try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); alert('Signed in!'); }
+        catch(e){ console.error(e); alert('Sign-in failed. See console.'); }
       });
-
       document.getElementById('btnNotify')?.addEventListener('click', async ()=>{
-        try{
-          const token = await messaging.getToken({
-            vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY"
-          });
+        try {
+          const token = await msg.getToken({ vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY" });
           alert('Notifications enabled!');
-          const u = auth.currentUser;
-          if (u) await db.collection('users').doc(u.uid).set({ pushToken: token }, { merge:true });
-        }catch(e){ console.error(e); alert('Notifications setup failed.'); }
+          const u = auth.currentUser; if (u) await db.collection('users').doc(u.uid).set({ pushToken: token }, { merge:true });
+        } catch(e){ console.error(e); alert('Notifications setup failed.'); }
       });
     })();
   </script>
