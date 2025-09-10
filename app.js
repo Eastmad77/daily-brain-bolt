@@ -1,10 +1,14 @@
 // /app.js
 
-// CSV links (published + gids)
+// === CSV URLs ===
+// Daily (existing)
 const LIVE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
+// Bank (unused by Pro; kept for Shuffle fallback)
 const BANK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
+// Pro bank (NEW) — replace with your real gid for `pro_bank`
+const PRO_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=REPLACE_WITH_PRO_BANK_GID";
 
-// Elements
+// === Elements ===
 const elQ = document.getElementById('question');
 const elOpts = document.getElementById('options');
 const elProgText = document.getElementById('progressText');
@@ -12,26 +16,30 @@ const elProgFill = document.getElementById('progressFill');
 const elScore = document.getElementById('score');
 const elFB = document.getElementById('feedback');
 const elToday = document.getElementById('today');
+
 const elStart = document.getElementById('startBtn');
 const elShuffle = document.getElementById('shuffleBtn');
 const elShare = document.getElementById('shareBtn');
 const elPlayAgain = document.getElementById('playAgain');
+
 const elTimerBar = document.getElementById('timerBar');
 const elElapsed = document.getElementById('elapsed');
+
 const btnSignIn = document.getElementById('btnSignIn');
 const btnNotify = document.getElementById('btnNotify');
 
-// Date
+// === Date ===
 const now = new Date();
 const todayKey = [now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0')].join('-');
 if (elToday) elToday.textContent = todayKey;
 
-// State
+// === State ===
 let allRows = [], todays = [], idx = 0, score = 0, wrongCount = 0;
 let startTime, elapsedInterval, timerInterval;
 let timerSeconds = 10;
+let isProMode = false;
 
-// Firebase init (compat)
+// === Firebase (optional parts used elsewhere) ===
 let app, auth, firestore, messaging;
 try{
   if (window.FB_CONFIG && firebase?.apps?.length === 0) {
@@ -44,8 +52,9 @@ try{
   messaging = firebase.messaging?.() || null;
 }catch(e){ console.warn('Firebase init warn:', e); }
 
-// Helpers
+// === Helpers ===
 const norm = s => String(s||'').trim();
+const inList = (v, list) => list.some(x => norm(x).toLowerCase() === norm(v).toLowerCase());
 
 function updateMeta() {
   elProgText.textContent = `${idx}/${todays.length || 0}`;
@@ -84,7 +93,7 @@ function playSound(type) {
   }catch(e){}
 }
 
-// Timer: right->left fill
+// Timer: right->left
 function startTimer(onExpire) {
   if (!elTimerBar) return;
   stopTimer();
@@ -104,12 +113,13 @@ function stopTimer() {
   elTimerBar?.style.setProperty('--tw', '0%');
 }
 
-function loadCSV() {
+// === Loaders ===
+function loadDaily() {
+  isProMode = false;
   Papa.parse(LIVE_URL, {
-    download: true,
-    header: true,
+    download: true, header: true,
     complete: ({ data }) => {
-      const rows = (data || []).filter(r => r && r.Date && r.Question);
+      const rows = (data || []).filter(r => r && r.Question);
       if (!rows.length) { elQ.textContent = "No quiz rows found."; return; }
       let todaysRows = rows.filter(r => norm(r.Date) === todayKey);
       if (!todaysRows.length) todaysRows = rows.slice(0,12);
@@ -123,11 +133,37 @@ function loadCSV() {
   });
 }
 
+function loadPro(filters) {
+  isProMode = true;
+  Papa.parse(PRO_URL, {
+    download: true, header: true,
+    complete: ({ data }) => {
+      let rows = (data || []).filter(r => r && r.Question);
+      if (!rows.length) { elQ.textContent = "No Pro questions found."; return; }
+      const cats = filters.cats || [];
+      const diffs = filters.diffs || [];
+      rows = rows.filter(r =>
+        (cats.length ? inList(r.Category, cats) : true) &&
+        (diffs.length ? inList(r.Difficulty, diffs) : true)
+      );
+      if (!rows.length) { elQ.textContent = "No matches for your Pro filters."; return; }
+      // random 12
+      todays = rows.sort(()=>Math.random()-0.5).slice(0,12);
+      allRows = rows;
+      elQ.textContent = "Ready (Pro)";
+      elOpts.innerHTML = '';
+      elQ.classList.remove('gameover');
+      clearFB(); updateMeta();
+    }
+  });
+}
+
+// === Flow ===
 function resetSession() {
   idx = 0; score = 0; wrongCount = 0;
   updateMeta(); clearFB();
   elPlayAgain.style.display = 'none';
-  elPlayAgain.classList.remove('pulse');
+  elPlayAgain.classList.remove('pulse','playagain');
   elQ.classList.remove('gameover');
   startElapsed();
 }
@@ -140,11 +176,11 @@ function showQuestion() {
   const q = todays[idx];
   if (!q) {
     elQ.classList.remove('gameover');
-    elQ.textContent = "🎉 Done for today!";
+    elQ.textContent = "🎉 Done!";
     elOpts.innerHTML = '';
     stopTimer(); stopElapsed();
     elPlayAgain.style.display = 'inline-flex';
-    elPlayAgain.classList.add('pulse');
+    elPlayAgain.classList.add('pulse','playagain');
     return;
   }
   elQ.classList.remove('gameover');
@@ -176,20 +212,18 @@ function handleChoice(btn, q, val) {
     playSound('wrong');
     wrongCount++;
     if (wrongCount >= 2) {
-      // Show "Game Over" INSIDE the question box with red fill
       elQ.classList.add('gameover');
       elQ.textContent = "❌ Game Over";
       stopElapsed();
       elPlayAgain.style.display = 'inline-flex';
       elPlayAgain.classList.add('pulse','playagain');
     } else {
-      // Try again automatically with the next render of same index
       setTimeout(()=>showQuestion(), 900);
     }
   }
 }
 
-// Buttons
+// === Buttons ===
 elStart?.addEventListener('click', startSession);
 elShuffle?.addEventListener('click', () => {
   if (!allRows || !allRows.length) return;
@@ -209,7 +243,7 @@ elShare?.addEventListener('click', () => {
 });
 elPlayAgain?.addEventListener('click', startSession);
 
-// Sign-in
+// === Sign-in (optional; works on pages that include the button) ===
 btnSignIn?.addEventListener('click', async () => {
   if (!auth) return alert('Auth not available.');
   try {
@@ -222,15 +256,14 @@ btnSignIn?.addEventListener('click', async () => {
   }
 });
 
-// Notifications (register messaging SW first)
+// === Notifications ===
 btnNotify?.addEventListener('click', async () => {
   try{
     if (!('Notification' in window)) return alert('Notifications not supported.');
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return alert('Permission denied.');
     const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    const messaging = firebase.messaging();
-    const token = await messaging.getToken({
+    const token = await firebase.messaging().getToken({
       vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
       serviceWorkerRegistration: swReg
     });
@@ -242,5 +275,16 @@ btnNotify?.addEventListener('click', async () => {
   }
 });
 
-// Init
-loadCSV();
+// === INIT ===
+// If Pro filters exist, load Pro; else load daily.
+(function init(){
+  try{
+    const f = localStorage.getItem('proFilters');
+    if (f) {
+      const parsed = JSON.parse(f);
+      loadPro(parsed);
+    } else {
+      loadDaily();
+    }
+  }catch(e){ loadDaily(); }
+})();
