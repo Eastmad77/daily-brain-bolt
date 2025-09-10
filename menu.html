@@ -4,80 +4,97 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Menu • The Daily BrainBolt</title>
-
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
-
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .menu-page {
-      display:flex;flex-direction:column;align-items:center;gap:1rem;padding:2rem 1rem;
-    }
-    .menu-title { text-align:center; }
-    .menu-title img { width:90px;height:90px;margin-bottom:.5rem }
-    .menu-card {
-      background: var(--bg-light);
-      border: 2px solid var(--accent-blue);
-      border-radius: 16px;
-      padding: 1rem 2rem;
-      text-align: center;
-      font-size: 1.1rem;
-      width: 100%;
-      max-width: 340px;
-      transition: background .2s, transform .15s, color .2s, border-color .2s;
-      cursor: pointer;
-      text-decoration: none;
-      color: var(--accent-orange);
-    }
-    .menu-card:hover {
-      background: var(--accent-blue);
-      color: #111;
-      transform: translateY(-2px);
-      border-color: var(--accent-blue);
-      text-decoration: none;
-    }
-    .menu-grid { display:grid; gap:1rem; width:100%; max-width:360px }
-  </style>
 </head>
 <body>
-  <div class="topbar">
-    <a href="/index.html" class="menu-btn" aria-label="Back to Home">←</a>
-  </div>
+  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <ul>
+      <li><a href="/index.html">Home</a></li><li><a href="/menu.html">Menu</a></li>
+      <li><a href="/about.html">About</a></li><li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li><li><a href="/contact.html">Contact</a></li>
+    </ul>
+  </nav>
 
   <header class="hero">
     <div class="hero-overlay"></div>
-    <div class="hero-inner menu-title">
-      <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
-      <h1>Menu</h1>
+    <div class="hero-inner">
+      <div class="hero-title">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
+        <h1>Menu</h1>
+      </div>
+      <p class="subtitle">Settings, modes & more</p>
     </div>
   </header>
 
   <main class="container">
-    <div class="menu-page">
-      <div class="menu-grid">
-        <a class="menu-card" href="/index.html">🏠 Home</a>
-        <a class="menu-card" href="/about.html">ℹ️ About</a>
-        <a class="menu-card" href="/terms.html">📜 Terms</a>
-        <a class="menu-card" href="/privacy.html">🔒 Privacy</a>
-        <a class="menu-card" href="/contact.html">✉️ Contact</a>
-        <button class="menu-card" id="btnSignIn">🔑 Sign in with Google</button>
-        <button class="menu-card" id="btnNotify">🔔 Enable Notifications</button>
+    <section class="card">
+      <div style="display:grid;gap:12px;">
+        <button id="btnSignIn" class="btn outline">Sign in with Google</button>
+        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
+        <a class="btn outline" href="/pro.html">Go Pro (categories & difficulty)</a>
       </div>
-    </div>
+    </section>
   </main>
 
-  <footer class="footer">
-    © 2025 The Daily BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
+  <footer class="footer">© 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase + App (reuse sign-in / notify handlers if any) -->
+  <script>
+    (()=>{const b=mmMenuBtn,p=mmSideMenu;let t;
+      const cls=()=>{p.classList.remove('open');p.setAttribute('aria-hidden','true');clearTimeout(t);};
+      const opn=()=>{p.classList.add('open');p.setAttribute('aria-hidden','false');clearTimeout(t);t=setTimeout(cls,5000);};
+      b?.addEventListener('click',opn);p.addEventListener('mouseenter',()=>clearTimeout(t));p.addEventListener('mouseleave',()=>{clearTimeout(t);t=setTimeout(cls,5000);});
+      p.querySelectorAll('a,button').forEach(el=>el.addEventListener('click',cls));
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')cls();});
+    })();
+  </script>
+
+  <!-- Firebase (if menu needs sign-in/notify here too) -->
   <script src="/firebase-config.js"></script>
-  <script src="/app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+  <script>
+    (function(){
+      try{
+        if(window.FB_CONFIG && firebase?.apps?.length===0) firebase.initializeApp(window.FB_CONFIG);
+      }catch(e){}
+      const btnSignIn=document.getElementById('btnSignIn');
+      const btnNotify=document.getElementById('btnNotify');
+
+      btnSignIn?.addEventListener('click', async ()=>{
+        try{
+          const auth=firebase.auth();
+          const provider=new firebase.auth.GoogleAuthProvider();
+          await auth.signInWithPopup(provider);
+          alert('Signed in!');
+        }catch(e){ console.error(e); alert('Sign in failed. See console.'); }
+      });
+
+      btnNotify?.addEventListener('click', async ()=>{
+        try{
+          if (!('Notification' in window)) return alert('Notifications not supported.');
+          const perm = await Notification.requestPermission();
+          if (perm !== 'granted') return alert('Permission denied.');
+          const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+          const messaging = firebase.messaging();
+          const token = await messaging.getToken({
+            vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
+            serviceWorkerRegistration: swReg
+          });
+          if (token) { console.log('FCM token:', token); alert('Notifications enabled!'); }
+          else { alert('Unable to get notification token.'); }
+        }catch(e){ console.error('Notify error',e); alert('Notifications error. See console.'); }
+      });
+    })();
+  </script>
 </body>
 </html>
