@@ -1,46 +1,169 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Admin • The Daily BrainBolt</title>
-  <link rel="stylesheet" href="/style.css"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Daily BrainBolt</title>
+
+  <!-- Icons & PWA -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0E1E27">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css">
+
+  <!-- PapaParse -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <main class="container">
-    <section class="static-page">
-      <h1>Admin</h1>
-      <p>Use this to manually refresh today’s <code>live</code> set from the bank.</p>
 
-      <div style="display:flex; gap:10px; align-items:center; margin-top:12px;">
-        <input id="secret" type="password" placeholder="Shared secret" style="flex:1; padding:10px; border-radius:10px; border:1px solid var(--outline); background:var(--card); color:var(--ink);" />
-        <button id="btnRun" class="btn primary">Refresh Live Now</button>
+  <!-- Splash Screen -->
+  <div id="splash" class="splash-screen" aria-hidden="true">
+    <div class="splash-inner">
+      <img src="/app-icon.svg" alt="BrainBolt Icon" class="splash-logo" />
+      <h1 class="splash-title">The Daily BrainBolt</h1>
+    </div>
+  </div>
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
+  <!-- Side Menu -->
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/menu.html">Menu</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><button id="btnSignIn" class="btn outline">Sign in with Google</button></li>
+      <li><button id="btnNotify" class="btn ghost">Enable Notifications</button></li>
+    </ul>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <div class="hero-title">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
+        <h1>The Daily BrainBolt</h1>
+      </div>
+      <p class="subtitle">Shock your synapses with 12 fresh questions a day.</p>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="container">
+    <!-- Score -->
+    <section class="card bar-card">
+      <div class="bar-top">
+        <div><strong>Score:</strong> <span id="score">0</span></div>
+        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+      </div>
+      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+
+      <div class="timer-row">
+        <div id="timerBar"></div>
+        <div id="elapsed" class="elapsed">00:00</div>
+      </div>
+    </section>
+
+    <!-- Quiz -->
+    <section class="card" id="quiz-card">
+      <div class="meta">
+        <span id="metaText" class="meta-text">Press Start Quiz</span>
+        <span class="spacer"></span>
+        <span id="today" class="meta-date"></span>
       </div>
 
-      <p id="msg" style="margin-top:12px; color: var(--muted);"></p>
+      <div id="question" class="question">Ready</div>
+      <div id="options" class="options"></div>
+
+      <div class="cta-row">
+        <button id="startBtn" class="btn primary">Start Quiz</button>
+        <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
+        <button id="shareBtn" class="btn outline">Share</button>
+        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
+      </div>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
     </section>
   </main>
 
-  <script>
-    // TODO: replace with your Apps Script Web App URL:
-    const SCRIPT_URL = "https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYED_WEB_APP_ID/exec";
+  <footer class="footer">
+    © 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a>
+  </footer>
 
-    document.getElementById('btnRun').addEventListener('click', async () => {
-      const secret = document.getElementById('secret').value.trim();
-      const msg = document.getElementById('msg');
-      msg.textContent = "Running…";
-      try {
-        const res = await fetch(SCRIPT_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "buildDailyLive", secret })
-        });
-        const text = await res.text();
-        msg.textContent = res.ok ? `✅ Done: ${text}` : `❌ Error: ${text}`;
-      } catch (e) {
-        msg.textContent = `❌ Request failed: ${e.message}`;
-      }
+  <!-- Firebase -->
+  <script src="/firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+
+  <!-- App -->
+  <script src="/app.js"></script>
+
+  <!-- Side Menu JS (with auto-hide) -->
+  <script>
+    (function initMenu(){
+      const btn=document.getElementById('mmMenuBtn');
+      const panel=document.getElementById('mmSideMenu');
+      const closeBtn=document.getElementById('mmCloseMenu');
+      let hideTimer=null;
+
+      const open=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');
+        clearTimeout(hideTimer);
+        hideTimer=setTimeout(close, 5000); // auto-hide after 5s
+      };
+      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');
+        clearTimeout(hideTimer);
+      };
+      panel.addEventListener('mouseenter',()=>clearTimeout(hideTimer));
+      panel.addEventListener('mouseleave',()=>{ clearTimeout(hideTimer); hideTimer=setTimeout(close, 3000); });
+
+      btn?.addEventListener('click',open);
+      closeBtn?.addEventListener('click',close);
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+    })();
+  </script>
+
+  <!-- Splash sequence: logo → title → fade out -->
+  <script>
+    document.addEventListener("DOMContentLoaded",()=>{
+      const splash=document.getElementById("splash");
+      // First half: logo visible, title hidden (CSS default)
+      setTimeout(()=>{ splash.classList.add('show-title'); }, 1000);  // switch to title at 1s
+      setTimeout(()=>{
+        splash.classList.add("fade-out");
+        setTimeout(()=>splash.remove(),800);
+      }, 2000); // end at ~2s
     });
+  </script>
+
+  <!-- Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+      });
+    }
   </script>
 </body>
 </html>
