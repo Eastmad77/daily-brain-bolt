@@ -2,22 +2,24 @@
    Global Variables
 =========================== */
 :root {
-  --header: rgb(14,30,39);
-  --bg: rgb(38,38,38);
-  --bg-light: rgb(43,43,43);
+  --header: rgb(14,30,39);        /* header stays as before unless you change */
+  --bg: rgb(33,33,33);            /* UPDATED: base background */
+  --bg-light: rgb(55,55,55);      /* UPDATED: complementary background */
   --accent-blue: rgb(74,201,255);
   --accent-orange: rgb(255,140,0);
   --accent-teal: rgb(66,180,170);
   --text: #fff;
   --text-muted: #aaa;
-  --good: rgb(40,200,120);
-  --bad: rgb(255,96,96);
+  --good: rgb(40,200,120);        /* success green */
+  --bad: rgb(255,96,96);          /* error red */
   --radius: 12px;
   --transition: 0.25s ease;
-  --shadow: 0 4px 16px rgba(0,0,0,0.4);
+  --shadow: 0 4px 16px rgba(0,0,0,0.45);
 }
 
-/* Reset + Base */
+/* ===========================
+   Reset + Base
+=========================== */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body {
   height: 100%;
@@ -28,7 +30,9 @@ html, body {
 a { color: var(--accent-blue); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-/* Layout */
+/* ===========================
+   Layout
+=========================== */
 .topbar {
   display: flex; justify-content: space-between; align-items: center;
   padding: .75rem 1rem; background: var(--header); box-shadow: var(--shadow);
@@ -50,7 +54,9 @@ a:hover { text-decoration: underline; }
 }
 .side-menu a:hover, .side-menu button:hover { background: var(--accent-blue); color: var(--bg); }
 
-/* Hero */
+/* ===========================
+   Hero
+=========================== */
 .hero { position: relative; background: var(--header); padding: 2rem 1rem 4rem; text-align: center; }
 .hero-overlay { background: url('/header-graphic.svg') center/cover no-repeat, var(--header); opacity: 0.6; position: absolute; inset: 0; }
 .hero-inner { position: relative; z-index: 1; }
@@ -59,7 +65,9 @@ a:hover { text-decoration: underline; }
 .hero h1 { font-size: 2rem; color: #fff; }
 .subtitle { color: var(--text-muted); margin-top: .25rem; }
 
-/* Main */
+/* ===========================
+   Main
+=========================== */
 .container { max-width: 720px; margin: -2rem auto 2rem; padding: 1rem; }
 .card { background: var(--bg-light); border-radius: var(--radius); padding: 1.5rem; box-shadow: var(--shadow); margin-bottom: 1.5rem; }
 
@@ -73,41 +81,55 @@ a:hover { text-decoration: underline; }
 #timerBar::after { content: ""; display: block; height: 6px; width: var(--tw, 0%); background: var(--accent-orange); transition: width linear; }
 .elapsed { font-size: .85rem; color: var(--text-muted); }
 
-/* Quiz */
+/* ===========================
+   Quiz
+=========================== */
 .meta { display: flex; justify-content: space-between; margin-bottom: 1rem; }
 .meta-text, .meta-date { font-size: .9rem; }
+
+/* Question panel */
 .question {
-  background: var(--header); border: 2px solid var(--accent-blue);
+  background: var(--bg);                 /* darker base so borders pop */
+  border: 2px solid var(--accent-blue);
   padding: 1rem; border-radius: var(--radius); margin-bottom: 1rem;
-  font-size: 1.1rem; text-align: center; color: #fff; /* ensure white text */
+  font-size: 1.1rem; text-align: center; color: #fff;
 }
 
+/* Options grid */
 .options { display: grid; gap: .5rem; margin-bottom: 1rem; }
+
+/* Choice buttons (act like chips) */
 .choice {
-  background: var(--bg-light); border: 2px solid var(--accent-blue);
-  padding: .75rem; border-radius: var(--radius); cursor: pointer;
-  transition: background var(--transition), color var(--transition), transform var(--transition);
-  color: #fff;  /* ensure white text in options */
+  background: var(--bg-light);
+  border: 2px solid var(--accent-blue);
+  padding: .9rem .95rem;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition), transform var(--transition), color var(--transition), background var(--transition);
+  color: #fff; /* ensure readable on dark */
 }
-.choice:hover { background: var(--accent-blue); color: var(--bg); transform: translateY(-2px); }
-.choice.disabled { opacity: 0.6; cursor: not-allowed; filter: grayscale(0.2); }
-.choice.result-correct { background: var(--good) !important; color: var(--bg) !important; border-color: var(--good) !important; }
-.choice.result-wrong   { background: var(--bad)  !important; color: var(--bg) !important; border-color: var(--bad)  !important; }
+.choice:hover { transform: translateY(-1px); }
+/* Correct/Incorrect now ONLY outline + glow; keep fill readable */
+.choice.result-correct {
+  border-color: var(--good) !important;
+  box-shadow: 0 0 0 3px rgba(40,200,120,0.25);
+}
+.choice.result-wrong {
+  border-color: var(--bad) !important;
+  box-shadow: 0 0 0 3px rgba(255,96,96,0.25);
+}
+.choice.disabled { opacity: 0.75; cursor: not-allowed; filter: grayscale(0.15); }
 
-.feedback { margin-top: .5rem; font-weight: 600; text-align: center; }
-.feedback.correct {
-  background: var(--good); color: var(--bg); border-radius: var(--radius); padding: .5rem 1rem;
-}
-.feedback.incorrect {
-  background: var(--bad); color: var(--bg); border-radius: var(--radius); padding: .5rem 1rem;
-}
+/* Feedback container kept for a11y (screen readers), visually subtle */
+.feedback { margin-top: .25rem; font-weight: 600; text-align: center; color: var(--text-muted); min-height: 1.25rem; }
 
-.cta-row { display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; }
+/* CTA row */
+.cta-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1rem; margin-top: .5rem; }
 
 /* Buttons */
 .btn {
   padding: .6rem 1.2rem; border-radius: var(--radius); cursor: pointer; border: none;
-  font-weight: 600; transition: background var(--transition), color var(--transition);
+  font-weight: 600; transition: background var(--transition), color var(--transition), opacity var(--transition);
 }
 .btn.primary { background: var(--accent-blue); color: var(--bg); }
 .btn.primary.subtle { background: var(--bg); color: var(--accent-blue); border: 1px solid var(--accent-blue); }
