@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Menu • The Daily BrainBolt</title>
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#0E1E27">
+
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .menu-page {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      gap: 1rem;
+    }
+    .menu-card {
+      background: var(--card);
+      border: 2px solid var(--accent-blue);
+      border-radius: 16px;
+      padding: 1rem 2rem;
+      text-align: center;
+      font-size: 1.2rem;
+      width: 100%;
+      max-width: 320px;
+      transition: background 0.2s, transform 0.15s;
+      cursor: pointer;
+    }
+    .menu-card:hover {
+      background: var(--accent-blue);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+    .menu-card a, .menu-card button {
+      display: block;
+      width: 100%;
+      text-decoration: none;
+      color: inherit;
+      background: none;
+      border: none;
+      font: inherit;
+      cursor: pointer;
+    }
+    .menu-title {
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .menu-title img {
+      width: 90px;
+      height: 90px;
+      margin-bottom: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Topbar -->
+  <div class="topbar">
+    <a href="/index.html" class="menu-btn" aria-label="Back to Home">←</a>
+  </div>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner menu-title">
+      <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
+      <h1>Menu</h1>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="menu-page">
+      <div class="menu-card"><a href="/index.html">🏠 Home</a></div>
+      <div class="menu-card"><a href="/about.html">ℹ️ About</a></div>
+      <div class="menu-card"><a href="/terms.html">📜 Terms</a></div>
+      <div class="menu-card"><a href="/privacy.html">🔒 Privacy</a></div>
+      <div class="menu-card"><a href="/contact.html">✉️ Contact</a></div>
+      <div class="menu-card"><button id="btnSignIn">🔑 Sign in with Google</button></div>
+      <div class="menu-card"><button id="btnNotify">🔔 Enable Notifications</button></div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a>
+  </footer>
+
+  <!-- Firebase + App integration -->
+  <script src="/firebase-config.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>
