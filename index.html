@@ -7,8 +7,9 @@
 
   <!-- Icons & PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest?v=2">
+  <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
 
   <!-- Fonts -->
@@ -17,21 +18,18 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=2">
+  <link rel="stylesheet" href="/style.css">
 
   <!-- PapaParse -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
-  <!-- Splash Screen -->
+  <!-- Splash Screen: logo → title → fade -->
   <div id="splash" class="splash-screen" aria-hidden="true">
     <div class="splash-inner">
       <img src="/app-icon.svg" alt="BrainBolt Icon" class="splash-logo" />
       <h1 class="splash-title">The Daily BrainBolt</h1>
-      <div class="sparkles" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
     </div>
   </div>
 
@@ -40,7 +38,7 @@
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
 
-  <!-- Side Menu (no X; auto-hide) -->
+  <!-- Slide-out Menu (auto-hide; no X button) -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
@@ -97,7 +95,7 @@
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
+        <button id="playAgain" class="btn gameover" style="display:none;">Play again</button>
       </div>
 
       <div id="feedback" class="feedback" aria-live="polite"></div>
@@ -120,46 +118,37 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
   <!-- App -->
-  <script src="/app.js?v=2"></script>
+  <script src="/app.js"></script>
 
-  <!-- Side Menu JS (auto-hide, click-outside, no “X”) -->
+  <!-- Slide-out Menu JS (auto-hide) -->
   <script>
     (function initMenu(){
-      const btn = document.getElementById('mmMenuBtn');
-      const panel = document.getElementById('mmSideMenu');
-      let hideTimer = null;
+      const btn=document.getElementById('mmMenuBtn');
+      const panel=document.getElementById('mmSideMenu');
+      let hideTimer=null;
 
-      const open = () => {
-        panel.classList.add('open');
-        panel.setAttribute('aria-hidden','false');
-        resetTimer();
-      };
-      const close = () => {
-        panel.classList.remove('open');
-        panel.setAttribute('aria-hidden','true');
-        clearTimeout(hideTimer);
-      };
-      const resetTimer = () => {
-        clearTimeout(hideTimer);
-        hideTimer = setTimeout(close, 5000);
-      };
+      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');clearTimeout(hideTimer);};
+      const open =()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');restartAutoHide();};
 
-      btn?.addEventListener('click', open);
-      panel.addEventListener('mouseenter', ()=>clearTimeout(hideTimer));
-      panel.addEventListener('mouseleave', resetTimer);
-      document.addEventListener('click', (e)=>{
-        if (!panel.contains(e.target) && e.target !== btn) close();
-      });
-      document.addEventListener('keydown', e=>{ if(e.key==='Escape') close(); });
+      function restartAutoHide(){
+        clearTimeout(hideTimer);
+        hideTimer=setTimeout(close, 5000);
+      }
+
+      btn?.addEventListener('click',open);
+      panel.addEventListener('mouseenter',()=>clearTimeout(hideTimer));
+      panel.addEventListener('mouseleave',()=>{restartAutoHide();});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
     })();
   </script>
 
-  <!-- Splash sequence: logo → title → fade out -->
+  <!-- Splash: logo → (1s) title → (2s) fade out -->
   <script>
     document.addEventListener("DOMContentLoaded",()=>{
-      const splash = document.getElementById("splash");
-      // 0–1s: logo only; 1–2s: animated title
+      const splash=document.getElementById("splash");
+      // half-way: swap to title
       setTimeout(()=>{ splash.classList.add('show-title'); }, 1000);
+      // finish: fade out
       setTimeout(()=>{
         splash.classList.add("fade-out");
         setTimeout(()=>splash.remove(),800);
@@ -167,7 +156,7 @@
     });
   </script>
 
-  <!-- SW -->
+  <!-- Service Worker -->
   <script>
     if('serviceWorker' in navigator){
       window.addEventListener('load',()=>{
