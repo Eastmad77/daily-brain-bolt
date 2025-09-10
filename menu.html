@@ -13,57 +13,39 @@
   <link rel="stylesheet" href="/style.css">
   <style>
     .menu-page {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-      gap: 1rem;
+      display:flex;flex-direction:column;align-items:center;gap:1rem;padding:2rem 1rem;
     }
+    .menu-title { text-align:center; }
+    .menu-title img { width:90px;height:90px;margin-bottom:.5rem }
     .menu-card {
-      background: var(--card);
+      background: var(--bg-light);
       border: 2px solid var(--accent-blue);
       border-radius: 16px;
       padding: 1rem 2rem;
       text-align: center;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       width: 100%;
-      max-width: 320px;
-      transition: background 0.2s, transform 0.15s;
+      max-width: 340px;
+      transition: background .2s, transform .15s, color .2s, border-color .2s;
       cursor: pointer;
+      text-decoration: none;
+      color: var(--accent-orange);
     }
     .menu-card:hover {
       background: var(--accent-blue);
-      color: #fff;
+      color: #111;
       transform: translateY(-2px);
-    }
-    .menu-card a, .menu-card button {
-      display: block;
-      width: 100%;
+      border-color: var(--accent-blue);
       text-decoration: none;
-      color: inherit;
-      background: none;
-      border: none;
-      font: inherit;
-      cursor: pointer;
     }
-    .menu-title {
-      margin-bottom: 1.5rem;
-      text-align: center;
-    }
-    .menu-title img {
-      width: 90px;
-      height: 90px;
-      margin-bottom: 0.5rem;
-    }
+    .menu-grid { display:grid; gap:1rem; width:100%; max-width:360px }
   </style>
 </head>
 <body>
-  <!-- Topbar -->
   <div class="topbar">
     <a href="/index.html" class="menu-btn" aria-label="Back to Home">←</a>
   </div>
 
-  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner menu-title">
@@ -74,13 +56,15 @@
 
   <main class="container">
     <div class="menu-page">
-      <div class="menu-card"><a href="/index.html">🏠 Home</a></div>
-      <div class="menu-card"><a href="/about.html">ℹ️ About</a></div>
-      <div class="menu-card"><a href="/terms.html">📜 Terms</a></div>
-      <div class="menu-card"><a href="/privacy.html">🔒 Privacy</a></div>
-      <div class="menu-card"><a href="/contact.html">✉️ Contact</a></div>
-      <div class="menu-card"><button id="btnSignIn">🔑 Sign in with Google</button></div>
-      <div class="menu-card"><button id="btnNotify">🔔 Enable Notifications</button></div>
+      <div class="menu-grid">
+        <a class="menu-card" href="/index.html">🏠 Home</a>
+        <a class="menu-card" href="/about.html">ℹ️ About</a>
+        <a class="menu-card" href="/terms.html">📜 Terms</a>
+        <a class="menu-card" href="/privacy.html">🔒 Privacy</a>
+        <a class="menu-card" href="/contact.html">✉️ Contact</a>
+        <button class="menu-card" id="btnSignIn">🔑 Sign in with Google</button>
+        <button class="menu-card" id="btnNotify">🔔 Enable Notifications</button>
+      </div>
     </div>
   </main>
 
@@ -92,7 +76,7 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase + App integration -->
+  <!-- Firebase + App (reuse sign-in / notify handlers if any) -->
   <script src="/firebase-config.js"></script>
   <script src="/app.js"></script>
 </body>
