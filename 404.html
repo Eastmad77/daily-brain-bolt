@@ -3,15 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Not Found • The Daily BrainBolt</title>
+  <title>404 • The Daily BrainBolt</title>
+
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
+
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
+  <!-- Topbar -->
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
+  <!-- Side Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
@@ -25,66 +32,48 @@
     </ul>
   </nav>
 
+  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
         <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
-        <h1>Page not found</h1>
+        <h1>Page Not Found</h1>
       </div>
-      <p class="subtitle">Let’s get you back to the quiz.</p>
+      <p class="subtitle">Looks like that page doesn’t exist.</p>
     </div>
   </header>
 
   <main class="container">
-    <section class="card" style="text-align:center">
-      <p>This page doesn’t exist. Head back to the homepage.</p>
-      <p style="margin-top:1rem"><a class="btn primary" href="/index.html">Go home</a></p>
+    <section class="card">
+      <p>Try going back to the <a href="/index.html">home page</a>, or use the menu to navigate elsewhere.</p>
     </section>
   </main>
 
-  <footer class="footer">© 2025 The Daily BrainBolt •
+  <footer class="footer">
+    © 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
     <a href="/terms.html">Terms</a> •
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase + Menu wiring -->
-  <script src="/firebase-config.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <script>
     (function initMenu(){
-      const btn = document.getElementById('mmMenuBtn');
-      const panel = document.getElementById('mmSideMenu');
-      const closeBtn = document.getElementById('mmCloseMenu');
-      const open = () => { panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); };
-      const close = () => { panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); };
-      btn?.addEventListener('click', open);
-      closeBtn?.addEventListener('click', close);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      const btn=document.getElementById('mmMenuBtn');
+      const panel=document.getElementById('mmSideMenu');
+      const closeBtn=document.getElementById('mmCloseMenu');
+      const open=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');};
+      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
+      btn?.addEventListener('click',open);
+      closeBtn?.addEventListener('click',close);
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
     })();
-    (function initFirebaseUI(){
-      if (!window.FB_CONFIG) return;
-      if (!firebase.apps.length) firebase.initializeApp(window.FB_CONFIG);
-      const auth = firebase.auth();
-      const db   = firebase.firestore();
-      const msg  = firebase.messaging();
-      document.getElementById('btnSignIn')?.addEventListener('click', async ()=>{
-        try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); alert('Signed in!'); }
-        catch(e){ console.error(e); alert('Sign-in failed. See console.'); }
-      });
-      document.getElementById('btnNotify')?.addEventListener('click', async ()=>{
-        try {
-          const token = await msg.getToken({ vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY" });
-          alert('Notifications enabled!');
-          const u = auth.currentUser; if (u) await db.collection('users').doc(u.uid).set({ pushToken: token }, { merge:true });
-        } catch(e){ console.error(e); alert('Notifications setup failed.'); }
-      });
-    })();
+  </script>
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').catch(()=>{});});
+    }
   </script>
 </body>
 </html>
