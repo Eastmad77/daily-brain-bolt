@@ -1,11 +1,8 @@
 // /firebase-messaging-sw.js
 // Firebase Cloud Messaging service worker (compat build)
-
-// 1) Load compat SDKs so we get global `firebase` in a worker
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-// 2) Initialize with the SAME config you use in /firebase-config.js
 firebase.initializeApp({
   apiKey: "AIzaSyDfjcMzAl-Tll0xsHri91VHiMdTGmd7b2k",
   authDomain: "dailybrainbolt.firebaseapp.com",
@@ -16,10 +13,8 @@ firebase.initializeApp({
   measurementId: "G-M0P3TSCF8P"
 });
 
-// 3) Get Messaging instance
 const messaging = firebase.messaging();
 
-// 4) Background notifications (when site is in background/closed)
 messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'The Daily BrainBolt';
   const body  = payload.notification?.body  || 'Today’s quiz is ready — keep your streak alive!';
@@ -31,10 +26,7 @@ messaging.onBackgroundMessage((payload) => {
   });
 });
 
-// 5) Click → open site
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow('https://dailybrainbolt.com/')
-  );
+  event.waitUntil(clients.openWindow('https://dailybrainbolt.com/'));
 });
