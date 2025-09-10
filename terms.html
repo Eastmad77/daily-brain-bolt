@@ -4,14 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Terms • The Daily BrainBolt</title>
+
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
+
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
+  <!-- Topbar -->
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
+  <!-- Side Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
@@ -25,6 +32,7 @@
     </ul>
   </nav>
 
+  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
@@ -32,71 +40,46 @@
         <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
         <h1>Terms</h1>
       </div>
-      <p class="subtitle">The ground rules for using BrainBolt</p>
+      <p class="subtitle">Please read these terms carefully.</p>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2>Use of Service</h2>
-      <p>BrainBolt is provided “as is”. We may update or change features at any time.</p>
-
-      <h2>User Conduct</h2>
-      <p>Don’t misuse the service, attempt to break it, or interfere with other users’ enjoyment.</p>
-
-      <h2>Content</h2>
-      <p>Quiz questions are for entertainment and learning and may include third-party facts and references.</p>
-
-      <h2>Disclaimers</h2>
-      <p>No warranty is provided. To the extent permitted by law, BrainBolt disclaims liability for any damages.</p>
-
-      <h2>Contact</h2>
-      <p>Questions? Email <strong style="color: var(--accent-orange)">support@dailybrainbolt.com</strong>.</p>
+      <p>By accessing or using The Daily BrainBolt, you agree to these Terms of Service. If you do not agree, do not use the site.</p>
+      <p><strong>Use of Service.</strong> You may use the site only for lawful purposes and in accordance with these Terms. You agree not to misuse the service or attempt to interfere with its operation.</p>
+      <p><strong>Content.</strong> Questions and explanations are provided for entertainment and educational purposes. We strive for accuracy but make no guarantees; content may include errors or omissions.</p>
+      <p><strong>Accounts.</strong> Optional sign-in may be offered to save progress or enable notifications. You’re responsible for maintaining the security of your account and credentials.</p>
+      <p><strong>Privacy.</strong> Your use is also governed by our <a href="/privacy.html">Privacy Policy</a>.</p>
+      <p><strong>Changes.</strong> We may modify these Terms. Continued use constitutes acceptance of updated Terms.</p>
+      <p><strong>Contact.</strong> Questions about these Terms? Email <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>.</p>
     </section>
   </main>
 
-  <footer class="footer">© 2025 The Daily BrainBolt •
+  <footer class="footer">
+    © 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
     <a href="/terms.html">Terms</a> •
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase + Menu wiring -->
-  <script src="/firebase-config.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
   <script>
     (function initMenu(){
-      const btn = document.getElementById('mmMenuBtn');
-      const panel = document.getElementById('mmSideMenu');
-      const closeBtn = document.getElementById('mmCloseMenu');
-      const open = () => { panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); };
-      const close = () => { panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); };
-      btn?.addEventListener('click', open);
-      closeBtn?.addEventListener('click', close);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      const btn=document.getElementById('mmMenuBtn');
+      const panel=document.getElementById('mmSideMenu');
+      const closeBtn=document.getElementById('mmCloseMenu');
+      const open=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');};
+      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
+      btn?.addEventListener('click',open);
+      closeBtn?.addEventListener('click',close);
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
     })();
-    (function initFirebaseUI(){
-      if (!window.FB_CONFIG) return;
-      if (!firebase.apps.length) firebase.initializeApp(window.FB_CONFIG);
-      const auth = firebase.auth();
-      const db   = firebase.firestore();
-      const msg  = firebase.messaging();
-      document.getElementById('btnSignIn')?.addEventListener('click', async ()=>{
-        try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); alert('Signed in!'); }
-        catch(e){ console.error(e); alert('Sign-in failed. See console.'); }
-      });
-      document.getElementById('btnNotify')?.addEventListener('click', async ()=>{
-        try {
-          const token = await msg.getToken({ vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY" });
-          alert('Notifications enabled!');
-          const u = auth.currentUser; if (u) await db.collection('users').doc(u.uid).set({ pushToken: token }, { merge:true });
-        } catch(e){ console.error(e); alert('Notifications setup failed.'); }
-      });
-    })();
+  </script>
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').catch(()=>{});});
+    }
   </script>
 </body>
 </html>
