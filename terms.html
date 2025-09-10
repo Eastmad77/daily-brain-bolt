@@ -4,82 +4,54 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Terms • The Daily BrainBolt</title>
-
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
-
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Topbar -->
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-  </div>
-
-  <!-- Side Menu -->
+  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><button id="btnSignIn" class="btn outline">Sign in with Google</button></li>
-      <li><button id="btnNotify" class="btn ghost">Enable Notifications</button></li>
+      <li><a href="/index.html">Home</a></li><li><a href="/menu.html">Menu</a></li>
+      <li><a href="/about.html">About</a></li><li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li><li><a href="/contact.html">Contact</a></li>
     </ul>
   </nav>
 
-  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
         <h1>Terms</h1>
       </div>
-      <p class="subtitle">Please read these terms carefully.</p>
+      <p class="subtitle">Please review carefully.</p>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <p>By accessing or using The Daily BrainBolt, you agree to these Terms of Service. If you do not agree, do not use the site.</p>
-      <p><strong>Use of Service.</strong> You may use the site only for lawful purposes and in accordance with these Terms. You agree not to misuse the service or attempt to interfere with its operation.</p>
-      <p><strong>Content.</strong> Questions and explanations are provided for entertainment and educational purposes. We strive for accuracy but make no guarantees; content may include errors or omissions.</p>
-      <p><strong>Accounts.</strong> Optional sign-in may be offered to save progress or enable notifications. You’re responsible for maintaining the security of your account and credentials.</p>
-      <p><strong>Privacy.</strong> Your use is also governed by our <a href="/privacy.html">Privacy Policy</a>.</p>
-      <p><strong>Changes.</strong> We may modify these Terms. Continued use constitutes acceptance of updated Terms.</p>
-      <p><strong>Contact.</strong> Questions about these Terms? Email <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>.</p>
+    <section class="card legal">
+      <p>By using The Daily BrainBolt, you agree to these Terms of Service. Content is provided “as is”. We may update terms over time.</p>
+      <p>For details on data usage, see our <a href="/privacy.html">Privacy Policy</a>.</p>
     </section>
   </main>
 
-  <footer class="footer">
-    © 2025 The Daily BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
+  <footer class="footer">© 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
   </footer>
 
   <script>
-    (function initMenu(){
-      const btn=document.getElementById('mmMenuBtn');
-      const panel=document.getElementById('mmSideMenu');
-      const closeBtn=document.getElementById('mmCloseMenu');
-      const open=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');};
-      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
-      btn?.addEventListener('click',open);
-      closeBtn?.addEventListener('click',close);
-      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+    (()=>{const b=mmMenuBtn,p=mmSideMenu;let t;
+      const cls=()=>{p.classList.remove('open');p.setAttribute('aria-hidden','true');clearTimeout(t);};
+      const opn=()=>{p.classList.add('open');p.setAttribute('aria-hidden','false');clearTimeout(t);t=setTimeout(cls,5000);};
+      b?.addEventListener('click',opn);p.addEventListener('mouseenter',()=>clearTimeout(t));p.addEventListener('mouseleave',()=>{clearTimeout(t);t=setTimeout(cls,5000);});
+      p.querySelectorAll('a,button').forEach(el=>el.addEventListener('click',cls));
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')cls();});
     })();
-  </script>
-  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').catch(()=>{});});
-    }
   </script>
 </body>
 </html>
