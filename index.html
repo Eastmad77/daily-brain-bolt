@@ -5,26 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>The Daily BrainBolt</title>
 
-  <!-- Icons / PWA -->
+  <!-- Icons & PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
 
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
 
   <!-- PapaParse -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
+
+  <!-- Splash Screen -->
+  <div id="splash" class="splash-screen" aria-hidden="true">
+    <div class="splash-inner">
+      <img src="/app-icon.svg" alt="BrainBolt Icon" class="splash-logo" />
+      <h1 class="splash-title">The Daily BrainBolt</h1>
+    </div>
+  </div>
+
   <!-- Topbar -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div id="userInfo" class="user-info" style="display:none"></div>
   </div>
 
-  <!-- Slide-out Menu -->
+  <!-- Side Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
@@ -43,48 +56,51 @@
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
         <h1>The Daily BrainBolt</h1>
       </div>
-      <p class="subtitle">Shock your synapses with today’s 12 fresh questions!</p>
+      <p class="subtitle">Shock your synapses with 12 fresh questions a day.</p>
     </div>
   </header>
 
   <!-- Main -->
   <main class="container">
+    <!-- Score -->
     <section class="card bar-card">
       <div class="bar-top">
         <div><strong>Score:</strong> <span id="score">0</span></div>
         <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
       </div>
       <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+
       <div class="timer-row">
         <div id="timerBar"></div>
-        <div class="elapsed" id="elapsed">00:00</div>
+        <div id="elapsed" class="elapsed">00:00</div>
       </div>
     </section>
 
+    <!-- Quiz -->
     <section class="card" id="quiz-card">
       <div class="meta">
-        <span id="metaText" class="meta-text">Ready</span>
+        <span id="metaText" class="meta-text">Press Start Quiz</span>
         <span class="spacer"></span>
         <span id="today" class="meta-date"></span>
       </div>
 
-      <div id="question" class="question">Press Start Quiz</div>
+      <div id="question" class="question">Loading…</div>
       <div id="options" class="options"></div>
-      <div id="feedback" class="feedback" aria-live="polite"></div>
 
       <div class="cta-row">
-        <button id="startBtn" class="btn primary subtle">Start Quiz</button>
+        <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <button id="playAgain" class="btn shuffle" style="display:none;">Play again</button>
+        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
       </div>
+
+      <div id="feedback" class="feedback" aria-live="polite"></div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     © 2025 The Daily BrainBolt •
     <a href="/about.html">About</a> •
@@ -93,84 +109,48 @@
     <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- Firebase (config + compat SDKs) -->
+  <!-- Firebase -->
   <script src="/firebase-config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 
-  <!-- Menu & Firebase UI wiring (scoped, avoids duplicate IDs) -->
+  <!-- App -->
+  <script src="/app.js"></script>
+
+  <!-- Side Menu JS -->
   <script>
     (function initMenu(){
-      const btn = document.getElementById('mmMenuBtn');
-      const panel = document.getElementById('mmSideMenu');
-      const closeBtn = document.getElementById('mmCloseMenu');
-      const open = () => { panel?.classList.add('open'); panel?.setAttribute('aria-hidden','false'); };
-      const close = () => { panel?.classList.remove('open'); panel?.setAttribute('aria-hidden','true'); };
-      btn?.addEventListener('click', open);
-      closeBtn?.addEventListener('click', close);
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+      const btn=document.getElementById('mmMenuBtn');
+      const panel=document.getElementById('mmSideMenu');
+      const closeBtn=document.getElementById('mmCloseMenu');
+      const open=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');};
+      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
+      btn?.addEventListener('click',open);
+      closeBtn?.addEventListener('click',close);
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
     })();
+  </script>
 
-    (function initFirebaseUI(){
-      if (!window.FB_CONFIG) return;                 // expects /firebase-config.js
-      if (!firebase.apps.length) firebase.initializeApp(window.FB_CONFIG);
-      const auth = firebase.auth();
-      const db   = firebase.firestore();
-      const msg  = firebase.messaging();
+  <!-- Splash Fade -->
+  <script>
+    document.addEventListener("DOMContentLoaded",()=>{
+      const splash=document.getElementById("splash");
+      setTimeout(()=>{
+        splash.classList.add("fade-out");
+        setTimeout(()=>splash.remove(),800);
+      },2000);
+    });
+  </script>
 
-      function renderUser(user){
-        const wrap = document.getElementById('userInfo');
-        if (!wrap) return;
-        if (user){
-          wrap.innerHTML = `
-            <img src="${user.photoURL}" alt="User" style="width:32px;height:32px;border-radius:50%">
-            <span>${user.displayName||'Signed in'}</span>
-            <button id="btnSignOutTop" class="signout-btn" style="background:none;border:none;color:#FF8C00;cursor:pointer">Sign out</button>
-          `;
-          wrap.style.display = 'flex';
-          document.getElementById('btnSignOutTop')?.addEventListener('click', ()=>auth.signOut());
-        } else {
-          wrap.innerHTML = '';
-          wrap.style.display = 'none';
-        }
-      }
-      auth.onAuthStateChanged(renderUser);
-
-      document.getElementById('btnSignIn')?.addEventListener('click', async ()=>{
-        try{
-          const provider = new firebase.auth.GoogleAuthProvider();
-          await auth.signInWithPopup(provider);
-          alert('Signed in!');
-        }catch(e){
-          console.error(e);
-          alert('Sign-in failed. See console.');
-        }
-      });
-
-      document.getElementById('btnNotify')?.addEventListener('click', async ()=>{
-        try{
-          const token = await msg.getToken({
-            vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY"
-          });
-          alert('Notifications enabled!');
-          const u = auth.currentUser;
-          if (u) await db.collection('users').doc(u.uid).set({ pushToken: token }, { merge:true });
-        }catch(e){ console.error(e); alert('Notifications setup failed.'); }
-      });
-    })();
-
-    // Service worker register
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .catch(err => console.log('SW reg failed', err));
+  <!-- Service Worker -->
+  <script>
+    if('serviceWorker' in navigator){
+      window.addEventListener('load',()=>{
+        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
       });
     }
   </script>
-
-  <!-- App logic -->
-  <script src="/app.js"></script>
 </body>
 </html>
