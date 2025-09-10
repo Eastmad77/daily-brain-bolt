@@ -1,10 +1,15 @@
-/* The Daily BrainBolt – Service Worker */
-const VERSION = 'v1.0.10';                 // bump this each deploy
+/* The Daily BrainBolt – Service Worker (bumped) */
+const VERSION = 'v1.0.11';                 // bump this each deploy
 const STATIC_CACHE = `dbb-static-${VERSION}`;
 const RUNTIME_CACHE = `dbb-runtime-${VERSION}`;
 const CORE = [
   '/',
   '/index.html',
+  '/about.html',
+  '/terms.html',
+  '/privacy.html',
+  '/contact.html',
+  '/404.html',
   '/style.css',
   '/app.js',
   '/firebase-config.js',
@@ -73,6 +78,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   if (req.method !== 'GET') return;
 
+  // HTML navigations
   if (req.mode === 'navigate' || req.destination === 'document') {
     event.respondWith((async () => {
       try { return await networkFirst(req, { cacheName: RUNTIME_CACHE, timeoutMs: 7000 }); }
@@ -84,11 +90,13 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Live/Bank CSV
   if (isCsvRequest(req.url)) {
     event.respondWith(networkFirst(req, { cacheName: RUNTIME_CACHE, timeoutMs: 8000 }));
     return;
   }
 
+  // Static assets
   const dest = req.destination;
   if (['style','script','image','font','manifest'].includes(dest) ||
       url.pathname.endsWith('.svg') || url.pathname.endsWith('.png') || url.pathname.endsWith('.webmanifest')) {
@@ -96,6 +104,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Default
   event.respondWith((async () => {
     try { return await fetch(req); }
     catch {
