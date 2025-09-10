@@ -1,13 +1,14 @@
-/* The Daily BrainBolt — App Logic
-   - Smooth 10s timer bar + elapsed counter
-   - White option text
+/* The Daily BrainBolt — App Logic (outline-only feedback + sound/vibration)
+   - Backgrounds updated via CSS
+   - NO big feedback banners; selection shows outline color only
    - First wrong => retry; Second wrong => game over + Play again
-   - Live CSV first, Bank fallback
+   - Smooth 10s timer + elapsed counter
+   - Correct = subtle beep; Incorrect = short vibration (if supported)
 */
 
 /* ---------- CONFIG ---------- */
 const LIVE_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
-const BANK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFv0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
+const BANK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
 const SECONDS_PER_QUESTION = 10;
 const AUTO_ADVANCE_DELAY = 800;
@@ -23,7 +24,7 @@ const elMetaText    = $("#metaText");
 const elDate        = $("#today");
 const elQuestion    = $("#question");
 const elOptions     = $("#options");
-const elFeedback    = $("#feedback");
+const elFeedback    = $("#feedback"); // kept for a11y text (visually subtle)
 const btnStart      = $("#startBtn");
 const btnShuffle    = $("#shuffleBtn");
 const btnShare      = $("#shareBtn");
@@ -35,8 +36,6 @@ let idx = 0;
 let score = 0;
 
 let timerRAF = null;
-let questionDeadline = 0;
-
 let quizStartedAt = 0;
 let elapsedRAF = null;
 
@@ -54,8 +53,33 @@ function shuffle(a){ const x=a.slice(); for(let i=x.length-1;i>0;i--){const j=Ma
 function norm(s){ return String(s||"").trim(); }
 function setProgress(i,t){ if(!elProgressTxt||!elProgFill)return; elProgressTxt.textContent=`${i}/${t}`; elProgFill.style.width=`${t?(i/t)*100:0}%`; }
 function setTimerPercent(p){ if(elTimerBar) elTimerBar.style.setProperty("--tw", `${p}%`); }
+
+/* Elapsed timer (quiz run time) */
 function startElapsed(){ if(!elElapsed) return; quizStartedAt=performance.now(); cancelAnimationFrame(elapsedRAF); const tick=()=>{ const ms=performance.now()-quizStartedAt; const sec=Math.floor(ms/1000); const m=Math.floor(sec/60); const s=sec%60; elElapsed.textContent=`${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`; elapsedRAF=requestAnimationFrame(tick); }; elapsedRAF=requestAnimationFrame(tick); }
 function stopElapsed(){ cancelAnimationFrame(elapsedRAF); }
+
+/* Subtle beep on correct via Web Audio */
+function playCorrectBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 520;     // soft mid tone
+    g.gain.value = 0.04;         // very subtle
+    o.connect(g); g.connect(ctx.destination);
+    o.start();
+    setTimeout(()=>{ o.stop(); ctx.close(); }, 140);
+  } catch {}
+}
+
+/* Short vibration on wrong (if supported) */
+function buzzWrong() {
+  if (navigator.vibrate) {
+    // short buzz pattern
+    navigator.vibrate([80]);
+  }
+}
 
 /* ---------- CSV ---------- */
 async function fetchCsvRows(url){
@@ -104,7 +128,7 @@ function updateMeta(){ setProgress(idx, todays.length||0); elScore && (elScore.t
 
 function showQuestion(){
   cancelAnimationFrame(timerRAF); setTimerPercent(0);
-  elFeedback && (elFeedback.textContent=""); elFeedback && (elFeedback.className="feedback");
+  if (elFeedback){ elFeedback.textContent=""; } // silent a11y area
   elOptions && (elOptions.innerHTML="");
   btnPlayAgain && (btnPlayAgain.style.display="none");
   attemptCount = 0;
@@ -135,26 +159,29 @@ function showQuestion(){
 }
 
 function onSelect(q, value, btnEl){
+  // Prevent double clicks while we compute result
   document.querySelectorAll(".choice").forEach(el => el.classList.add("disabled"));
 
   const isCorrect = norm(value).toLowerCase() === norm(q.Answer).toLowerCase();
+
+  // Style only the BORDER (no big banners)
+  document.querySelectorAll(".choice").forEach(el => el.classList.remove("result-correct","result-wrong"));
   if (btnEl){
-    btnEl.classList.remove("disabled");
     btnEl.classList.add(isCorrect ? "result-correct" : "result-wrong");
+    // keep only outline feedback, no fill change
   }
 
   cancelAnimationFrame(timerRAF);
 
   if (isCorrect){
-    elFeedback && (elFeedback.className="feedback correct");
-    elFeedback && (elFeedback.textContent="Correct!");
+    playCorrectBeep();
     score++; idx++; updateMeta();
     setTimeout(showQuestion, AUTO_ADVANCE_DELAY);
   } else {
+    buzzWrong();
     attemptCount += 1;
     if (attemptCount === 1){
-      elFeedback && (elFeedback.className="feedback incorrect");
-      elFeedback && (elFeedback.textContent="Incorrect — try again");
+      // First wrong => reset same question after short pause
       setTimeout(()=>{
         document.querySelectorAll(".choice").forEach(el =>
           el.classList.remove("disabled","result-correct","result-wrong")
@@ -162,8 +189,7 @@ function onSelect(q, value, btnEl){
         startQuestionTimer();
       }, 600);
     } else {
-      elFeedback && (elFeedback.className="feedback incorrect");
-      elFeedback && (elFeedback.textContent="Incorrect — game over");
+      // Second wrong => game over
       btnPlayAgain && (btnPlayAgain.style.display="inline-flex");
       stopElapsed();
     }
@@ -188,17 +214,14 @@ function startQuestionTimer(){
     } else {
       // timeout counts as a wrong attempt
       document.querySelectorAll(".choice").forEach(el => el.classList.add("disabled"));
+      buzzWrong();
       attemptCount += 1;
       if (attemptCount === 1){
-        elFeedback && (elFeedback.className="feedback incorrect");
-        elFeedback && (elFeedback.textContent="Time’s up — try again");
         setTimeout(()=>{
           document.querySelectorAll(".choice").forEach(el => el.classList.remove("disabled","result-correct","result-wrong"));
           startQuestionTimer();
         }, 600);
       } else {
-        elFeedback && (elFeedback.className="feedback incorrect");
-        elFeedback && (elFeedback.textContent="Time’s up — game over");
         btnPlayAgain && (btnPlayAgain.style.display="inline-flex");
         stopElapsed();
       }
