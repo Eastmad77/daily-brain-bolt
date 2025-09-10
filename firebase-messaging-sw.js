@@ -1,5 +1,4 @@
 // /firebase-messaging-sw.js
-// Firebase Cloud Messaging service worker (compat build)
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
