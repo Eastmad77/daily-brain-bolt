@@ -4,40 +4,27 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>About • The Daily BrainBolt</title>
-
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#0E1E27">
-
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Topbar -->
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-  </div>
-
-  <!-- Side Menu -->
+  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmCloseMenu" class="close-btn" aria-label="Close menu">✕</button>
     <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><button id="btnSignIn" class="btn outline">Sign in with Google</button></li>
-      <li><button id="btnNotify" class="btn ghost">Enable Notifications</button></li>
+      <li><a href="/index.html">Home</a></li><li><a href="/menu.html">Menu</a></li>
+      <li><a href="/about.html">About</a></li><li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li><li><a href="/contact.html">Contact</a></li>
     </ul>
   </nav>
-
-  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" onerror="this.style.display='none'">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
         <h1>About</h1>
       </div>
       <p class="subtitle">What makes The Daily BrainBolt spark?</p>
@@ -46,38 +33,24 @@
 
   <main class="container">
     <section class="card">
-      <p><strong>The Daily BrainBolt</strong> delivers 12 fresh questions per day spanning world knowledge, language, and logic. Difficulty is balanced so anyone can play—and improve—while keeping a daily streak.</p>
-      <p>Return each day to challenge yourself, compare scores with friends, and build momentum over time. We fine-tune layout and accessibility so it’s fast, readable, and fun on any screen.</p>
-      <p>Have suggestions? We’d love to hear them: <a href="/contact.html">contact us</a>.</p>
+      <p><strong>The Daily BrainBolt</strong> delivers 12 fresh questions per day spanning world trivia, language, and logic. Difficulty is balanced so anyone can play—and improve.</p>
+      <p>Keep your streak, challenge friends, come back daily.</p>
     </section>
   </main>
 
-  <footer class="footer">
-    © 2025 The Daily BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
+  <footer class="footer">© 2025 The Daily BrainBolt •
+    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
   </footer>
 
   <script>
-    (function initMenu(){
-      const btn=document.getElementById('mmMenuBtn');
-      const panel=document.getElementById('mmSideMenu');
-      const closeBtn=document.getElementById('mmCloseMenu');
-      const open=()=>{panel.classList.add('open');panel.setAttribute('aria-hidden','false');};
-      const close=()=>{panel.classList.remove('open');panel.setAttribute('aria-hidden','true');};
-      btn?.addEventListener('click',open);
-      closeBtn?.addEventListener('click',close);
-      document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+    (()=>{const b=mmMenuBtn,p=mmSideMenu;let t;
+      const cls=()=>{p.classList.remove('open');p.setAttribute('aria-hidden','true');clearTimeout(t);};
+      const opn=()=>{p.classList.add('open');p.setAttribute('aria-hidden','false');clearTimeout(t);t=setTimeout(cls,5000);};
+      b?.addEventListener('click',opn);p.addEventListener('mouseenter',()=>clearTimeout(t));p.addEventListener('mouseleave',()=>{clearTimeout(t);t=setTimeout(cls,5000);});
+      p.querySelectorAll('a,button').forEach(el=>el.addEventListener('click',cls));
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')cls();});
     })();
-  </script>
-
-  <!-- Optional SW register (safe no-op if missing) -->
-  <script>
-    if('serviceWorker' in navigator){
-      window.addEventListener('load',()=>{navigator.serviceWorker.register('/service-worker.js').catch(()=>{});});
-    }
   </script>
 </body>
 </html>
