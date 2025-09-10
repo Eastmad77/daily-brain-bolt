@@ -2,7 +2,7 @@
 
 // CSV links (published + gids)
 const LIVE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
-const BANK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFv0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
+const BANK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
 // Elements
 const elQ = document.getElementById('question');
@@ -29,7 +29,7 @@ if (elToday) elToday.textContent = todayKey;
 // State
 let allRows = [], todays = [], idx = 0, score = 0, wrongCount = 0;
 let startTime, elapsedInterval, timerInterval;
-let timerSeconds = 10; // keep at 10s
+let timerSeconds = 10;
 
 // Firebase init (compat)
 let app, auth, firestore, messaging;
@@ -74,8 +74,7 @@ function playSound(type) {
       const ctx = new (window.AudioContext||window.webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 520;
+      osc.type = 'sine'; osc.frequency.value = 520;
       gain.gain.value = 0.08;
       osc.connect(gain).connect(ctx.destination);
       osc.start(); osc.stop(ctx.currentTime + 0.15);
@@ -85,22 +84,19 @@ function playSound(type) {
   }catch(e){}
 }
 
-// Timer: right->left fill, smooth (100ms steps)
+// Timer: right->left fill
 function startTimer(onExpire) {
   if (!elTimerBar) return;
   stopTimer();
   const totalMs = timerSeconds * 1000;
-  const step = 100; // ms
+  const step = 100;
   let elapsed = 0;
-  elTimerBar.style.setProperty('--tw', '100%'); // remaining 100%
+  elTimerBar.style.setProperty('--tw', '100%');
   timerInterval = setInterval(() => {
     elapsed += step;
     let remain = Math.max(0, 1 - (elapsed/totalMs));
     elTimerBar.style.setProperty('--tw', (remain*100).toFixed(1) + '%');
-    if (elapsed >= totalMs) {
-      stopTimer();
-      onExpire();
-    }
+    if (elapsed >= totalMs) { stopTimer(); onExpire(); }
   }, step);
 }
 function stopTimer() {
@@ -108,47 +104,42 @@ function stopTimer() {
   elTimerBar?.style.setProperty('--tw', '0%');
 }
 
-// Load CSV (wait for Start)
 function loadCSV() {
   Papa.parse(LIVE_URL, {
     download: true,
     header: true,
     complete: ({ data }) => {
       const rows = (data || []).filter(r => r && r.Date && r.Question);
-      if (!rows.length) {
-        elQ.textContent = "No quiz rows found.";
-        return;
-      }
+      if (!rows.length) { elQ.textContent = "No quiz rows found."; return; }
       let todaysRows = rows.filter(r => norm(r.Date) === todayKey);
       if (!todaysRows.length) todaysRows = rows.slice(0,12);
       todays = todaysRows;
       allRows = rows;
       elQ.textContent = "Ready";
       elOpts.innerHTML = '';
-      clearFB();
-      updateMeta();
+      elQ.classList.remove('gameover');
+      clearFB(); updateMeta();
     }
   });
 }
 
-// Flow
 function resetSession() {
   idx = 0; score = 0; wrongCount = 0;
-  updateMeta();
-  clearFB();
+  updateMeta(); clearFB();
   elPlayAgain.style.display = 'none';
   elPlayAgain.classList.remove('pulse');
+  elQ.classList.remove('gameover');
   startElapsed();
 }
 function startSession() {
   if (!todays || todays.length === 0) return;
-  resetSession();
-  showQuestion();
+  resetSession(); showQuestion();
 }
 function showQuestion() {
   clearFB();
   const q = todays[idx];
   if (!q) {
+    elQ.classList.remove('gameover');
     elQ.textContent = "🎉 Done for today!";
     elOpts.innerHTML = '';
     stopTimer(); stopElapsed();
@@ -156,10 +147,10 @@ function showQuestion() {
     elPlayAgain.classList.add('pulse');
     return;
   }
+  elQ.classList.remove('gameover');
   elQ.textContent = q.Question || '—';
   elOpts.innerHTML = '';
-  const opts = [q.OptionA,q.OptionB,q.OptionC,q.OptionD].filter(Boolean);
-  opts.forEach((optText) => {
+  [q.OptionA,q.OptionB,q.OptionC,q.OptionD].filter(Boolean).forEach((optText) => {
     const btn = document.createElement('button');
     btn.className = 'choice';
     btn.textContent = optText;
@@ -185,11 +176,14 @@ function handleChoice(btn, q, val) {
     playSound('wrong');
     wrongCount++;
     if (wrongCount >= 2) {
-      elFB.textContent = "❌ Game Over";
+      // Show "Game Over" INSIDE the question box with red fill
+      elQ.classList.add('gameover');
+      elQ.textContent = "❌ Game Over";
       stopElapsed();
       elPlayAgain.style.display = 'inline-flex';
-      elPlayAgain.classList.add('pulse');
+      elPlayAgain.classList.add('pulse','playagain');
     } else {
+      // Try again automatically with the next render of same index
       setTimeout(()=>showQuestion(), 900);
     }
   }
@@ -215,7 +209,7 @@ elShare?.addEventListener('click', () => {
 });
 elPlayAgain?.addEventListener('click', startSession);
 
-// Sign-in (popup)
+// Sign-in
 btnSignIn?.addEventListener('click', async () => {
   if (!auth) return alert('Auth not available.');
   try {
@@ -228,32 +222,25 @@ btnSignIn?.addEventListener('click', async () => {
   }
 });
 
-// Notifications (FCM) — explicitly register messaging SW first
+// Notifications (register messaging SW first)
 btnNotify?.addEventListener('click', async () => {
   try{
     if (!('Notification' in window)) return alert('Notifications not supported.');
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return alert('Permission denied.');
-
-    // Ensure firebase-messaging-sw.js is registered at root
     const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-
-    if (!messaging) return alert('Messaging not available.');
+    const messaging = firebase.messaging();
     const token = await messaging.getToken({
       vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
       serviceWorkerRegistration: swReg
     });
-    if (token) {
-      console.log('FCM token:', token);
-      alert('Notifications enabled!');
-    } else {
-      alert('Unable to get notification token.');
-    }
+    if (token) { console.log('FCM token:', token); alert('Notifications enabled!'); }
+    else { alert('Unable to get notification token.'); }
   }catch(e){
     console.error('Notify error', e);
     alert('Notifications error. See console.');
   }
 });
 
-// Init (load data only; no auto-start)
+// Init
 loadCSV();
