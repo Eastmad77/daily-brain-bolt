@@ -2,7 +2,7 @@
 
 // CSV links (published + gids)
 const LIVE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
-const BANK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
+const BANK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFv0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
 // Elements
 const elQ = document.getElementById('question');
@@ -228,18 +228,20 @@ btnSignIn?.addEventListener('click', async () => {
   }
 });
 
-// Notifications (FCM)
+// Notifications (FCM) — explicitly register messaging SW first
 btnNotify?.addEventListener('click', async () => {
   try{
     if (!('Notification' in window)) return alert('Notifications not supported.');
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') return alert('Permission denied.');
-    // Prefer using the main SW so the app stays PWA-friendly
-    const swReg = await navigator.serviceWorker.getRegistration();
+
+    // Ensure firebase-messaging-sw.js is registered at root
+    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+
     if (!messaging) return alert('Messaging not available.');
     const token = await messaging.getToken({
       vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
-      serviceWorkerRegistration: swReg || undefined
+      serviceWorkerRegistration: swReg
     });
     if (token) {
       console.log('FCM token:', token);
