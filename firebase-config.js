@@ -1,4 +1,4 @@
-// /firebase-config.js
+// Firebase configuration
 window.FB_CONFIG = {
   apiKey: "AIzaSyDfjcMzAl-Tll0xsHri91VHiMdTGmd7b2k",
   authDomain: "dailybrainbolt.firebaseapp.com",
