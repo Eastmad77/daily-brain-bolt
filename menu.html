@@ -1,23 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Menu • The Daily BrainBolt</title>
+  <title>Menu • BrainBolt</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#0E1E27">
-  <link rel="stylesheet" href="/style.css">
+  <meta name="theme-color" content="#162022" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <div class="topbar"><button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button></div>
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu" title="Menu">☰</button>
+    <div class="topbar-right">
+      <a class="btn outline small" href="/index.html">Home</a>
+    </div>
+  </div>
+
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
-      <li><a href="/index.html">Home</a></li><li><a href="/menu.html">Menu</a></li>
-      <li><a href="/about.html">About</a></li><li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li><li><a href="/contact.html">Contact</a></li>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/pro.html" class="menu-pro">Go Pro</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><button id="btnSignIn" class="btn outline full">Sign in with Google</button></li>
+      <li><button id="btnNotify" class="btn ghost full">Enable Notifications</button></li>
     </ul>
   </nav>
 
@@ -25,76 +35,59 @@
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
-        <h1>Menu</h1>
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" />
+        <h1><img class="favicon-inline" src="/favicon.svg" alt="">Menu</h1>
       </div>
-      <p class="subtitle">Settings, modes & more</p>
+      <p class="subtitle">Quick access to everything</p>
     </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <div style="display:grid;gap:12px;">
-        <button id="btnSignIn" class="btn outline">Sign in with Google</button>
-        <button id="btnNotify" class="btn ghost">Enable Notifications</button>
-        <a class="btn outline" href="/pro.html">Go Pro (categories & difficulty)</a>
+      <div class="options" style="grid-template-columns:1fr 1fr;">
+        <a class="btn outline" href="/about.html">About</a>
+        <a class="btn outline" href="/terms.html">Terms</a>
+        <a class="btn outline" href="/privacy.html">Privacy</a>
+        <a class="btn outline" href="/contact.html">Contact</a>
+        <a class="btn shuffle" href="/pro.html">Go Pro</a>
+        <a class="btn outline" href="/admin.html">Admin</a>
+      </div>
+      <div class="cta-row" style="margin-top:14px;">
+        <button id="btnSignIn2" class="btn outline">Sign in with Google</button>
+        <button id="btnNotify2" class="btn ghost">Enable Notifications</button>
       </div>
     </section>
   </main>
 
-  <footer class="footer">© 2025 The Daily BrainBolt •
-    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
+  <footer class="footer">
+    © 2025 BrainBolt •
+    <a class="footer-link" href="/about.html">About</a> •
+    <a class="footer-link" href="/terms.html">Terms</a> •
+    <a class="footer-link" href="/privacy.html">Privacy</a> •
+    <a class="footer-link" href="/contact.html">Contact</a> •
+    <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
   </footer>
 
-  <script>
-    (()=>{const b=mmMenuBtn,p=mmSideMenu;let t;
-      const cls=()=>{p.classList.remove('open');p.setAttribute('aria-hidden','true');clearTimeout(t);};
-      const opn=()=>{p.classList.add('open');p.setAttribute('aria-hidden','false');clearTimeout(t);t=setTimeout(cls,5000);};
-      b?.addEventListener('click',opn);p.addEventListener('mouseenter',()=>clearTimeout(t));p.addEventListener('mouseleave',()=>{clearTimeout(t);t=setTimeout(cls,5000);});
-      p.querySelectorAll('a,button').forEach(el=>el.addEventListener('click',cls));
-      document.addEventListener('keydown',e=>{if(e.key==='Escape')cls();});
-    })();
-  </script>
-
-  <!-- Firebase (if menu needs sign-in/notify here too) -->
   <script src="/firebase-config.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+  <script src="/app.js"></script>
   <script>
-    (function(){
-      try{
-        if(window.FB_CONFIG && firebase?.apps?.length===0) firebase.initializeApp(window.FB_CONFIG);
-      }catch(e){}
-      const btnSignIn=document.getElementById('btnSignIn');
-      const btnNotify=document.getElementById('btnNotify');
+    // Mirror the main menu auto-hide behavior when opened
+    const m = document.getElementById('mmMenuBtn');
+    const s = document.getElementById('mmSideMenu');
+    let t = null;
+    m?.addEventListener('click', ()=>{
+      s?.classList.add('open'); s?.setAttribute('aria-hidden','false');
+      if (t) clearTimeout(t);
+      t = setTimeout(()=>{ s?.classList.remove('open'); s?.setAttribute('aria-hidden','true'); }, 5000);
+    });
 
-      btnSignIn?.addEventListener('click', async ()=>{
-        try{
-          const auth=firebase.auth();
-          const provider=new firebase.auth.GoogleAuthProvider();
-          await auth.signInWithPopup(provider);
-          alert('Signed in!');
-        }catch(e){ console.error(e); alert('Sign in failed. See console.'); }
-      });
-
-      btnNotify?.addEventListener('click', async ()=>{
-        try{
-          if (!('Notification' in window)) return alert('Notifications not supported.');
-          const perm = await Notification.requestPermission();
-          if (perm !== 'granted') return alert('Permission denied.');
-          const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-          const messaging = firebase.messaging();
-          const token = await messaging.getToken({
-            vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
-            serviceWorkerRegistration: swReg
-          });
-          if (token) { console.log('FCM token:', token); alert('Notifications enabled!'); }
-          else { alert('Unable to get notification token.'); }
-        }catch(e){ console.error('Notify error',e); alert('Notifications error. See console.'); }
-      });
-    })();
+    // Duplicate sign-in/notify (re-use handlers in app.js via same IDs)
+    document.getElementById('btnSignIn2')?.addEventListener('click', ()=> {
+      document.getElementById('btnSignIn')?.click();
+    });
+    document.getElementById('btnNotify2')?.addEventListener('click', ()=> {
+      document.getElementById('btnNotify')?.click();
+    });
   </script>
 </body>
 </html>
