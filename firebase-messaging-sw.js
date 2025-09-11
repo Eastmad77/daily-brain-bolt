@@ -1,21 +1,21 @@
-// /firebase-messaging-sw.js
+// Firebase Cloud Messaging SW (compat build)
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "AIzaSyDfjcMzAl-Tll0xsHri91VHiMdTGmd7b2k",
+  apiKey: "YOUR_REAL_API_KEY",
   authDomain: "dailybrainbolt.firebaseapp.com",
   projectId: "dailybrainbolt",
   storageBucket: "dailybrainbolt.firebasestorage.app",
-  messagingSenderId: "118224143962",
-  appId: "1:118224143962:web:43d85714b96ac1357e7a63",
-  measurementId: "G-M0P3TSCF8P"
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 });
 
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'The Daily BrainBolt';
+  const title = payload.notification?.title || 'BrainBolt';
   const body  = payload.notification?.body  || 'Today’s quiz is ready — keep your streak alive!';
   self.registration.showNotification(title, {
     body,
