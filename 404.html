@@ -1,77 +1,50 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>404 Not Found • BrainBolt</title>
-
+  <title>Page not found • BrainBolt</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#162022" />
   <link rel="stylesheet" href="/style.css" />
 </head>
-<body data-theme="dark">
-  <!-- Topbar -->
+<body>
   <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div class="topbar-right">
-      <button id="themeToggle" class="btn outline small">Theme</button>
-      <button id="muteBtn" class="mute-btn" aria-label="Toggle sound">🔊</button>
-    </div>
+    <a class="btn outline small" href="/index.html">Home</a>
   </div>
 
-  <!-- Side Menu -->
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><a href="/pro.html" class="menu-pro">Go Pro</a></li>
-      <li><button id="btnSignIn" class="btn outline full">Sign in with Google</button></li>
-      <li><button id="btnNotify" class="btn ghost full">Enable Notifications</button></li>
-    </ul>
-  </nav>
-
-  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
         <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" />
-        <h1>404</h1>
+        <h1><img class="favicon-inline" src="/favicon.svg" alt="">404</h1>
       </div>
-      <p class="subtitle">Oops! Page not found.</p>
+      <p class="subtitle">That page sparked out. Let’s get you back.</p>
     </div>
   </header>
 
-  <!-- Message -->
   <main class="container">
-    <section class="card" style="text-align:center">
-      <p>The page you’re looking for doesn’t exist or has moved.</p>
-      <p><a href="/index.html" class="btn primary">Return Home</a></p>
+    <section class="card">
+      <p>Try one of these:</p>
+      <div class="options" style="grid-template-columns:1fr 1fr;">
+        <a class="btn outline" href="/index.html">Home</a>
+        <a class="btn outline" href="/menu.html">Menu</a>
+        <a class="btn outline" href="/about.html">About</a>
+        <a class="btn outline" href="/contact.html">Contact</a>
+      </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     © 2025 BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a> •
+    <a class="footer-link" href="/about.html">About</a> •
+    <a class="footer-link" href="/terms.html">Terms</a> •
+    <a class="footer-link" href="/privacy.html">Privacy</a> •
+    <a class="footer-link" href="/contact.html">Contact</a> •
     <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
   </footer>
-
-  <!-- Scripts -->
-  <script src="/firebase-config.js"></script>
-  <script src="/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-    }
-  </script>
 </body>
 </html>
