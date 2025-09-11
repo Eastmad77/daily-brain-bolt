@@ -1,10 +1,104 @@
-// Firebase configuration
-window.FB_CONFIG = {
-  apiKey: "AIzaSyDfjcMzAl-Tll0xsHri91VHiMdTGmd7b2k",
-  authDomain: "dailybrainbolt.firebaseapp.com",
-  projectId: "dailybrainbolt",
-  storageBucket: "dailybrainbolt.firebasestorage.app",
-  messagingSenderId: "118224143962",
-  appId: "1:118224143962:web:43d85714b96ac1357e7a63",
-  measurementId: "G-M0P3TSCF8P"
-};
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Go Pro • BrainBolt</title>
+
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="theme-color" content="#162022" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body data-theme="dark">
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <div class="topbar-right">
+      <button id="themeToggle" class="btn outline small">Theme</button>
+      <button id="muteBtn" class="mute-btn" aria-label="Toggle sound">🔊</button>
+    </div>
+  </div>
+
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <ul>
+      <li><a href="/index.html">Home</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/pro.html" class="menu-pro">Go Pro</a></li>
+      <li><button id="btnSignIn" class="btn outline full">Sign in with Google</button></li>
+      <li><button id="btnNotify" class="btn ghost full">Enable Notifications</button></li>
+    </ul>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <div class="hero-title">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" />
+        <h1>Go Pro</h1>
+      </div>
+      <p class="subtitle">More control, more data, more fun.</p>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- Value -->
+    <section class="card" style="text-align:center">
+      <p><strong>BrainBolt Pro</strong> unlocks advanced features for power players and classrooms:</p>
+      <ul class="feature-list" style="text-align:left; display:inline-block; max-width:700px">
+        <li>Choose categories & difficulty, not just the daily set</li>
+        <li>Extended history & personal stats</li>
+        <li>Friends leaderboard & private duels</li>
+        <li>Practice mode & streak repair</li>
+        <li>Ad-free experience</li>
+        <li>Priority support</li>
+      </ul>
+    </section>
+
+    <!-- Plans -->
+    <section class="card plan-card" style="text-align:center">
+      <div class="plans">
+        <div class="plan">
+          <h3>Monthly</h3>
+          <div class="price">$3.99</div>
+          <button class="btn primary">Start monthly</button>
+        </div>
+        <div class="plan highlight">
+          <h3>Annual <span class="badge">Best Value</span></h3>
+          <div class="price">$29.99</div>
+          <button class="btn shuffle">Start annual</button>
+        </div>
+      </div>
+      <p style="margin-top:.8rem;color:#b9c3c9">Manage or cancel any time.</p>
+    </section>
+
+    <!-- Manage subscription (Stripe Customer Portal placeholder) -->
+    <section class="card" style="text-align:center">
+      <h2>Manage Your Subscription</h2>
+      <p>If you purchased via a mobile store, manage it in your store account.</p>
+      <p>If you purchased directly, use the button below:</p>
+      <a href="https://YOUR_STRIPE_PORTAL_URL" class="btn outline">Manage Subscription</a>
+    </section>
+  </main>
+
+  <footer class="footer">
+    © 2025 BrainBolt •
+    <a href="/about.html">About</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a> •
+    <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
+  </footer>
+
+  <script src="/firebase-config.js"></script>
+  <script src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+    }
+  </script>
+</body>
+</html>
