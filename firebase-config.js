@@ -1,10 +1,13 @@
-// Firebase configuration
+// Optional Firebase config (kept off by default)
+window.FB_CONFIG = null;
+/*
 window.FB_CONFIG = {
-  apiKey: "AIzaSyDfjcMzAl-Tll0xsHri91VHiMdTGmd7b2k",
-  authDomain: "dailybrainbolt.firebaseapp.com",
-  projectId: "dailybrainbolt",
-  storageBucket: "dailybrainbolt.firebasestorage.app",
-  messagingSenderId: "118224143962",
-  appId: "1:118224143962:web:43d85714b96ac1357e7a63",
-  measurementId: "G-M0P3TSCF8P"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "G-XXXXXXX"
 };
+*/
