@@ -4,28 +4,32 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Terms • BrainBolt</title>
+
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" sizes="192x192" href="/icon-192.png">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022">
-  <link rel="stylesheet" href="/style.css">
+  <meta name="theme-color" content="#162022" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
-<body class="copy">
+<body data-theme="dark">
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <button id="muteBtn" class="mute-btn" aria-label="Sound on/off">🔊</button>
+    <div class="topbar-right">
+      <button id="themeToggle" class="btn outline small">Theme</button>
+      <button id="muteBtn" class="mute-btn" aria-label="Toggle sound">🔊</button>
+    </div>
   </div>
+
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
-      <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
-      <li><a href="/pro.html" class="pro-link">Go Pro 🚀</a></li>
-      <li><button id="themeToggle" class="btn outline" type="button">Toggle Light/Dark</button></li>
+      <li><a href="/pro.html" class="menu-pro">Go Pro</a></li>
+      <li><button id="btnSignIn" class="btn outline full">Sign in with Google</button></li>
+      <li><button id="btnNotify" class="btn ghost full">Enable Notifications</button></li>
     </ul>
   </nav>
 
@@ -33,24 +37,40 @@
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
-        <h1>Terms</h1>
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" />
+        <h1>Terms of Use</h1>
       </div>
-      <p class="subtitle">Simple terms to keep things fair</p>
+      <p class="subtitle">The basics of using BrainBolt.</p>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <p>Use BrainBolt for fun and personal learning. Don’t abuse the service, don’t try to break it, and respect others. These terms may change over time.</p>
+    <section class="card" style="text-align:center">
+      <p><strong>Acceptance:</strong> By using BrainBolt you agree to these Terms.</p>
+      <p><strong>Non-commercial use:</strong> The game is provided for personal entertainment. Don’t copy, resell, or scrape content.</p>
+      <p><strong>Content accuracy:</strong> We strive for correctness, but trivia may contain errors. Let us know and we’ll fix them.</p>
+      <p><strong>Accounts:</strong> You’re responsible for activity on your account. Don’t share credentials.</p>
+      <p><strong>Data:</strong> Usage is governed by our <a href="/privacy.html">Privacy Policy</a>.</p>
+      <p><strong>Changes:</strong> We may update these Terms and will post the new version here.</p>
+      <p><strong>Contact:</strong> <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a></p>
     </section>
   </main>
 
-  <footer class="footer">© 2025 BrainBolt •
-    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
+  <footer class="footer">
+    © 2025 BrainBolt •
+    <a href="/about.html">About</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a> •
+    <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
   </footer>
 
-  <script>(function(){const b=mmMenuBtn,p=mmSideMenu;let t=null;const c=()=>{p.classList.remove('open');p.setAttribute('aria-hidden','true');clearTimeout(t)};const o=()=>{p.classList.add('open');p.setAttribute('aria-hidden','false');clearTimeout(t);t=setTimeout(c,5000)};b?.addEventListener('click',o);p.addEventListener('mouseenter',()=>clearTimeout(t));p.addEventListener('mouseleave',()=>{clearTimeout(t);t=setTimeout(c,5000)});p.querySelectorAll('a,button').forEach(e=>e.addEventListener('click',c));document.addEventListener('keydown',e=>{if(e.key==='Escape')c();});})();</script>
+  <script src="/firebase-config.js"></script>
+  <script src="/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+    }
+  </script>
 </body>
 </html>
