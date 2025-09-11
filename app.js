@@ -1,14 +1,9 @@
 // /app.js
 
 // === CSV URLs ===
-// Daily (existing)
 const LIVE_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
-// Bank (unused by Pro; kept for Shuffle fallback)
 const BANK_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
-// Pro bank (NEW) — replace with your real gid for `pro_bank`
-const PRO_URL  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=REPLACE_WITH_PRO_BANK_GID";
 
-// === Elements ===
 const elQ = document.getElementById('question');
 const elOpts = document.getElementById('options');
 const elProgText = document.getElementById('progressText');
@@ -25,36 +20,32 @@ const elPlayAgain = document.getElementById('playAgain');
 const elTimerBar = document.getElementById('timerBar');
 const elElapsed = document.getElementById('elapsed');
 
-const btnSignIn = document.getElementById('btnSignIn');
-const btnNotify = document.getElementById('btnNotify');
+const muteBtn = document.getElementById('muteBtn');
+const themeToggle = document.getElementById('themeToggle');
 
-// === Date ===
 const now = new Date();
 const todayKey = [now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0')].join('-');
 if (elToday) elToday.textContent = todayKey;
 
-// === State ===
+// State
 let allRows = [], todays = [], idx = 0, score = 0, wrongCount = 0;
 let startTime, elapsedInterval, timerInterval;
 let timerSeconds = 10;
-let isProMode = false;
+let muted = localStorage.getItem('bb_muted') === '1';
+let theme = localStorage.getItem('bb_theme') || 'dark';
+applyTheme(theme); updateMuteIcon();
 
-// === Firebase (optional parts used elsewhere) ===
-let app, auth, firestore, messaging;
-try{
-  if (window.FB_CONFIG && firebase?.apps?.length === 0) {
-    app = firebase.initializeApp(window.FB_CONFIG);
-  } else if (window.FB_CONFIG && firebase?.apps?.length > 0) {
-    app = firebase.app();
-  }
-  auth = firebase.auth?.() || null;
-  firestore = firebase.firestore?.() || null;
-  messaging = firebase.messaging?.() || null;
-}catch(e){ console.warn('Firebase init warn:', e); }
+// Splash: show briefly, then fade out + short vibration
+document.addEventListener('DOMContentLoaded', () => {
+  const s = document.getElementById('splash');
+  if (!s) return;
+  setTimeout(()=>{ try{navigator.vibrate && navigator.vibrate(50);}catch(e){} }, 450);
+  setTimeout(()=>{ s.classList.add('fade-out'); }, 900);
+  setTimeout(()=>{ s.remove(); }, 1700);
+});
 
-// === Helpers ===
+// Helpers
 const norm = s => String(s||'').trim();
-const inList = (v, list) => list.some(x => norm(x).toLowerCase() === norm(v).toLowerCase());
 
 function updateMeta() {
   elProgText.textContent = `${idx}/${todays.length || 0}`;
@@ -62,7 +53,7 @@ function updateMeta() {
   const pct = (todays.length ? (idx / todays.length) : 0) * 100;
   elProgFill.style.width = `${pct}%`;
 }
-function clearFB(){ elFB.textContent = ''; }
+function clearFB(){ elFB.textContent=''; }
 
 function startElapsed() {
   startTime = Date.now();
@@ -75,16 +66,17 @@ function startElapsed() {
     elElapsed.textContent = `${m}:${s}`;
   }, 1000);
 }
-function stopElapsed() { clearInterval(elapsedInterval); }
+function stopElapsed(){ clearInterval(elapsedInterval); }
 
 function playSound(type) {
+  if (muted) return;
   try{
     if (type === 'correct') {
       const ctx = new (window.AudioContext||window.webkitAudioContext)();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine'; osc.frequency.value = 520;
-      gain.gain.value = 0.08;
+      osc.type='sine'; osc.frequency.value=520;
+      gain.gain.value=0.08;
       osc.connect(gain).connect(ctx.destination);
       osc.start(); osc.stop(ctx.currentTime + 0.15);
     } else if (type === 'wrong' && navigator.vibrate) {
@@ -93,14 +85,13 @@ function playSound(type) {
   }catch(e){}
 }
 
-// Timer: right->left
 function startTimer(onExpire) {
   if (!elTimerBar) return;
   stopTimer();
   const totalMs = timerSeconds * 1000;
   const step = 100;
   let elapsed = 0;
-  elTimerBar.style.setProperty('--tw', '100%');
+  elTimerBar.style.setProperty('--tw', '100%'); // right->left
   timerInterval = setInterval(() => {
     elapsed += step;
     let remain = Math.max(0, 1 - (elapsed/totalMs));
@@ -108,16 +99,11 @@ function startTimer(onExpire) {
     if (elapsed >= totalMs) { stopTimer(); onExpire(); }
   }, step);
 }
-function stopTimer() {
-  if (timerInterval) clearInterval(timerInterval);
-  elTimerBar?.style.setProperty('--tw', '0%');
-}
+function stopTimer(){ if (timerInterval) clearInterval(timerInterval); elTimerBar?.style.setProperty('--tw', '0%'); }
 
-// === Loaders ===
-function loadDaily() {
-  isProMode = false;
-  Papa.parse(LIVE_URL, {
-    download: true, header: true,
+function loadCSV() {
+  Papa.parse(LIVE_URL + "&cb=" + Date.now(), {
+    download:true, header:true,
     complete: ({ data }) => {
       const rows = (data || []).filter(r => r && r.Question);
       if (!rows.length) { elQ.textContent = "No quiz rows found."; return; }
@@ -129,48 +115,27 @@ function loadDaily() {
       elOpts.innerHTML = '';
       elQ.classList.remove('gameover');
       clearFB(); updateMeta();
+    },
+    error: () => {
+      elQ.textContent = "Error loading CSV.";
     }
   });
 }
 
-function loadPro(filters) {
-  isProMode = true;
-  Papa.parse(PRO_URL, {
-    download: true, header: true,
-    complete: ({ data }) => {
-      let rows = (data || []).filter(r => r && r.Question);
-      if (!rows.length) { elQ.textContent = "No Pro questions found."; return; }
-      const cats = filters.cats || [];
-      const diffs = filters.diffs || [];
-      rows = rows.filter(r =>
-        (cats.length ? inList(r.Category, cats) : true) &&
-        (diffs.length ? inList(r.Difficulty, diffs) : true)
-      );
-      if (!rows.length) { elQ.textContent = "No matches for your Pro filters."; return; }
-      // random 12
-      todays = rows.sort(()=>Math.random()-0.5).slice(0,12);
-      allRows = rows;
-      elQ.textContent = "Ready (Pro)";
-      elOpts.innerHTML = '';
-      elQ.classList.remove('gameover');
-      clearFB(); updateMeta();
-    }
-  });
-}
-
-// === Flow ===
 function resetSession() {
-  idx = 0; score = 0; wrongCount = 0;
+  idx=0; score=0; wrongCount=0;
   updateMeta(); clearFB();
-  elPlayAgain.style.display = 'none';
+  elPlayAgain.style.display='none';
   elPlayAgain.classList.remove('pulse','playagain');
   elQ.classList.remove('gameover');
   startElapsed();
 }
+
 function startSession() {
-  if (!todays || todays.length === 0) return;
+  if (!todays || todays.length===0) return;
   resetSession(); showQuestion();
 }
+
 function showQuestion() {
   clearFB();
   const q = todays[idx];
@@ -199,13 +164,12 @@ function showQuestion() {
 function handleChoice(btn, q, val) {
   stopTimer();
   const isCorrect = (val != null) && (norm(val).toLowerCase() === norm(q.Answer).toLowerCase());
-
   document.querySelectorAll('.choice').forEach(b => b.classList.add('disabled'));
   if (btn) btn.classList.add(isCorrect ? 'result-correct' : 'result-wrong');
 
   if (isCorrect) {
     playSound('correct');
-    score++; idx++; wrongCount = 0;
+    score++; idx++; wrongCount=0;
     updateMeta();
     setTimeout(()=>showQuestion(), 800);
   } else {
@@ -213,7 +177,7 @@ function handleChoice(btn, q, val) {
     wrongCount++;
     if (wrongCount >= 2) {
       elQ.classList.add('gameover');
-      elQ.textContent = "❌ Game Over";
+      elQ.textContent = "Game Over";
       stopElapsed();
       elPlayAgain.style.display = 'inline-flex';
       elPlayAgain.classList.add('pulse','playagain');
@@ -223,7 +187,7 @@ function handleChoice(btn, q, val) {
   }
 }
 
-// === Buttons ===
+// Share/Buttons
 elStart?.addEventListener('click', startSession);
 elShuffle?.addEventListener('click', () => {
   if (!allRows || !allRows.length) return;
@@ -233,7 +197,7 @@ elShuffle?.addEventListener('click', () => {
 elShare?.addEventListener('click', () => {
   if (navigator.share) {
     navigator.share({
-      title: "The Daily BrainBolt",
+      title: "BrainBolt",
       text: "Play today’s quiz now!",
       url: "https://dailybrainbolt.com/"
     }).catch(()=>{});
@@ -243,48 +207,28 @@ elShare?.addEventListener('click', () => {
 });
 elPlayAgain?.addEventListener('click', startSession);
 
-// === Sign-in (optional; works on pages that include the button) ===
-btnSignIn?.addEventListener('click', async () => {
-  if (!auth) return alert('Auth not available.');
-  try {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    await auth.signInWithPopup(provider);
-    alert('Signed in!');
-  } catch (e) {
-    console.error(e);
-    alert('Sign in failed. See console.');
-  }
+// Mute toggle
+muteBtn?.addEventListener('click', () => {
+  muted = !muted;
+  localStorage.setItem('bb_muted', muted ? '1' : '0');
+  updateMuteIcon();
 });
+function updateMuteIcon(){
+  if (!muteBtn) return;
+  muteBtn.classList.toggle('active', muted);
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+}
 
-// === Notifications ===
-btnNotify?.addEventListener('click', async () => {
-  try{
-    if (!('Notification' in window)) return alert('Notifications not supported.');
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') return alert('Permission denied.');
-    const swReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
-    const token = await firebase.messaging().getToken({
-      vapidKey: "BMt3tNZvjrKVPgzHd2k_Belbqd2idB7O-5j5-u6lIcl7-mptPSeROci4SRxOqnyhWM1Ii4BZgT-TA5k8HVPoClY",
-      serviceWorkerRegistration: swReg
-    });
-    if (token) { console.log('FCM token:', token); alert('Notifications enabled!'); }
-    else { alert('Unable to get notification token.'); }
-  }catch(e){
-    console.error('Notify error', e);
-    alert('Notifications error. See console.');
-  }
+// Theme toggle
+themeToggle?.addEventListener('click', () => {
+  theme = (theme === 'dark') ? 'light' : 'dark';
+  localStorage.setItem('bb_theme', theme);
+  applyTheme(theme);
 });
+function applyTheme(t){
+  if (t === 'light') document.body.setAttribute('data-theme','light');
+  else document.body.removeAttribute('data-theme');
+}
 
-// === INIT ===
-// If Pro filters exist, load Pro; else load daily.
-(function init(){
-  try{
-    const f = localStorage.getItem('proFilters');
-    if (f) {
-      const parsed = JSON.parse(f);
-      loadPro(parsed);
-    } else {
-      loadDaily();
-    }
-  }catch(e){ loadDaily(); }
-})();
+// Init
+loadCSV();
