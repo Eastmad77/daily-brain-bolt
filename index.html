@@ -3,114 +3,33 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BrainBolt • The Daily Brain Quiz</title>
+  <title>BrainBolt</title>
 
-  <!-- Icons / PWA -->
+  <!-- Icons & PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022">
+  <meta name="theme-color" content="#162022" />
+
+  <!-- Social (optional) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BrainBolt">
+  <meta property="og:description" content="12 fresh questions every day. Shock your synapses.">
+  <meta property="og:image" content="/og-image-dark.svg">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body data-theme="dark">
-  <!-- Topbar -->
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div class="topbar-right">
-      <button id="themeToggle" class="btn outline small">Theme</button>
-      <button id="muteBtn" class="mute-btn" aria-label="Toggle sound">🔊</button>
-    </div>
-  </div>
+  <!-- your existing header / hero / app UI here -->
 
-  <!-- Side Menu -->
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><a href="/pro.html" class="menu-pro">Go Pro</a></li>
-      <li><button id="btnSignIn" class="btn outline full">Sign in with Google</button></li>
-      <li><button id="btnNotify" class="btn ghost full">Enable Notifications</button></li>
-    </ul>
-  </nav>
-
-  <!-- Splash -->
-  <div id="splash" class="splash-screen">
-    <img src="/app-icon.svg" alt="BrainBolt Logo" class="splash-logo">
-    <h1 class="splash-text">Brain<span class="bolt">⚡</span>Bolt</h1>
-  </div>
-
-  <!-- Hero -->
-  <header class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-inner">
-      <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
-        <h1>Brain<span class="bolt">⚡</span>Bolt</h1>
-      </div>
-      <p class="subtitle">Shock your synapses with 12 fresh questions a day.</p>
-    </div>
-  </header>
-
-  <!-- Main -->
-  <main class="container">
-    <section class="card bar-card">
-      <div class="bar-top">
-        <div><strong>Score:</strong> <span id="score">0</span></div>
-        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
-      </div>
-      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
-
-      <div class="timer-row">
-        <div id="timerBar" class="timer-bar"></div>
-        <div id="elapsed" class="elapsed">0s</div>
-      </div>
-    </section>
-
-    <section class="card" id="quiz-card">
-      <div class="meta">
-        <span id="metaText" class="meta-text">Press Start Quiz</span>
-        <span class="spacer"></span>
-        <span id="today" class="meta-date"></span>
-      </div>
-
-      <div id="question" class="question"></div>
-      <div id="options" class="options"></div>
-      <div id="feedback" class="feedback"></div>
-      <div id="gameOver" class="gameover"></div>
-
-      <div class="cta-row">
-        <button id="startBtn" class="btn primary">Start Quiz</button>
-        <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
-        <button id="shareBtn" class="btn outline">Share</button>
-        <button id="playAgain" class="btn playagain">Play Again</button>
-      </div>
-    </section>
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    © 2025 BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a> •
-    <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
-  </footer>
-
-  <!-- Firebase Config -->
   <script src="/firebase-config.js"></script>
   <script src="/app.js"></script>
-
-  <!-- SW -->
   <script>
+    // Register core SW
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js')
-        .catch(err => console.log('SW failed', err));
+        .catch(err => console.log('SW reg failed', err));
     }
   </script>
 </body>
