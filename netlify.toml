@@ -5,7 +5,6 @@
 [build.environment]
   NODE_VERSION = "18"
 
-# Cache icons & manifest
 [[headers]]
   for = "/icon-*.png"
   [headers.values]
@@ -26,7 +25,6 @@
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
 
-# Don’t cache SWs
 [[headers]]
   for = "/service-worker.js"
   [headers.values]
