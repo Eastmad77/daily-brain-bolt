@@ -1,154 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Privacy Policy • Brain ⚡ Bolt</title>
+<!-- Brain ⚡ Bolt header graphic — subtle tech lines & glow -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 420" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Deep header base -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0e1e27"/>
+      <stop offset="100%" stop-color="#0c1920"/>
+    </linearGradient>
 
-  <!-- Icons / PWA -->
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" sizes="192x192" href="/icon-192.png">
-  <link rel="icon" sizes="512x512" href="/icon-512.png">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022">
+    <!-- Cyan glow accents -->
+    <radialGradient id="glowCyan" cx="75%" cy="20%" r="60%">
+      <stop offset="0%" stop-color="rgba(74,201,255,0.32)"/>
+      <stop offset="60%" stop-color="rgba(74,201,255,0.08)"/>
+      <stop offset="100%" stop-color="rgba(74,201,255,0)"/>
+    </radialGradient>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css">
+    <!-- Orange glow -->
+    <radialGradient id="glowOrange" cx="20%" cy="85%" r="55%">
+      <stop offset="0%" stop-color="rgba(255,140,0,0.25)"/>
+      <stop offset="60%" stop-color="rgba(255,140,0,0.06)"/>
+      <stop offset="100%" stop-color="rgba(255,140,0,0)"/>
+    </radialGradient>
 
-  <!-- App (optional if you don’t need JS here) -->
-  <script src="/firebase-config.js"></script>
-  <script defer src="/app.js"></script>
-</head>
-<body>
-  <!-- Topbar -->
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-  </div>
+    <!-- Tech stroke color -->
+    <linearGradient id="tech" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="rgba(74,201,255,0.55)"/>
+      <stop offset="100%" stop-color="rgba(74,201,255,0.15)"/>
+    </linearGradient>
+  </defs>
 
-  <!-- Slide-out Menu -->
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <ul>
-      <li><a href="/index.html">Home</a></li>
-      <li><a href="/menu.html">Menu</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-    </ul>
-  </nav>
+  <!-- Base -->
+  <rect width="1600" height="420" fill="url(#bg)"/>
 
-  <header class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-inner">
-      <h1>Privacy Policy</h1>
-      <p class="subtitle">Last updated: 2025-09-12</p>
-    </div>
-  </header>
+  <!-- Glows -->
+  <rect width="1600" height="420" fill="url(#glowCyan)"/>
+  <rect width="1600" height="420" fill="url(#glowOrange)"/>
 
-  <main class="container">
-    <section class="card">
-      <h2>Overview</h2>
-      <p>
-        Brain ⚡ Bolt (“we”, “us”, “our”) respects your privacy. This policy explains what data we collect,
-        how we use it, and your choices. By using our website or app (the “Service”), you agree to this policy.
-      </p>
-    </section>
+  <!-- Soft tech lines -->
+  <g stroke="url(#tech)" stroke-width="2" stroke-linecap="round" opacity="0.5">
+    <path d="M50 100h220m40 0h140m60 0h200m60 0h260"/>
+    <path d="M110 180h160m50 0h100m60 0h260m40 0h290"/>
+    <path d="M140 260h200m40 0h180m40 0h200m80 0h220"/>
+    <path d="M200 340h240m40 0h120m80 0h300m60 0h160"/>
+  </g>
 
-    <section class="card">
-      <h2>What We Collect</h2>
-      <ul>
-        <li><strong>Usage data (minimal):</strong> basic analytics such as page views or feature usage (aggregated/anonymous).</li>
-        <li><strong>Quiz session data:</strong> when you finish a game, we may store the date, score, elapsed time, and non-identifying session info in our database to power leaderboards and trends.</li>
-        <li><strong>Notifications (optional):</strong> if you enable web push, your browser may create a device token so we can send a “daily quiz is ready” message.</li>
-        <li><strong>Sign-in (optional):</strong> if you choose to sign in (e.g., with Google), we receive your basic profile (name, email, avatar) for account features like syncing progress.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>How We Use Data</h2>
-      <ul>
-        <li>Provide and improve the quiz experience.</li>
-        <li>Deliver optional daily notifications (if you opted in).</li>
-        <li>Maintain security, debug issues, and prevent abuse.</li>
-        <li>Offer account features like saved progress (if signed in).</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Legal Bases</h2>
-      <p>
-        If you are in the EEA/UK, our legal bases include: <em>legitimate interests</em> (to operate and improve the Service),
-        <em>consent</em> (for notifications and sign-in), and <em>contract</em> (to provide features you request).
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Sharing & Service Providers</h2>
-      <p>
-        We do not sell your data. We may use trusted providers to host infrastructure or deliver services (e.g., Firebase for
-        authentication, database, and notifications). These providers process data on our behalf under appropriate safeguards.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Data Retention</h2>
-      <p>
-        We retain data only as long as necessary to provide the Service and for legitimate business needs (troubleshooting,
-        legal compliance). You may request deletion of your account data if you signed in.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Security</h2>
-      <p>
-        We use reasonable administrative, technical, and organizational measures to protect data. No system is 100% secure.
-        Please use strong, unique passwords for any connected accounts.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Your Choices & Rights</h2>
-      <ul>
-        <li><strong>Notifications:</strong> you can enable/disable web push in your browser settings and within the app.</li>
-        <li><strong>Access/Deletion:</strong> if you signed in, you can request access or deletion of your account data.</li>
-        <li><strong>Consent withdrawal:</strong> you may withdraw consent (e.g., notifications, sign-in) at any time.</li>
-        <li><strong>Regional rights:</strong> depending on your location (e.g., EEA/UK/California), you may have additional rights such as data portability or objection. Contact us to exercise your rights.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Children’s Privacy</h2>
-      <p>
-        The Service is not directed to children under the age of 13, and we do not knowingly collect personal information from them.
-        If you believe a child has provided us personal information, please contact us and we will delete it.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>International Transfers</h2>
-      <p>
-        Your information may be processed in countries other than your own. We implement appropriate safeguards for such transfers
-        where required by law.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Changes to This Policy</h2>
-      <p>
-        We may update this policy from time to time. Material changes will be highlighted within the Service and the “Last updated” date will change.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Contact</h2>
-      <p>
-        Questions or requests? Email us at
-        <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>.
-      </p>
-    </section>
-  </main>
-
-  <footer class="footer">
-    © 2025 Brain ⚡ Bolt •
-    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+  <!-- Faint nodes -->
+  <g fill="#4ac9ff" opacity="0.35">
+    <circle cx="320" cy="100" r="3"/>
+    <circle cx="960" cy="100" r="3"/>
+    <circle cx="720" cy="180" r="3"/>
+    <circle cx="1340" cy="260" r="3"/>
+    <circle cx="540" cy="340" r="3"/>
+    <circle cx="1180" cy="340" r="3"/>
+  </g>
+</svg>
