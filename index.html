@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brain ⚡ Bolt</title>
+  <title>Brain <span class="bolt">⚡</span> Bolt</title>
 
   <!-- PWA / Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -11,9 +11,8 @@
   <link rel="icon" sizes="512x512" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022" />
+  <meta name="theme-color" content="#152021" />
 
-  <!-- Social -->
   <meta property="og:title" content="Brain ⚡ Bolt">
   <meta property="og:description" content="Daily trivia, riddles & logic challenges. Keep your streak alive!">
   <meta property="og:type" content="website">
@@ -21,18 +20,22 @@
   <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.svg">
   <meta name="twitter:card" content="summary_large_image">
 
-  <!-- Styles -->
   <link rel="stylesheet" href="/style.css" />
-
-  <!-- App scripts (config first) -->
   <script src="/firebase-config.js"></script>
   <script defer src="/app.js"></script>
+
+  <style>
+    /* Hide body until splash ends (prevents content flash) */
+    body.splash-lock { overflow: hidden; height: 100vh; }
+    main, header, .topbar, footer { visibility: hidden; }
+    body.ready main, body.ready header, body.ready .topbar, body.ready footer { visibility: visible; }
+  </style>
 </head>
-<body>
-  <!-- Splash (animated; title appears mid-way) -->
+<body class="splash-lock">
+  <!-- Solid blue animated splash (icon → title swap) -->
   <div id="splash">
     <div class="splash-inner">
-      <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
+      <img src="/app-icon.svg" alt="Logo" class="splash-logo" />
       <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
     </div>
   </div>
@@ -40,14 +43,18 @@
   <!-- Topbar -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
+    <div class="topbar-right">
+      <button id="notifyBtn" class="btn tiny outline">Notify</button>
+      <button id="signInBtn" class="btn tiny outline">Sign in</button>
+      <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
+      <button id="themeBtn" class="btn tiny outline">Theme</button>
+    </div>
   </div>
 
   <!-- Slide-out Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html" class="menu-home">Home</a></li>
-      <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
@@ -58,7 +65,6 @@
 
   <!-- Header -->
   <header class="hero">
-    <div class="hero-overlay"></div>
     <div class="hero-inner">
       <h1 class="hero-title">Brain <span class="bolt">⚡</span> Bolt</h1>
       <p class="subtitle">Your Daily Challenge</p>
@@ -68,42 +74,31 @@
   <!-- Main -->
   <main class="container">
     <section id="daily" class="card">
-      <!-- Status strip -->
       <div class="status-bar">
         <span id="dateLabel"></span>
         <span id="setLabel">Ready</span>
       </div>
 
-      <!-- Countdown (3…2…1) -->
       <div id="countdown" class="countdown" aria-live="polite" style="display:none;"></div>
 
-      <!-- Timer (orange, smooth) + elapsed (discreet) -->
       <div id="timerWrapper" class="timer-wrap" aria-hidden="true">
         <div id="timerBar" class="timer-bar"></div>
         <span id="elapsedTime" class="elapsed">0s</span>
       </div>
 
-      <!-- Question panel -->
       <div id="questionBox" class="question-box">Press Start Quiz</div>
-
-      <!-- Answers -->
       <div id="choices" class="choices"></div>
-
-      <!-- Game Over (appears inside panel area) -->
       <div id="gameOverBox" class="game-over" style="display:none;">Game Over</div>
 
-      <!-- Actions -->
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <button id="themeBtn" class="btn outline">Theme</button>
         <button id="playAgainBtn" class="btn again" style="display:none;">Play Again</button>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     © 2025 Brain ⚡ Bolt •
     <a href="/about.html" class="footer-link">About</a> •
@@ -112,21 +107,29 @@
     <a href="/contact.html" class="footer-link">Contact</a>
   </footer>
 
-  <!-- SW registration + Splash autoclose -->
+  <!-- SW registration + Splash timing -->
   <script>
-    // Splash sequence (logo first, title fades in mid-way)
+    // Splash sequence: icon first, title mid-way, then unlock UI
     window.addEventListener('load', () => {
       const s = document.getElementById('splash');
+      const body = document.body;
       s?.classList.add('show');
-      setTimeout(() => s?.classList.add('show-title'), 900);
-      setTimeout(() => s?.classList.add('hide'), 2200);
+      // beep + vibrate lightly as it animates
+      try { navigator.vibrate && navigator.vibrate(30); } catch(e){}
+      setTimeout(() => {
+        s?.classList.add('show-title');
+        try { navigator.vibrate && navigator.vibrate([20,30,20]); } catch(e){}
+      }, 800);
+      setTimeout(() => {
+        s?.classList.add('hide');
+        body.classList.add('ready');
+        body.classList.remove('splash-lock');
+      }, 1800);
     });
 
-    // Register Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js')
-          .catch(err => console.log('SW reg failed:', err));
+        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
       });
     }
   </script>
