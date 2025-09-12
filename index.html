@@ -1,68 +1,36 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brain ⚡ Bolt — Daily Quiz</title>
+  <title>Privacy Policy • Brain ⚡ Bolt</title>
 
   <!-- Icons / PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="icon" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" sizes="512x512" href="/icon-512.png">
+  <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#0E1E27">
-
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#162022">
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css">
 
-  <!-- Papa Parse (CSV) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
-  <!-- App -->
+  <!-- App (optional if you don’t need JS here) -->
+  <script src="/firebase-config.js"></script>
   <script defer src="/app.js"></script>
 </head>
 <body>
-
-  <!-- Splash (animated, does not auto-start game) -->
-  <div id="splash" class="splash" aria-hidden="true">
-    <div class="spark">
-      <div class="spark-logo"></div>
-      <div class="spark-title">
-        <span>Brain</span>
-        <svg class="bolt" width="30" height="30" viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M13 2L3 14h7l-1 8 11-13h-7l0-7z" fill="var(--blue)" stroke="var(--orange)" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
-        <span>Bolt</span>
-      </div>
-      <div class="spark-line"></div>
-    </div>
-  </div>
-
-  <!-- Top bar -->
+  <!-- Topbar -->
   <div class="topbar">
-    <button id="menuBtn" class="menu-btn" aria-label="Open menu" title="Menu">☰</button>
-
-    <div class="topbar-right">
-      <button id="soundBtn" class="icon-btn" aria-label="Sound on/off" title="Sound">
-        🔊
-      </button>
-      <button id="themeBtn" class="icon-btn" aria-label="Toggle theme" title="Theme">
-        🌓
-      </button>
-    </div>
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
 
   <!-- Slide-out Menu -->
-  <nav id="sideMenu" class="side-menu" aria-hidden="true">
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
-      <li><a href="/index.html" id="homeLink">Home</a></li>
+      <li><a href="/index.html">Home</a></li>
       <li><a href="/menu.html">Menu</a></li>
-      <li><a href="/pro.html">Go Pro</a></li>
-      <li><button id="notifyBtn" class="linklike" type="button">Enable Notifications</button></li>
-      <li><button id="signinBtn" class="linklike" type="button">Sign in with Google</button></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
@@ -70,86 +38,117 @@
     </ul>
   </nav>
 
-  <!-- Header -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <div class="hero-title">
-        <!-- (Removed favicon image on homepage as requested) -->
-        <h1>
-          <span>Brain</span>
-          <svg class="bolt mid" width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M13 2L3 14h7l-1 8 11-13h-7l0-7z" fill="var(--blue)" stroke="var(--orange)" stroke-width="1.5" stroke-linejoin="round"/>
-          </svg>
-          <span>Bolt</span>
-        </h1>
-      </div>
-      <p class="subtitle">Shock your synapses daily ⚡ Keep your streak alive.</p>
+      <h1>Privacy Policy</h1>
+      <p class="subtitle">Last updated: 2025-09-12</p>
     </div>
   </header>
 
   <main class="container">
-    <!-- Score / Progress -->
-    <section class="card bar-card">
-      <div class="bar-top">
-        <div><strong>Score:</strong> <span id="score">0</span></div>
-        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
-      </div>
-      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+    <section class="card">
+      <h2>Overview</h2>
+      <p>
+        Brain ⚡ Bolt (“we”, “us”, “our”) respects your privacy. This policy explains what data we collect,
+        how we use it, and your choices. By using our website or app (the “Service”), you agree to this policy.
+      </p>
     </section>
 
-    <!-- Status + Date + Timer -->
-    <section class="card" id="quiz-card">
-      <div class="meta">
-        <span id="metaText" class="meta-text">Ready</span>
-        <span class="spacer"></span>
-        <span id="today" class="meta-date"></span>
-      </div>
+    <section class="card">
+      <h2>What We Collect</h2>
+      <ul>
+        <li><strong>Usage data (minimal):</strong> basic analytics such as page views or feature usage (aggregated/anonymous).</li>
+        <li><strong>Quiz session data:</strong> when you finish a game, we may store the date, score, elapsed time, and non-identifying session info in our database to power leaderboards and trends.</li>
+        <li><strong>Notifications (optional):</strong> if you enable web push, your browser may create a device token so we can send a “daily quiz is ready” message.</li>
+        <li><strong>Sign-in (optional):</strong> if you choose to sign in (e.g., with Google), we receive your basic profile (name, email, avatar) for account features like syncing progress.</li>
+      </ul>
+    </section>
 
-      <!-- refined statusline hidden until needed -->
-      <div id="statusline" class="statusline" style="display:none;"></div>
+    <section class="card">
+      <h2>How We Use Data</h2>
+      <ul>
+        <li>Provide and improve the quiz experience.</li>
+        <li>Deliver optional daily notifications (if you opted in).</li>
+        <li>Maintain security, debug issues, and prevent abuse.</li>
+        <li>Offer account features like saved progress (if signed in).</li>
+      </ul>
+    </section>
 
-      <!-- Question area -->
-      <div id="question" class="question">Press “Start Quiz”</div>
-      <div id="options" class="options"></div>
+    <section class="card">
+      <h2>Legal Bases</h2>
+      <p>
+        If you are in the EEA/UK, our legal bases include: <em>legitimate interests</em> (to operate and improve the Service),
+        <em>consent</em> (for notifications and sign-in), and <em>contract</em> (to provide features you request).
+      </p>
+    </section>
 
-      <!-- Timer row -->
-      <div class="timer-row">
-        <div class="timer-track">
-          <div id="timerFill" class="timer-fill"></div>
-        </div>
-        <div id="elapsed" class="elapsed" aria-live="polite">0.0s</div>
-      </div>
+    <section class="card">
+      <h2>Sharing & Service Providers</h2>
+      <p>
+        We do not sell your data. We may use trusted providers to host infrastructure or deliver services (e.g., Firebase for
+        authentication, database, and notifications). These providers process data on our behalf under appropriate safeguards.
+      </p>
+    </section>
 
-      <!-- Controls -->
-      <div class="cta-row">
-        <button id="startBtn" class="btn primary">Start Quiz</button>
-        <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
-        <button id="shareBtn" class="btn outline">Share</button>
-      </div>
+    <section class="card">
+      <h2>Data Retention</h2>
+      <p>
+        We retain data only as long as necessary to provide the Service and for legitimate business needs (troubleshooting,
+        legal compliance). You may request deletion of your account data if you signed in.
+      </p>
+    </section>
 
-      <!-- After-round feedback & actions -->
-      <div id="feedback" class="feedback" aria-live="polite"></div>
-      <div class="cta-row">
-        <button id="playAgain" class="btn outline" style="display:none;">Play again</button>
-      </div>
+    <section class="card">
+      <h2>Security</h2>
+      <p>
+        We use reasonable administrative, technical, and organizational measures to protect data. No system is 100% secure.
+        Please use strong, unique passwords for any connected accounts.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Your Choices & Rights</h2>
+      <ul>
+        <li><strong>Notifications:</strong> you can enable/disable web push in your browser settings and within the app.</li>
+        <li><strong>Access/Deletion:</strong> if you signed in, you can request access or deletion of your account data.</li>
+        <li><strong>Consent withdrawal:</strong> you may withdraw consent (e.g., notifications, sign-in) at any time.</li>
+        <li><strong>Regional rights:</strong> depending on your location (e.g., EEA/UK/California), you may have additional rights such as data portability or objection. Contact us to exercise your rights.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Children’s Privacy</h2>
+      <p>
+        The Service is not directed to children under the age of 13, and we do not knowingly collect personal information from them.
+        If you believe a child has provided us personal information, please contact us and we will delete it.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>International Transfers</h2>
+      <p>
+        Your information may be processed in countries other than your own. We implement appropriate safeguards for such transfers
+        where required by law.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Changes to This Policy</h2>
+      <p>
+        We may update this policy from time to time. Material changes will be highlighted within the Service and the “Last updated” date will change.
+      </p>
+    </section>
+
+    <section class="card">
+      <h2>Contact</h2>
+      <p>
+        Questions or requests? Email us at
+        <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>.
+      </p>
     </section>
   </main>
 
   <footer class="footer">
-    © <span id="year"></span> Brain ⚡ Bolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
-  </footer>
-
-  <!-- 3-second countdown overlay -->
-  <div id="countdown" class="countdown" hidden>
-    <div class="count-wrap">
-      <div id="countNum" class="count-num">3</div>
-    </div>
-  </div>
-
-</body>
-</html>
+    © 2025 Brain ⚡ Bolt •
+    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
