@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>BrainBolt</title>
+  <title>Brain Bolt</title>
 
   <!-- PWA / Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
@@ -15,6 +15,19 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <!-- Splash (homepage only) -->
+  <div id="splash" class="splash">
+    <div class="splash-inner">
+      <div class="splash-logo">
+        <img src="/app-icon.svg" alt="" />
+      </div>
+      <div class="splash-title" aria-hidden="true">
+        <span>Brain&nbsp;Bo<tspan class="bolt">⚡</span>t</span>
+      </div>
+      <div class="splash-sub">12 fresh sparks, every day.</div>
+    </div>
+  </div>
+
   <!-- Topbar -->
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu" title="Menu">☰</button>
@@ -24,10 +37,11 @@
     </div>
   </div>
 
-  <!-- Side Menu (auto-hides after 5s if no interaction) -->
+  <!-- Side Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
+      <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
@@ -43,8 +57,8 @@
     <div class="hero-overlay"></div>
     <div class="hero-inner">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" />
-        <h1><img class="favicon-inline" src="/favicon.svg" alt="">BrainBolt</h1>
+        <img src="/app-icon.svg" alt="Brain Bolt Icon" class="app-icon-large" />
+        <h1><img class="favicon-inline" src="/favicon.svg" alt="">Brain&nbsp;Bo<span class="bolt">⚡</span>t</h1>
       </div>
       <p class="subtitle">Your daily dose of trivia sparks — 12 questions, one streak.</p>
     </div>
@@ -71,7 +85,7 @@
       </div>
       <div id="statusline" class="statusline"></div>
 
-      <!-- Question display: “Press Start Quiz” when idle -->
+      <!-- Question display -->
       <div id="question" class="question shape-blue">Press Start Quiz</div>
 
       <!-- Choices -->
@@ -92,7 +106,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    © 2025 BrainBolt •
+    © 2025 Brain&nbsp;Bo<span class="bolt">⚡</span>t •
     <a class="footer-link" href="/about.html">About</a> •
     <a class="footer-link" href="/terms.html">Terms</a> •
     <a class="footer-link" href="/privacy.html">Privacy</a> •
