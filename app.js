@@ -1,10 +1,11 @@
-/* BrainBolt – app.js (clean build) */
+/* Brain Bolt – app.js */
 
-/** CSV endpoints (LIVE / BANK) – make sure the doc is Published to web */
+/** CSV endpoints (LIVE / BANK) */
 const LIVE_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
 const BANK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
 /** Elements */
+const elSplash = document.getElementById('splash');
 const elQ = document.getElementById('question');
 const elOpts = document.getElementById('options');
 const elMetaText = document.getElementById('metaText');
@@ -22,15 +23,15 @@ const btnShuffle = document.getElementById('shuffleBtn');
 const btnShare = document.getElementById('shareBtn');
 const btnMenu = document.getElementById('mmMenuBtn');
 const sideMenu = document.getElementById('mmSideMenu');
-const btnSignIn = document.getElementById('btnSignIn');
-const btnNotify = document.getElementById('btnNotify');
+const btnSignIn = document.getElementById('btnSignIn') || document.getElementById('btnSignIn2');
+const btnNotify = document.getElementById('btnNotify') || document.getElementById('btnNotify2');
 const themeToggle = document.getElementById('themeToggle');
 const muteBtn = document.getElementById('muteBtn');
 
 /** Date */
 const now = new Date();
 const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
-elToday.textContent = todayKey;
+if (elToday) elToday.textContent = todayKey;
 
 /** State */
 let todays=[], idx=0, score=0, selected=null;
@@ -38,6 +39,18 @@ let inRound=false, wrongStreak=0;
 let timerRAF=null, startTs=null, elapsedTimer=null;
 const ROUND_MS = 10000; // 10s
 let muted=false;
+
+/** Splash control (homepage only) */
+(function splashShow(){
+  if (!elSplash) return; // not on this page
+  // Animate: show logo first, then title halfway, then fade out
+  setTimeout(()=>{ document.querySelector('.splash-title')?.style.setProperty('opacity','1'); }, 600);
+  setTimeout(()=>{ document.querySelector('.splash-sub')?.style.setProperty('opacity','1'); }, 850);
+  setTimeout(()=>{
+    elSplash.style.opacity='0';
+    setTimeout(()=>{ elSplash.remove(); }, 350);
+  }, 1700);
+})();
 
 /** Menu open/close + auto-hide */
 let menuTimer=null;
@@ -69,7 +82,7 @@ muteBtn?.addEventListener('click', ()=>{
 });
 
 /** Utilities */
-function status(msg){ elStatus.textContent = msg; console.log('[APP]', msg); }
+function status(msg){ if (elStatus) elStatus.textContent = msg; console.log('[APP]', msg); }
 const norm = s => String(s||'').trim();
 function play(id){
   if (muted) return;
@@ -90,7 +103,7 @@ function parseCSV(text){
   const lines = text.split(/\r?\n/).filter(l => l.trim().length);
   const headers = lines[0].split(',').map(h=>h.trim());
   const rows = lines.slice(1).map(line => {
-    // very simple CSV split; assumes no embedded commas in values
+    // simple split (assumes no embedded commas)
     const cols = line.split(',');
     const obj={};
     headers.forEach((h,i)=> obj[h]=cols[i]!==undefined?cols[i].trim():'');
@@ -114,20 +127,21 @@ async function buildSet(){
     }
     idx=0; score=0; wrongStreak=0; selected=null; inRound=false;
     updateMeta();
-    elQ.textContent = 'Press Start Quiz';
-    elOpts.innerHTML = '';
-    elFB.innerHTML = '';
-    elPlayAgain.style.display='none';
+    if (elQ) elQ.textContent = 'Press Start Quiz';
+    if (elOpts) elOpts.innerHTML = '';
+    if (elFB) elFB.innerHTML = '';
+    if (elPlayAgain) elPlayAgain.style.display='none';
     resetTimerBar();
   }catch(err){
     console.error(err);
     status('Couldn’t load CSV. Ensure sheet is Published to the web.');
-    elQ.textContent = 'Press Start Quiz';
+    if (elQ) elQ.textContent = 'Press Start Quiz';
   }
 }
 
 /** Meta/Progress */
 function updateMeta(){
+  if (!elProgText || !elProgFill || !elScore) return;
   elProgText.textContent = `${idx}/${todays.length||0}`;
   const pct = (todays.length ? (idx/todays.length) : 0) * 100;
   elProgFill.style.width = `${pct}%`;
@@ -135,24 +149,23 @@ function updateMeta(){
 }
 
 /** Timer */
-function resetTimerBar(){ cancelAnimationFrame(timerRAF); elTimer.style.width='0%'; startTs=null; }
+function resetTimerBar(){ cancelAnimationFrame(timerRAF); if (elTimer) elTimer.style.width='100%'; startTs=null; }
 function startTimer(){
   resetTimerBar();
   startTs = performance.now();
   const step = (ts)=>{
     const t = ts - startTs;
     const p = Math.min(1, t/ROUND_MS);
-    elTimer.style.width = `${(1-p)*100}%`; // right-to-left feel
+    if (elTimer) elTimer.style.width = `${(1-p)*100}%`; // right-to-left fill
     if (p<1 && inRound) { timerRAF = requestAnimationFrame(step); }
-    else if (p>=1 && inRound) { // time up ⇒ treat as wrong
-      onReveal(false, null, true);
-    }
+    else if (p>=1 && inRound) { onReveal(false, null, true); }
   };
   timerRAF = requestAnimationFrame(step);
 }
 function startElapsed(){
   const t0 = Date.now();
   clearInterval(elapsedTimer);
+  if (!elElapsed) return;
   elapsedTimer = setInterval(()=>{
     const s = Math.floor((Date.now()-t0)/1000);
     elElapsed.textContent = s+'s';
@@ -164,17 +177,17 @@ function stopElapsed(){ clearInterval(elapsedTimer); }
 function showQuestion(){
   const q = todays[idx];
   if (!q){
-    elFB.innerHTML = `<div class="gameover">Nice! Done for today.</div>`;
-    elPlayAgain.style.display='inline-flex';
+    if (elFB) elFB.innerHTML = `<div class="gameover">Nice! Done for today.</div>`;
+    if (elPlayAgain) elPlayAgain.style.display='inline-flex';
     return;
   }
   inRound = true;
   wrongStreak = 0;
-  elFB.innerHTML='';
-  elPlayAgain.style.display='none';
-  elMetaText.textContent = `${q.Difficulty||'—'} • ${q.Category||'Quiz'}`;
-  elQ.textContent = q.Question || '—';
-  elOpts.innerHTML = '';
+  if (elFB) elFB.innerHTML='';
+  if (elPlayAgain) elPlayAgain.style.display='none';
+  if (elMetaText) elMetaText.textContent = `${q.Difficulty||'—'} • ${q.Category||'Quiz'}`;
+  if (elQ) elQ.textContent = q.Question || '—';
+  if (elOpts) elOpts.innerHTML = '';
   const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
   opts.forEach((optText)=>{
     const btn = document.createElement('button');
@@ -183,7 +196,7 @@ function showQuestion(){
     btn.onmouseenter = ()=> btn.style.background='var(--blue-2, #4AC9FF20)';
     btn.onmouseleave = ()=> btn.style.background='';
     btn.onclick = ()=> onSelect(btn, optText);
-    elOpts.appendChild(btn);
+    elOpts?.appendChild(btn);
   });
   startTimer();
 }
@@ -200,7 +213,7 @@ function onSelect(btn, val){
   onReveal(correct, btn, false);
 }
 
-/** Reveal logic (no explicit button; auto) */
+/** Reveal logic */
 function onReveal(isCorrect, btn, timedOut){
   inRound=false;
   cancelAnimationFrame(timerRAF);
@@ -217,13 +230,12 @@ function onReveal(isCorrect, btn, timedOut){
     play('sndWrong'); vibrate(80);
     wrongStreak++;
     if (wrongStreak>=2 || timedOut){
-      // Game over after two consecutive wrong OR timeout counts as wrong
       stopElapsed();
-      elFB.innerHTML = `<div class="gameover">Game Over</div>`;
-      elPlayAgain.style.display='inline-flex';
+      if (elFB) elFB.innerHTML = `<div class="gameover">Game Over</div>`;
+      if (elPlayAgain) elPlayAgain.style.display='inline-flex';
       document.querySelectorAll('.choice').forEach(b=>{ b.classList.add('disabled'); b.disabled=true; });
     } else {
-      // restart same question (do not show correct answer)
+      // restart same question
       setTimeout(()=>{
         inRound=true;
         document.querySelectorAll('.choice').forEach(b=>{ b.classList.remove('wrong','selected'); });
@@ -242,11 +254,7 @@ btnShuffle?.addEventListener('click', async ()=>{
   await buildSet();
 });
 btnShare?.addEventListener('click', async ()=>{
-  const shareData = {
-    title:'BrainBolt',
-    text:`I’m playing BrainBolt! Can you beat my score?`,
-    url: location.origin + '/'
-  };
+  const shareData = { title:'Brain Bolt', text:`I’m playing Brain Bolt! Can you beat my score?`, url: location.origin + '/' };
   try{
     if (navigator.share) await navigator.share(shareData);
     else alert('Share not supported on this device.');
@@ -256,16 +264,15 @@ elPlayAgain?.addEventListener('click', ()=>{
   buildSet().then(()=>{ /* wait for Start */ });
 });
 
-/** Firebase hooks (optional) */
-btnSignIn?.addEventListener('click', async ()=>{
-  if (!window.FB_CONFIG){ alert('Sign-in not configured.'); return; }
-  alert('Sign-in is disabled in this clean build. Add Firebase code when ready.');
+/** Firebase placeholders (safe) */
+btnSignIn?.addEventListener('click', ()=>{
+  alert('Sign-in disabled in this build. Configure Firebase to enable.');
 });
 btnNotify?.addEventListener('click', async ()=>{
   if (!('Notification' in window)) return alert('Notifications not supported.');
   const perm = await Notification.requestPermission();
   if (perm!=='granted') return alert('Notifications not enabled.');
-  new Notification('BrainBolt', { body:'You’ll get a ping when the daily quiz is ready!', icon:'/icon-192.png' });
+  new Notification('Brain Bolt', { body:'You’ll get a ping when the daily quiz is ready!', icon:'/icon-192.png' });
 });
 
 /** Boot */
