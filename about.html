@@ -1,30 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>About • BrainBolt</title>
-
+  <title>About • Brain ⚡ Bolt</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022" />
-  <link rel="stylesheet" href="/style.css" />
+  <meta name="theme-color" content="#162022">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .brand-title h1 .bolt{ color: rgb(74,201,255); -webkit-text-stroke: 2px rgb(255,140,0); text-shadow: 0 0 10px rgba(74,201,255,.35); }
+  </style>
 </head>
-<body data-theme="dark">
-  <!-- Topbar -->
+<body>
   <div class="topbar">
     <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
     <div class="topbar-right">
       <button id="themeToggle" class="btn outline small">Theme</button>
-      <button id="muteBtn" class="mute-btn" aria-label="Toggle sound">🔊</button>
+      <button id="muteBtn" class="mute-btn" aria-label="Mute/Unmute">🔊</button>
     </div>
   </div>
 
-  <!-- Side Menu -->
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
+      <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
@@ -35,40 +36,34 @@
     </ul>
   </nav>
 
-  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
-    <div class="hero-inner">
+    <div class="hero-inner brand-title">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large" />
-        <h1>About</h1>
+        <img src="/app-icon.svg" alt="" class="app-icon-large">
+        <h1>About • Brain <span class="bolt">⚡</span> Bolt</h1>
       </div>
-      <p class="subtitle">What makes BrainBolt spark?</p>
+      <p class="subtitle">What makes Brain ⚡ Bolt spark?</p>
     </div>
   </header>
 
   <main class="container">
-    <section class="card" style="text-align:center">
-      <p><strong>BrainBolt</strong> delivers 12 fresh questions every day across world trivia, language, and logic — calibrated for a fair mix of easy, medium, and hard.</p>
-      <p>Keep your streak, beat your best time, challenge your friends. Come back daily and shock your synapses ⚡.</p>
+    <section class="card">
+      <p><strong>Brain ⚡ Bolt</strong> delivers 12 fresh questions daily across trivia, riddles, language, and logic. Designed for quick play and long streaks.</p>
+      <p>Challenge friends, keep your streak, and get a little sharper every day.</p>
     </section>
   </main>
 
   <footer class="footer">
-    © 2025 BrainBolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a> •
+    © 2025 Brain <span class="bolt">⚡</span> Bolt •
+    <a class="footer-link" href="/about.html">About</a> •
+    <a class="footer-link" href="/terms.html">Terms</a> •
+    <a class="footer-link" href="/privacy.html">Privacy</a> •
+    <a class="footer-link" href="/contact.html">Contact</a> •
     <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
   </footer>
 
   <script src="/firebase-config.js"></script>
   <script src="/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-    }
-  </script>
 </body>
 </html>
