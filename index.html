@@ -3,37 +3,27 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brain Bolt</title>
-
-  <!-- PWA / Icons -->
+  <title>Brain ⚡ Bolt – Daily Quiz</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022" />
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css" />
+  <meta name="theme-color" content="#162022">
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .brand-title h1 .bolt{
+      color: rgb(74,201,255);
+      -webkit-text-stroke: 2px rgb(255,140,0);
+      text-shadow: 0 0 10px rgba(74,201,255,.35);
+    }
+  </style>
 </head>
 <body>
-  <!-- Splash (homepage only) -->
-  <div id="splash" class="splash">
-    <div class="splash-inner">
-      <div class="splash-logo">
-        <img src="/app-icon.svg" alt="" />
-      </div>
-      <div class="splash-title" aria-hidden="true">
-        <span>Brain&nbsp;Bo<tspan class="bolt">⚡</span>t</span>
-      </div>
-      <div class="splash-sub">12 fresh sparks, every day.</div>
-    </div>
-  </div>
-
   <!-- Topbar -->
   <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu" title="Menu">☰</button>
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
     <div class="topbar-right">
-      <button id="themeToggle" class="btn outline small" title="Toggle theme">Theme</button>
-      <button id="muteBtn" class="mute-btn" aria-label="Toggle sound" title="Sound">🔊</button>
+      <button id="themeToggle" class="btn outline small">Theme</button>
+      <button id="muteBtn" class="mute-btn" aria-label="Mute/Unmute">🔊</button>
     </div>
   </div>
 
@@ -52,61 +42,72 @@
     </ul>
   </nav>
 
-  <!-- Hero/Header -->
+  <!-- Splash (optional; hidden by app.js when complete) -->
+  <div id="splash" class="splash hidden">
+    <div class="splash-inner">
+      <img src="/app-icon.svg" alt="" class="splash-logo">
+      <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
+    </div>
+  </div>
+
+  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
-    <div class="hero-inner">
+    <div class="hero-inner brand-title">
       <div class="hero-title">
-        <img src="/app-icon.svg" alt="Brain Bolt Icon" class="app-icon-large" />
-        <h1><img class="favicon-inline" src="/favicon.svg" alt="">Brain&nbsp;Bo<span class="bolt">⚡</span>t</h1>
+        <img src="/app-icon.svg" alt="App Icon" class="app-icon-large" onerror="this.style.display='none'">
+        <h1>Brain <span class="bolt">⚡</span> Bolt</h1>
       </div>
-      <p class="subtitle">Your daily dose of trivia sparks — 12 questions, one streak.</p>
+      <p class="subtitle">Ignite your mind every day</p>
     </div>
   </header>
 
   <main class="container">
-    <!-- Stats Bar -->
+    <!-- Score/Progress bar card -->
     <section class="card bar-card">
       <div class="bar-top">
         <div><strong>Score:</strong> <span id="score">0</span></div>
-        <div class="elapsed-wrap"><strong>Elapsed:</strong> <span id="elapsed">0s</span></div>
         <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
       </div>
       <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
-      <div class="timer"><div id="timerFill" class="timer-fill"></div></div>
     </section>
 
-    <!-- Meta/Status + Question -->
+    <!-- Quiz card -->
     <section class="card" id="quiz-card">
       <div class="meta">
-        <span id="metaText" class="meta-text">Ready</span>
+        <span id="metaText" class="meta-text">Loading…</span>
         <span class="spacer"></span>
         <span id="today" class="meta-date"></span>
       </div>
-      <div id="statusline" class="statusline"></div>
+      <div id="statusline" class="status"></div>
 
-      <!-- Question display -->
-      <div id="question" class="question shape-blue">Press Start Quiz</div>
+      <!-- Question box -->
+      <div id="question" class="question">Press Start Quiz</div>
 
-      <!-- Choices -->
+      <!-- Options -->
       <div id="options" class="options"></div>
 
-      <!-- CTA row -->
+      <!-- Controls -->
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
+        <button id="showAnswerBtn" class="btn primary" style="display:none;">Show Answer</button>
+        <button id="playAgain" class="btn ghost" style="display:none;">Play again</button>
       </div>
 
-      <!-- Feedback + Game Over -->
+      <!-- Timer + elapsed -->
+      <div class="timers">
+        <div class="timer-wrap"><div id="timerBar" class="timer-bar"></div></div>
+        <div id="elapsed" class="elapsed">00:00</div>
+      </div>
+
       <div id="feedback" class="feedback" aria-live="polite"></div>
-      <button id="playAgain" class="btn ghost pulse" style="display:none;">Play again</button>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
-    © 2025 Brain&nbsp;Bo<span class="bolt">⚡</span>t •
+    © 2025 Brain <span class="bolt">⚡</span> Bolt •
     <a class="footer-link" href="/about.html">About</a> •
     <a class="footer-link" href="/terms.html">Terms</a> •
     <a class="footer-link" href="/privacy.html">Privacy</a> •
@@ -114,17 +115,7 @@
     <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
   </footer>
 
-  <!-- Sounds (optional) -->
-  <audio id="sndCorrect" preload="auto" src="/assets/correct.mp3"></audio>
-  <audio id="sndWrong" preload="auto" src="/assets/incorrect.mp3"></audio>
-
-  <!-- Scripts -->
   <script src="/firebase-config.js"></script>
   <script src="/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-    }
-  </script>
 </body>
 </html>
