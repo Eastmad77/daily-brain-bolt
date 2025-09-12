@@ -1,16 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+<!-- Brain Bolt App Icon (maskable-safe) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
   <defs>
+    <!-- Deep background to match header -->
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#0E1E27"/>
+      <stop offset="100%" stop-color="#0C1920"/>
+    </linearGradient>
+
+    <!-- Subtle cyan aura -->
+    <radialGradient id="aura" cx="50%" cy="38%" r="55%">
+      <stop offset="0%"  stop-color="rgba(74,201,255,0.45)"/>
+      <stop offset="60%" stop-color="rgba(74,201,255,0.18)"/>
+      <stop offset="100%" stop-color="rgba(74,201,255,0)"/>
+    </radialGradient>
+
+    <!-- Bolt fill/outline -->
     <linearGradient id="boltFill" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%"  stop-color="#4AC9FF"/>
       <stop offset="100%" stop-color="#1CA7E3"/>
     </linearGradient>
+    <linearGradient id="boltStroke" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"  stop-color="#FF9E22"/>
+      <stop offset="100%" stop-color="#FF8C00"/>
+    </linearGradient>
+
+    <!-- Very soft tech lines -->
+    <linearGradient id="tech" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="rgba(74,201,255,0.45)"/>
+      <stop offset="100%" stop-color="rgba(74,201,255,0.12)"/>
+    </linearGradient>
   </defs>
 
-  <!-- Background -->
-  <rect width="256" height="256" rx="56" fill="#162022"/>
+  <!-- Rounded square safe for maskable icons -->
+  <rect x="64" y="64" width="896" height="896" rx="220" fill="url(#bg)"/>
 
-  <!-- Lightning Bolt -->
-  <path d="M150 38 L94 128 L142 128 L112 218 L190 122 L140 122 Z"
-        fill="url(#boltFill)" stroke="#FF8C00" stroke-width="6"
-        style="filter: drop-shadow(0 8px 14px rgba(0,0,0,.35))"/>
+  <!-- Glow -->
+  <circle cx="512" cy="360" r="340" fill="url(#aura)"/>
+
+  <!-- Soft tech strokes (super subtle so it scales well) -->
+  <g stroke="url(#tech)" stroke-width="10" stroke-linecap="round" opacity=".35">
+    <path d="M210 310h160m40 0h180m60 0h200"/>
+    <path d="M260 480h200m60 0h200m60 0h140"/>
+    <path d="M220 650h220m40 0h200m60 0h160"/>
+  </g>
+
+  <!-- Lightning bolt (blue fill, orange outline) -->
+  <!-- Shape biased to center with good padding for maskable cropping -->
+  <path
+    d="M565 192 L388 496 h146 l-50 336 275 -420 h-168 l-26 -220 z"
+    fill="url(#boltFill)"
+    stroke="url(#boltStroke)"
+    stroke-width="26"
+    stroke-linejoin="round"
+    style="filter: drop-shadow(0 14px 28px rgba(0,0,0,.35)) drop-shadow(0 18px 34px rgba(74,201,255,.22));"
+  />
 </svg>
