@@ -3,62 +3,67 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pro • Brain ⚡ Bolt</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#0E1E27">
-  <link rel="stylesheet" href="/style.css">
+  <title>Go Pro • Brain ⚡ Bolt</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#162022" />
+  <link rel="stylesheet" href="/style.css" />
+  <script defer src="/app.js"></script>
 </head>
 <body>
-  <!-- Topbar -->
-  <div class="topbar"><button id="mmMenuBtn" class="menu-btn">☰</button></div>
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
-      <li><a href="/index.html">Home</a></li>
+      <li><a href="/index.html" class="menu-home">Home</a></li>
       <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
     </ul>
   </nav>
 
-  <header class="hero"><div class="hero-overlay"></div>
-    <div class="hero-inner"><h1>Brain ⚡ Bolt Pro</h1></div>
+  <header class="hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-inner">
+      <h1>Go Pro</h1>
+      <p class="subtitle">Unlock power features</p>
+    </div>
   </header>
 
   <main class="container">
     <section class="card">
-      <h2>Unlock More</h2>
-      <p>Go Pro to access extra features:</p>
-      <ul>
-        <li>Category-based quizzes (Trivia, Logic, Riddles)</li>
-        <li>Difficulty selection (Easy, Medium, Hard)</li>
-        <li>Track progress and stats</li>
-        <li>Early access to new game modes</li>
+      <ul class="feature-list">
+        <li>Pick categories & difficulty (not limited to daily set)</li>
+        <li>Streak insights & history</li>
+        <li>Early access to weekly packs</li>
+        <li>Ad-free experience</li>
+        <li>Push notifications with snooze</li>
       </ul>
-      <a href="https://YOUR_STRIPE_CHECKOUT_URL" class="btn primary">Go Pro</a>
+      <div class="cta-row">
+        <a class="btn primary wide" href="#" aria-disabled="true">Coming Soon</a>
+      </div>
     </section>
 
     <section class="card">
       <h2>Manage Your Subscription</h2>
-      <p>If purchased via the App Store or Google Play, manage in your store account.</p>
-      <p>If purchased directly, click below:</p>
+      <p>If you purchased via the App Store or Google Play, please manage your subscription through your store account.</p>
+      <p>If you purchased directly from us, click below to manage your subscription:</p>
       <a href="https://YOUR_STRIPE_PORTAL_URL" class="btn outline">Manage Subscription</a>
     </section>
   </main>
 
-  <footer class="footer">© 2025 Brain ⚡ Bolt •
-    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
+  <footer class="footer">
+    © 2025 Brain ⚡ Bolt •
+    <a href="/about.html" class="footer-link">About</a> •
+    <a href="/terms.html" class="footer-link">Terms</a> •
+    <a href="/privacy.html" class="footer-link">Privacy</a> •
+    <a href="/contact.html" class="footer-link">Contact</a>
   </footer>
-
-  <script>
-    const mmMenuBtn=document.getElementById('mmMenuBtn');
-    const mmSideMenu=document.getElementById('mmSideMenu');
-    mmMenuBtn?.addEventListener('click',()=>{mmSideMenu?.classList.add('open');setTimeout(()=>mmSideMenu?.classList.remove('open'),5000)});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')mmSideMenu?.classList.remove('open')});
-  </script>
 </body>
 </html>
