@@ -1,10 +1,18 @@
-/* Brain ⚡ Bolt — app.js (fixes + countdown + smooth timer + sound/vibration + menu) */
+/* Brain ⚡ Bolt – App core
+   Fixes:
+   - Splash every load (no auto-start)
+   - Working menu + buttons (shuffle/theme/home/sound)
+   - 3s countdown with beeps, then start quiz
+   - Timer smooth (orange), elapsed clock
+   - Improved chip contrast; green/red outline only
+   - Hides "loading today's set" under Ready
+*/
 
-/* ====== CONFIG: CSV URLs (make sure these are your live links) ====== */
-const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
-const BANK_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
+/* === CONFIG: your published CSVs (Live preferred, Bank fallback) === */
+const CSV_LIVE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
+const CSV_BANK = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
-/* ====== DOM ====== */
+/* === Elements === */
 const elQ = document.getElementById('question');
 const elOpts = document.getElementById('options');
 const elFB = document.getElementById('feedback');
@@ -12,271 +20,371 @@ const elMetaText = document.getElementById('metaText');
 const elToday = document.getElementById('today');
 const elProgText = document.getElementById('progressText');
 const elProgFill = document.getElementById('progressFill');
-const elScore = document.getElementById('score');
-const elStatus = document.getElementById('statusline');
 const elTimerFill = document.getElementById('timerFill');
-const elElapsed = document.getElementById('elapsed');
-const startBtn = document.getElementById('startBtn');
-const shuffleBtn = document.getElementById('shuffleBtn');
-const shareBtn = document.getElementById('shareBtn');
-const playAgainBtn = document.getElementById('playAgain');
-const menuBtn = document.getElementById('menuBtn');
-const sideMenu = document.getElementById('sideMenu');
-const soundBtn = document.getElementById('soundBtn');
-const themeBtn = document.getElementById('themeBtn');
+const elScore = document.getElementById('score');
+const elPlayAgain = document.getElementById('playAgain');
+const elStatus = document.getElementById('statusline');
+const elSubtitle = document.getElementById('subtitle');
 
+const btnStart = document.getElementById('startBtn');
+const btnShuffle = document.getElementById('shuffleBtn');
+const btnShare = document.getElementById('shareBtn');
+
+const btnMenu = document.getElementById('mmMenuBtn');
+const sideMenu = document.getElementById('mmSideMenu');
+const btnHome = document.getElementById('homeBtn');
+const btnTheme = document.getElementById('themeBtn');
+const btnSound = document.getElementById('soundBtn');
+
+const splash = document.getElementById('splash');
+
+/* === State === */
 const now = new Date();
 const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
-if (elToday) elToday.textContent = todayKey;
-const yearEl = document.getElementById('year'); if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+elToday.textContent = todayKey;
 
-/* ====== STATE ====== */
-let allRows = [], todays = [], idx = 0, score = 0;
-let selected = null, wrongStreak = 0;
-let quizStarted = false;
-let elapsedTimer = null, elapsedStartMs = 0;
-let roundTimer = null, roundMsLeft = 0;
-let soundOn = JSON.parse(localStorage.getItem('bb_sound') || 'true');
-updateSoundIcon();
+let allRows = [], todays = [];
+let idx = 0, score = 0;
+let selected = null;
+let timerDur = 10; // seconds
+let timerStart = null;
+let timerReq = null;
+let elapsedStart = null;
+let elapsedReq = null;
+let soundOn = true;
+let consecutiveWrong = 0;
+let hasStarted = false;
 
-function updateSoundIcon(){ if (soundBtn) soundBtn.textContent = soundOn ? '🔊' : '🔇'; }
-
-/* ====== AUDIO / VIBRATION ====== */
-let audioCtx = null;
-function ensureAudioCtx(){ if (!audioCtx) { try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} } }
-function beep(freq=440, ms=120, type='sine', gain=0.06){
-  if (!soundOn) return;
-  ensureAudioCtx(); if (!audioCtx) return;
-  const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  osc.type = type; osc.frequency.value = freq;
-  g.gain.value = gain;
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.start();
-  setTimeout(()=>{ osc.stop(); }, ms);
-}
-function buzz(pattern=[60,40,60]){ try{ navigator.vibrate && navigator.vibrate(pattern); }catch(e){} }
-
-/* ====== MENU ====== */
-let menuAutoHide = null;
-function openMenu(){
+/* === Menu / Buttons === */
+function openMenu() {
   sideMenu?.classList.add('open');
   sideMenu?.setAttribute('aria-hidden','false');
-  if (menuAutoHide) clearTimeout(menuAutoHide);
-  menuAutoHide = setTimeout(closeMenu, 5000);
+  // auto-hide after 5s
+  setTimeout(() => {
+    sideMenu?.classList.remove('open');
+    sideMenu?.setAttribute('aria-hidden','true');
+  }, 5000);
 }
-function closeMenu(){
+function closeMenu() {
   sideMenu?.classList.remove('open');
   sideMenu?.setAttribute('aria-hidden','true');
 }
-menuBtn?.addEventListener('click', openMenu);
+btnMenu?.addEventListener('click', openMenu);
+document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
 
-/* close menu if user taps outside (mobile) */
-document.addEventListener('click', (e)=>{
-  if (!sideMenu?.classList.contains('open')) return;
-  const within = sideMenu.contains(e.target) || e.target === menuBtn;
-  if (!within) closeMenu();
+btnHome?.addEventListener('click', () => { window.location.href = '/index.html'; });
+btnTheme?.addEventListener('click', () => {
+  // simple theme toggle by flipping bg variables
+  const r = document.documentElement;
+  const isAlt = r.dataset.alt === '1';
+  if (isAlt) {
+    r.style.setProperty('--bg', '#0E1E27');
+    r.style.setProperty('--bg-2', '#152B36');
+    r.dataset.alt = '0';
+  } else {
+    r.style.setProperty('--bg', '#0B1B22');
+    r.style.setProperty('--bg-2', '#0E2530');
+    r.dataset.alt = '1';
+  }
 });
-
-/* ====== THEME ====== */
-themeBtn?.addEventListener('click', ()=>{
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  const next = current === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', next);
-});
-
-/* ====== SOUND TOGGLE ====== */
-soundBtn?.addEventListener('click', ()=>{
+btnSound?.addEventListener('click', () => {
   soundOn = !soundOn;
-  localStorage.setItem('bb_sound', JSON.stringify(soundOn));
-  updateSoundIcon();
-  if (soundOn) { ensureAudioCtx(); beep(520,120,'sine',0.05); }
+  btnSound.textContent = soundOn ? '🔊' : '🔇';
 });
 
-/* ====== SPLASH ====== */
-window.addEventListener('load', ()=>{
-  const splash = document.getElementById('splash');
-  if (splash) setTimeout(()=> splash.remove(), 1800); // remove when animation ends
-});
-
-/* ====== CSV LOAD ====== */
-function status(msg){
-  if (!elStatus) return;
-  elStatus.textContent = msg;
-  elStatus.style.display = msg ? 'block' : 'none';
-  console.log('[CSV]', msg);
+/* === Audio (beeps) === */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function beep(freq=660, ms=110, volume=0.05){
+  if(!soundOn) return;
+  try {
+    if(!audioCtx) audioCtx = new AudioCtx();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    g.gain.value = volume;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start();
+    setTimeout(()=>{ o.stop(); }, ms);
+  } catch(e){}
 }
-const norm = s => String(s||'').trim();
+function vib(ms=30){
+  if(!soundOn) return;
+  if (navigator.vibrate) navigator.vibrate(ms);
+}
 
-async function loadCSVs(){
-  status('Loading questions…');
-  try{
-    const live = await loadCSV(LIVE_CSV_URL);
-    const bank = await loadCSV(BANK_CSV_URL);
-    const rows = (live.length ? live : bank).filter(r => r && r.Question);
-    allRows = rows;
-    todays = rows.filter(r => norm(r.Date) === todayKey);
-    if (!todays.length) {
-      // fallback: first 12 from rows
-      todays = rows.slice(0,12);
+/* === CSV Loader === */
+function status(msg){ elStatus.textContent = msg || ''; console.log('[CSV]', msg); }
+function norm(s){ return String(s||'').trim(); }
+
+async function loadCSV(url){
+  const res = await fetch(url, { cache: 'no-store' });
+  if(!res.ok) throw new Error(`HTTP ${res.status}`);
+  const text = await res.text();
+  return parseCSV(text);
+}
+function parseCSV(text){
+  // simple CSV parser (assumes no embedded commas in quoted fields)
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  const headers = lines.shift().split(',');
+  const data = lines.map(line=>{
+    // handle basic quoted commas
+    const cells = [];
+    let cur = '', inQ = false;
+    for (let i=0;i<line.length;i++){
+      const ch = line[i];
+      if (ch === '"' && line[i+1] === '"'){ cur+='"'; i++; continue; }
+      if (ch === '"'){ inQ = !inQ; continue; }
+      if (ch === ',' && !inQ){ cells.push(cur); cur=''; continue; }
+      cur += ch;
     }
-    status(''); // hide
-    elMetaText.textContent = "Ready";
-    updateMeta();
-    // DO NOT auto-start
-  }catch(e){
-    console.error(e);
-    status('Couldn’t load CSV. Check publish link & permissions.');
-    elMetaText.textContent = "Ready";
+    cells.push(cur);
+    const row = {};
+    headers.forEach((h,ix)=> row[h.trim()] = (cells[ix] ?? '').trim());
+    return row;
+  });
+  return data;
+}
+
+/* === Quiz control === */
+function updateMeta(){
+  elProgText.textContent = `${idx}/${todays.length || 0}`;
+  const pct = (todays.length ? (idx / todays.length) : 0) * 100;
+  elProgFill.style.width = `${pct}%`;
+  elScore.textContent = String(score);
+}
+function stopTimer(){
+  timerStart = null;
+  cancelAnimationFrame(timerReq);
+  elTimerFill.style.width = '0%';
+}
+function stopElapsed(){
+  elapsedStart = null;
+  cancelAnimationFrame(elapsedReq);
+}
+function runElapsed(){
+  if(!elapsedStart) elapsedStart = performance.now();
+  const t = performance.now();
+  const sec = (t - elapsedStart)/1000;
+  document.getElementById('elapsed').textContent = `${sec.toFixed(1)}s`;
+  elapsedReq = requestAnimationFrame(runElapsed);
+}
+function runTimer(){
+  if(!timerStart) timerStart = performance.now();
+  const t = performance.now();
+  const elapsed = (t - timerStart)/1000;
+  const remain = Math.max(0, timerDur - elapsed);
+  const pct = ((timerDur - remain)/timerDur)*100; // fill left->right
+  elTimerFill.style.width = `${pct}%`;
+  if (remain <= 0){
+    // time up -> wrong
+    markWrongAndAdvance(true);
+    return;
+  }
+  timerReq = requestAnimationFrame(runTimer);
+}
+
+function countdown3(cb){
+  // Fancy overlay countdown
+  const overlay = document.createElement('div');
+  overlay.className = 'count-overlay';
+  overlay.innerHTML = `<div class="count-badge"><span id="countNum">3</span></div>`;
+  document.body.appendChild(overlay);
+
+  let n = 3;
+  const tick = () => {
+    const el = document.getElementById('countNum');
+    if (!el) return;
+    el.textContent = String(n);
+    beep(660 - (3-n)*60, 100, 0.06);
+    if (n<=1){
+      setTimeout(()=>{
+        overlay.remove();
+        cb();
+      }, 350);
+    }
+    n--;
+    if (n>=1) setTimeout(tick, 800);
+  };
+  setTimeout(tick, 50);
+}
+
+/* Selection logic */
+function onSelect(btn, val){
+  if (!hasStarted) return; // ignore before start
+  document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selected = val;
+
+  // Auto-reveal: check immediately; apply outline color
+  const q = todays[idx];
+  if (!q) return;
+  const correct = norm(selected).toLowerCase() === norm(q.Answer).toLowerCase();
+  if (correct){
+    btn.classList.add('correct');
+    beep(760, 120, 0.07);
+    vib(30);
+    consecutiveWrong = 0;
+    setTimeout(()=>advance(true), 450);
+  } else {
+    btn.classList.add('wrong');
+    beep(260, 140, 0.06);
+    vib(90);
+    markWrongAndAdvance(false);
   }
 }
-function loadCSV(url){
-  return new Promise((resolve, reject)=>{
-    Papa.parse(url + (url.includes('?')?'&':'?') + "cb=" + Date.now(), {
-      download:true, header:true, skipEmptyLines:true,
-      complete: ({data}) => resolve(data||[]),
-      error: err => reject(err)
-    });
-  });
+
+function markWrongAndAdvance(fromTimeout){
+  consecutiveWrong++;
+  // first wrong -> reset same question
+  if (consecutiveWrong === 1){
+    setTimeout(()=>{
+      // Re-ask: do not show correct answer, just reset selections
+      showQuestion(); // same idx
+    }, 550);
+  } else {
+    // second wrong -> end game
+    endGame();
+  }
 }
 
-/* ====== QUIZ FLOW ====== */
-function resetRoundState(){
-  idx = 0; score = 0; selected = null; wrongStreak = 0;
-  if (!todays.length && allRows.length) todays = allRows.slice(0,12);
+function advance(isCorrect){
+  if (isCorrect) score++;
+  idx++;
   updateMeta();
-  elFB.innerHTML = '';
-  playAgainBtn.style.display = 'none';
-  showReadyUI();
-}
-function showReadyUI(){
-  elQ.textContent = "Press “Start Quiz”";
-  elOpts.innerHTML = '';
-  stopElapsed();
-  stopTimerBar();
-  setElapsed(0);
-}
-function updateMeta(){
-  elProgText.textContent = `${Math.min(idx, todays.length)}/${todays.length || 0}`;
-  elProgFill.style.width = `${todays.length ? (idx / todays.length) * 100 : 0}%`;
-  elScore.textContent = String(score);
+  if (idx >= todays.length){
+    // finished
+    elFB.innerHTML = `<span class="gameover">All done — great run!</span>`;
+    stopTimer(); stopElapsed();
+    elPlayAgain.style.display = "inline-flex";
+    return;
+  }
+  showQuestion();
 }
 
 function showQuestion(){
+  stopTimer();
   const q = todays[idx];
+  elFB.textContent = '';
+  selected = null;
+
   if (!q){
-    // end of set (success)
-    stopElapsed();
-    stopTimerBar();
-    elQ.textContent = "Done for today. Great work!";
-    elOpts.innerHTML = '';
-    elFB.innerHTML = '';
-    playAgainBtn.style.display = 'inline-flex';
+    elQ.textContent = "Nice! Done for today.";
+    elPlayAgain.style.display = "inline-flex";
     return;
   }
-  selected = null;
-  elFB.innerHTML = '';
-  playAgainBtn.style.display = 'none';
 
+  consecutiveWrong = 0;
   elMetaText.textContent = `${q.Difficulty || '—'} • ${q.Category || 'Quiz'}`;
   elQ.textContent = q.Question || '—';
 
   const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
   elOpts.innerHTML = '';
-  opts.forEach((txt) => {
+  opts.forEach((optText) => {
     const btn = document.createElement('button');
     btn.className = 'choice';
-    btn.textContent = txt;
-    btn.onclick = () => onSelect(btn, txt, q);
+    btn.textContent = optText;
+    btn.onmouseenter = () => btn.style.background = 'rgba(74,201,255,0.16)';
+    btn.onmouseleave = () => btn.style.background = '';
+    btn.onclick = () => onSelect(btn, optText);
     elOpts.appendChild(btn);
   });
 
-  // start smooth 10s timer for this question
-  startTimerBar(10_000, ()=>{ // times up -> treat as wrong attempt
-    handleReveal(false, q, true);
-  });
+  // start per-question timer & elapsed if first question
+  timerStart = null;
+  requestAnimationFrame(runTimer);
+  if (!elapsedStart) requestAnimationFrame(runElapsed);
 }
 
-function onSelect(btn, val, q){
-  // highlight selection
-  document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  selected = val;
-  // check immediately (no Show Answer button)
-  if (!q) return;
-  const isCorrect = norm(val).toLowerCase() === norm(q.Answer).toLowerCase();
-  handleReveal(isCorrect, q, false, btn);
-}
-
-function handleReveal(isCorrect, q, timeoutFired=false, clickedBtn=null){
-  // stop question timer
-  stopTimerBar();
-
-  // audio/vibration
-  if (isCorrect){
-    beep(420,120,'sine',0.05);
-  }else{
-    beep(200,120,'sine',0.05);
-    buzz([60,40,60]);
+/* Start / Shuffle / Share */
+btnStart.addEventListener('click', () => {
+  if (!allRows.length){
+    status("Loading questions first…");
+    return;
   }
-
-  // visual outline on chosen
-  const btns = [...document.querySelectorAll('.choice')];
-  btns.forEach(b => b.disabled = true);
-  if (clickedBtn){
-    clickedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
-  }else{
-    // if time out, mark none, just show a quick wrong pulse on all
-    btns.forEach(b => b.classList.add('wrong'));
-  }
-
-  if (isCorrect){
-    wrongStreak = 0;
-    score++; idx++;
+  if (hasStarted) return;
+  // countdown then start
+  countdown3(()=>{
+    hasStarted = true;
+    idx = 0; score = 0; selected = null;
     updateMeta();
-    setTimeout(()=> showQuestion(), 650);
-  }else{
-    wrongStreak++;
-    if (wrongStreak >= 2){
-      // game over — show in question box
-      stopElapsed();
-      elQ.textContent = "Game Over";
-      elOpts.innerHTML = '';
-      playAgainBtn.style.display = 'inline-flex';
-    }else{
-      // retry same question once more automatically
-      setTimeout(()=>{
-        // reset choices (same q)
-        showQuestion();
-      }, 700);
-    }
-  }
-}
-
-/* ====== TIMER BAR (smooth, right -> left) ====== */
-function startTimerBar(ms, onDone){
-  // reset instantly
-  elTimerFill.style.transition = 'none';
-  elTimerFill.style.transform = 'scaleX(1)'; // full
-  // next frame, animate to 0
-  requestAnimationFrame(()=>{
-    requestAnimationFrame(()=>{
-      elTimerFill.style.transition = `transform ${ms}ms linear`;
-      elTimerFill.style.transform = 'scaleX(0)';
-      clearTimeout(roundTimer);
-      roundTimer = setTimeout(()=> onDone && onDone(), ms);
-    });
+    elSubtitle.textContent = 'Good luck!';
+    showQuestion();
   });
-}
-function stopTimerBar(){
-  elTimerFill.style.transition = 'none';
-  elTimerFill.style.transform = 'scaleX(0)';
-  clearTimeout(roundTimer);
+});
+
+btnShuffle.addEventListener('click', () => {
+  if (!allRows.length) return;
+  todays = shuffle(allRows).slice(0, 12);
+  hasStarted = false;
+  stopTimer(); stopElapsed();
+  elSubtitle.textContent = 'Ready';
+  elQ.textContent = 'Press “Start Quiz”';
+  elOpts.innerHTML = '';
+  elFB.textContent = '';
+  idx = 0; score = 0; updateMeta();
+});
+
+btnShare.addEventListener('click', async () => {
+  try {
+    const url = window.location.href;
+    if (navigator.share) {
+      await navigator.share({ title: 'Brain ⚡ Bolt', text: 'Try today’s Brain ⚡ Bolt!', url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied!');
+    }
+  } catch(e){}
+});
+
+/* Play again */
+elPlayAgain.addEventListener('click', () => {
+  hasStarted = false; stopTimer(); stopElapsed();
+  idx = 0; score = 0; updateMeta();
+  elSubtitle.textContent = 'Ready';
+  elQ.textContent = 'Press “Start Quiz”';
+  elOpts.innerHTML = '';
+  elFB.textContent = '';
+  elPlayAgain.style.display = 'none';
+});
+
+/* Helpers */
+function shuffle(arr){
+  const a = arr.slice();
+  for (let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
 }
 
-/* ====== ELAPSED TIMER ====== */
-function startElapsed(){
-  elapsedStartMs = Date.now();
-  clearInterval(elapsedTimer);
-  elapsedTimer = setInterval(()=>{
-    const s = (Date.now() -
+/* Boot */
+(async function init(){
+  elSubtitle.textContent = 'Ready';   // do NOT show “loading today’s set…”
+  try{
+    status('Loading…');
+    const dataLive = await loadCSV(CSV_LIVE);
+    const rows = (dataLive || []).filter(r => r && r.Question);
+    if (rows.length){
+      todays = rows.slice(0, 12);
+      allRows = rows;
+      status(`Loaded ${rows.length} rows (live)`);
+    } else {
+      throw new Error('No live rows');
+    }
+  } catch(e){
+    try {
+      const dataBank = await loadCSV(CSV_BANK);
+      const rows = (dataBank || []).filter(r => r && r.Question);
+      todays = rows.slice(0, 12);
+      allRows = rows;
+      status(`Loaded ${rows.length} rows (bank)`);
+    } catch(e2){
+      status('Couldn’t load CSV. Check Publish and GIDs.');
+    }
+  } finally {
+    // Splash will fade by CSS timer; do nothing else here.
+    setTimeout(()=>{ splash?.remove(); }, 2200);
+  }
+})();
