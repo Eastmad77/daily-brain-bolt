@@ -1,422 +1,282 @@
-<script>
-// ===========================
-// Brain ⚡ Bolt — App Script
-// ===========================
+/* Brain ⚡ Bolt — app.js (fixes + countdown + smooth timer + sound/vibration + menu) */
 
-// ---- CONFIG ----
-const LIVE_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
-const BANK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
+/* ====== CONFIG: CSV URLs (make sure these are your live links) ====== */
+const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
+const BANK_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
-const QUIZ_LEN = 12;
-const PER_QUESTION_SECONDS = 10;
+/* ====== DOM ====== */
+const elQ = document.getElementById('question');
+const elOpts = document.getElementById('options');
+const elFB = document.getElementById('feedback');
+const elMetaText = document.getElementById('metaText');
+const elToday = document.getElementById('today');
+const elProgText = document.getElementById('progressText');
+const elProgFill = document.getElementById('progressFill');
+const elScore = document.getElementById('score');
+const elStatus = document.getElementById('statusline');
+const elTimerFill = document.getElementById('timerFill');
+const elElapsed = document.getElementById('elapsed');
+const startBtn = document.getElementById('startBtn');
+const shuffleBtn = document.getElementById('shuffleBtn');
+const shareBtn = document.getElementById('shareBtn');
+const playAgainBtn = document.getElementById('playAgain');
+const menuBtn = document.getElementById('menuBtn');
+const sideMenu = document.getElementById('sideMenu');
+const soundBtn = document.getElementById('soundBtn');
+const themeBtn = document.getElementById('themeBtn');
 
-// ---- STATE ----
-let allRows = [];
-let todays = [];
-let idx = 0;
-let score = 0;
-let selected = null;
-let answeredWrongStreak = 0;
+const now = new Date();
+const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
+if (elToday) elToday.textContent = todayKey;
+const yearEl = document.getElementById('year'); if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 
-let timerId = null;
-let timerStart = 0;
-let elapsedTick = null;
+/* ====== STATE ====== */
+let allRows = [], todays = [], idx = 0, score = 0;
+let selected = null, wrongStreak = 0;
+let quizStarted = false;
+let elapsedTimer = null, elapsedStartMs = 0;
+let roundTimer = null, roundMsLeft = 0;
+let soundOn = JSON.parse(localStorage.getItem('bb_sound') || 'true');
+updateSoundIcon();
+
+function updateSoundIcon(){ if (soundBtn) soundBtn.textContent = soundOn ? '🔊' : '🔇'; }
+
+/* ====== AUDIO / VIBRATION ====== */
 let audioCtx = null;
-let muted = false;
-
-// ---- DOM ----
-const qs  = (s, root=document) => root.querySelector(s);
-const qsa = (s, root=document) => [...root.querySelectorAll(s)];
-
-// Layout
-const elSplash     = qs('#splash');
-const elHero       = qs('.hero');
-const elToday      = qs('#today');
-const elMetaText   = qs('#metaText');
-const elStatus     = qs('#statusline');
-const elQuestion   = qs('#question');
-const elOptions    = qs('#options');
-const elScore      = qs('#score');
-const elProgText   = qs('#progressText');
-const elProgFill   = qs('#progressFill');
-const elTimerBar   = qs('#timerBar');
-const elElapsed    = qs('#elapsed');
-const elFeedback   = qs('#feedback');
-
-// Controls
-const btnStart   = qs('#startBtn');
-const btnShuffle = qs('#shuffleBtn');
-const btnShare   = qs('#shareBtn');
-const btnPlay    = qs('#playAgain');
-const btnTheme   = qs('#themeToggle');
-const btnMute    = qs('#muteBtn');
-
-// Menu (works on all pages that include these)
-const btnMenu    = qs('#mmMenuBtn');
-const sideMenu   = qs('#mmSideMenu');
-
-// ---- UTIL ----
-const todayKey = () => {
-  const now = new Date();
-  return [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
-};
-
-function status(msg){ if(elStatus) elStatus.textContent = msg || ''; }
-function setMeta(s){ if(elMetaText) elMetaText.textContent = s || ''; }
-function setQuestion(s){ if(elQuestion) elQuestion.textContent = s || ''; }
-function setProgress(){
-  if(!elProgText || !elProgFill) return;
-  elProgText.textContent = `${Math.min(idx, todays.length)}/${todays.length || 0}`;
-  const pct = todays.length ? (idx / todays.length) * 100 : 0;
-  elProgFill.style.width = `${pct}%`;
-  elScore.textContent = String(score);
-}
-function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-
-// ---- AUDIO / HAPTICS ----
-function ensureAudio(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-function beep(freq=880, ms=120, gain=0.05){
-  if(muted) return;
-  const ctx = ensureAudio();
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type = 'sine';
-  o.frequency.value = freq;
+function ensureAudioCtx(){ if (!audioCtx) { try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} } }
+function beep(freq=440, ms=120, type='sine', gain=0.06){
+  if (!soundOn) return;
+  ensureAudioCtx(); if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  osc.type = type; osc.frequency.value = freq;
   g.gain.value = gain;
-  o.connect(g); g.connect(ctx.destination);
-  o.start();
-  setTimeout(()=>{ o.stop(); }, ms);
+  osc.connect(g); g.connect(audioCtx.destination);
+  osc.start();
+  setTimeout(()=>{ osc.stop(); }, ms);
 }
-function vibrate(ms=40){
-  if(navigator.vibrate) navigator.vibrate(ms);
-}
+function buzz(pattern=[60,40,60]){ try{ navigator.vibrate && navigator.vibrate(pattern); }catch(e){} }
 
-// Countdown 3-2-1-Go
-function countdown3(onDone){
-  const overlay = document.createElement('div');
-  overlay.className = 'count-overlay';
-  overlay.innerHTML = `
-    <div class="count-pod">
-      <div id="countDigit" class="count-digit">3</div>
-    </div>`;
-  document.body.appendChild(overlay);
-
-  const seq = [3,2,1,'Go!'];
-  let i = 0;
-  const tick = () => {
-    const d = qs('#countDigit', overlay);
-    d.textContent = seq[i];
-    // fancy beep: go higher as we approach "Go!"
-    if(seq[i]==='Go!'){ beep(1200,120,0.06); vibrate(30); }
-    else { beep(700 + (i*120),120,0.04); }
-    i++;
-    if(i<seq.length) setTimeout(tick, 700);
-    else setTimeout(()=>{ overlay.remove(); onDone && onDone(); }, 400);
-  };
-  tick();
-}
-
-// ---- TIMER ----
-// Smooth leftwards fill (right -> left) over PER_QUESTION_SECONDS
-function startQuestionTimer(onExpire){
-  stopQuestionTimer();
-  const total = PER_QUESTION_SECONDS * 1000;
-  const start = performance.now();
-  elTimerBar.style.transition = 'none';
-  elTimerBar.style.transform = 'scaleX(1)';
-  elTimerBar.getBoundingClientRect(); // reflow
-  elTimerBar.style.transition = `transform ${PER_QUESTION_SECONDS}s linear`;
-  // scale from right to left:
-  elTimerBar.style.transformOrigin = 'right center';
-  requestAnimationFrame(()=> {
-    elTimerBar.style.transform = 'scaleX(0)';
-  });
-
-  timerId = setTimeout(()=>{
-    stopQuestionTimer();
-    onExpire && onExpire();
-  }, total);
-
-  // elapsed clock
-  timerStart = Date.now();
-  if(elElapsed){
-    if(elapsedTick) clearInterval(elapsedTick);
-    elapsedTick = setInterval(()=>{
-      const sec = Math.floor((Date.now()-timerStart)/1000);
-      const mm = String(Math.floor(sec/60)).padStart(2,'0');
-      const ss = String(sec%60).padStart(2,'0');
-      elElapsed.textContent = `${mm}:${ss}`;
-    }, 250);
-  }
-}
-function stopQuestionTimer(){
-  if(timerId){ clearTimeout(timerId); timerId = null; }
-  if(elTimerBar){
-    elTimerBar.style.transition = 'none';
-    elTimerBar.style.transform = 'scaleX(1)';
-  }
-  if(elapsedTick){ clearInterval(elapsedTick); elapsedTick = null; }
-}
-
-// ---- CSV ----
-async function fetchCSV(url){
-  const res = await fetch(url, { cache: 'no-store' });
-  if(!res.ok) throw new Error(`CSV fetch ${res.status}`);
-  const text = await res.text();
-  // very small CSV parser (no quotes w/ commas support — assumed clean sheet)
-  const lines = text.split(/\r?\n/).filter(Boolean);
-  const headers = lines[0].split(',');
-  return lines.slice(1).map(line=>{
-    // handle commas inside Explanation by splitting only first 11 commas
-    let parts = [];
-    let curr = '';
-    let commas = 0;
-    for (let ch of line){
-      if(ch===',' && commas < headers.length-1){ parts.push(curr); curr=''; commas++; }
-      else curr += ch;
-    }
-    parts.push(curr);
-    const obj = {};
-    headers.forEach((h,i)=> obj[h.trim()] = (parts[i]||'').trim());
-    return obj;
-  });
-}
-
-async function loadData(){
-  setMeta(''); // don’t show “loading today’s set…”
-  status('Loading questions…');
-
-  // Try live first
-  try{
-    const live = await fetchCSV(LIVE_CSV);
-    const rows = (live||[]).filter(r => r && r.Question);
-    if(rows.length){
-      status(`Loaded ${rows.length} from live`);
-      return rows.slice(0, QUIZ_LEN);
-    }
-  }catch(e){ console.warn('live csv failed', e); }
-
-  // Fallback bank
-  try{
-    const bank = await fetchCSV(BANK_CSV);
-    const rows = (bank||[]).filter(r => r && r.Question);
-    status(`Loaded ${rows.length} from bank`);
-    // pick the first daily slice of 12
-    return rows.slice(0, QUIZ_LEN);
-  }catch(e){
-    console.error('bank csv failed', e);
-    status('Could not load questions.');
-    return [];
-  }
-}
-
-// ---- QUIZ FLOW ----
-function resetQuizSet(set){
-  todays = [...set];
-  idx = 0;
-  score = 0;
-  answeredWrongStreak = 0;
-  setProgress();
-  setMeta('Ready');
-  setQuestion('Press Start Quiz');
-  elOptions.innerHTML = '';
-  elFeedback.innerHTML = '';
-  stopQuestionTimer();
-}
-
-function revealOutcome(isCorrect, q){
-  if(isCorrect){
-    // subtle green flash + beep
-    beep(880,120,0.06); vibrate(18);
-    elFeedback.innerHTML = `<div class="badge correct-badge">Correct</div>`;
-    score++;
-    idx++;
-    answeredWrongStreak = 0;
-    setProgress();
-    setTimeout(showQuestion, 600);
-  }else{
-    // red flash + buzz
-    beep(220,120,0.04); vibrate(60);
-    answeredWrongStreak++;
-    elFeedback.innerHTML = `<div class="badge wrong-badge">Incorrect — try again</div>`;
-    if(answeredWrongStreak >= 2){
-      // Game over
-      stopQuestionTimer();
-      elFeedback.innerHTML = `<div class="badge gameover-badge">Game Over</div>`;
-      btnPlay.style.display = 'inline-flex';
-      // disable option buttons
-      qsa('.choice').forEach(b => b.disabled = true);
-    }else{
-      // Restart same question after a short beat
-      setTimeout(()=> { showQuestion(/*retrySame*/true); }, 800);
-    }
-  }
-}
-
-function wireOptionButtons(q){
-  const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
-  elOptions.innerHTML = '';
-  opts.forEach((label) => {
-    const btn = document.createElement('button');
-    btn.className = 'choice';
-    btn.textContent = label;
-    btn.onmouseenter = ()=> btn.classList.add('hovering');
-    btn.onmouseleave = ()=> btn.classList.remove('hovering');
-    btn.onclick = () => {
-      if(btn.disabled) return;
-      qsa('.choice').forEach(b => b.classList.remove('selected','correct','incorrect'));
-      btn.classList.add('selected');
-      const isCorrect = (label.trim().toLowerCase() === (q.Answer||'').trim().toLowerCase());
-      // visual outlines only; don’t show the correct answer text
-      btn.classList.add(isCorrect ? 'correct' : 'incorrect');
-      stopQuestionTimer();
-      revealOutcome(isCorrect, q);
-    };
-    elOptions.appendChild(btn);
-  });
-}
-
-function showQuestion(retrySame=false){
-  elFeedback.innerHTML = '';
-  if(idx >= todays.length){
-    setMeta('Done for today!');
-    elQuestion.textContent = 'Nice! You finished the set.';
-    btnPlay.style.display = 'inline-flex';
-    elOptions.innerHTML = '';
-    stopQuestionTimer();
-    return;
-  }
-  const q = todays[retrySame ? idx : idx];
-  setMeta(`${q.Difficulty||'—'} • ${q.Category||'Quiz'}`);
-  setQuestion(q.Question || '—');
-  wireOptionButtons(q);
-  btnPlay.style.display = 'none';
-
-  // start per-question timer
-  startQuestionTimer(()=>{
-    // timer expired counts as incorrect attempt
-    qsa('.choice').forEach(b => b.classList.add('timeout'));
-    revealOutcome(false, q);
-  });
-}
-
-async function startQuiz(){
-  // 3-second countdown before first question
-  countdown3(async ()=>{
-    // ensure set is loaded
-    if(!todays.length){
-      resetQuizSet(await loadData());
-    }
-    idx = 0; score=0; answeredWrongStreak=0;
-    setProgress();
-    showQuestion();
-  });
-}
-
-function shuffleSet(){
-  if(!todays.length) return;
-  for(let i=todays.length-1;i>0;i--){
-    const j = Math.floor(Math.random()* (i+1));
-    [todays[i], todays[j]] = [todays[j], todays[i]];
-  }
-  idx = 0; score = 0; answeredWrongStreak=0;
-  setProgress();
-  setMeta('Shuffled');
-  setTimeout(()=> setMeta('Ready'), 600);
-  setQuestion('Press Start Quiz');
-  elOptions.innerHTML = '';
-  elFeedback.innerHTML = '';
-  stopQuestionTimer();
-}
-
-// ---- THEME ----
-function toggleTheme(){
-  const html = document.documentElement;
-  const cur = html.getAttribute('data-theme') || 'dark';
-  html.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
-}
-function toggleMute(){
-  muted = !muted;
-  if(btnMute) btnMute.textContent = muted ? '🔇' : '🔊';
-}
-
-// ---- MENU ----
+/* ====== MENU ====== */
+let menuAutoHide = null;
 function openMenu(){
-  if(!sideMenu) return;
-  sideMenu.classList.add('open');
-  sideMenu.setAttribute('aria-hidden','false');
-  // auto-hide after 5s of no interaction
-  setTimeout(()=>{
-    if(sideMenu.classList.contains('open')) closeMenu();
-  }, 5000);
+  sideMenu?.classList.add('open');
+  sideMenu?.setAttribute('aria-hidden','false');
+  if (menuAutoHide) clearTimeout(menuAutoHide);
+  menuAutoHide = setTimeout(closeMenu, 5000);
 }
 function closeMenu(){
-  if(!sideMenu) return;
-  sideMenu.classList.remove('open');
-  sideMenu.setAttribute('aria-hidden','true');
+  sideMenu?.classList.remove('open');
+  sideMenu?.setAttribute('aria-hidden','true');
 }
+menuBtn?.addEventListener('click', openMenu);
 
-// ---- SHARE ----
-async function doShare(){
-  const url = location.origin + '/';
-  const text = `I’m playing Brain ⚡ Bolt — daily quiz! Join me: ${url}`;
-  try{
-    if(navigator.share){
-      await navigator.share({ title:'Brain ⚡ Bolt', text, url });
-    }else{
-      await navigator.clipboard.writeText(text);
-      alert('Share text copied!');
-    }
-  }catch(e){}
-}
-
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', async ()=>{
-  // today label
-  if(elToday) elToday.textContent = todayKey();
-
-  // splash in, then out (only on index pages that have #splash)
-  if(elSplash){
-    elSplash.classList.remove('hidden'); // show
-    setTimeout(()=> elSplash.classList.add('hidden'), 1600);
-  }
-
-  // DO NOT show "loading today’s set…" beneath Ready
-  setMeta('Ready');
-  status('');
-
-  // wire buttons (guard if not present on content pages)
-  btnStart && (btnStart.onclick = startQuiz);
-  btnShuffle && (btnShuffle.onclick = shuffleSet);
-  btnShare && (btnShare.onclick = doShare);
-  btnPlay && (btnPlay.onclick = async ()=>{
-    resetQuizSet(await loadData());
-    setMeta('Ready');
-    setQuestion('Press Start Quiz');
-  });
-
-  btnTheme && (btnTheme.onclick = toggleTheme);
-  btnMute && (btnMute.onclick = toggleMute);
-
-  // menu
-  btnMenu && (btnMenu.onclick = openMenu);
-  // close menu by clicking outside
-  sideMenu && sideMenu.addEventListener('click', e=>{
-    if(e.target === sideMenu) closeMenu();
-  });
-
-  // preload data but don’t auto-start
-  try{
-    const set = await loadData();
-    resetQuizSet(set);
-  }catch(e){ /* handled in loadData */ }
-
-  // service worker (if present)
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-  }
+/* close menu if user taps outside (mobile) */
+document.addEventListener('click', (e)=>{
+  if (!sideMenu?.classList.contains('open')) return;
+  const within = sideMenu.contains(e.target) || e.target === menuBtn;
+  if (!within) closeMenu();
 });
-</script>
+
+/* ====== THEME ====== */
+themeBtn?.addEventListener('click', ()=>{
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+});
+
+/* ====== SOUND TOGGLE ====== */
+soundBtn?.addEventListener('click', ()=>{
+  soundOn = !soundOn;
+  localStorage.setItem('bb_sound', JSON.stringify(soundOn));
+  updateSoundIcon();
+  if (soundOn) { ensureAudioCtx(); beep(520,120,'sine',0.05); }
+});
+
+/* ====== SPLASH ====== */
+window.addEventListener('load', ()=>{
+  const splash = document.getElementById('splash');
+  if (splash) setTimeout(()=> splash.remove(), 1800); // remove when animation ends
+});
+
+/* ====== CSV LOAD ====== */
+function status(msg){
+  if (!elStatus) return;
+  elStatus.textContent = msg;
+  elStatus.style.display = msg ? 'block' : 'none';
+  console.log('[CSV]', msg);
+}
+const norm = s => String(s||'').trim();
+
+async function loadCSVs(){
+  status('Loading questions…');
+  try{
+    const live = await loadCSV(LIVE_CSV_URL);
+    const bank = await loadCSV(BANK_CSV_URL);
+    const rows = (live.length ? live : bank).filter(r => r && r.Question);
+    allRows = rows;
+    todays = rows.filter(r => norm(r.Date) === todayKey);
+    if (!todays.length) {
+      // fallback: first 12 from rows
+      todays = rows.slice(0,12);
+    }
+    status(''); // hide
+    elMetaText.textContent = "Ready";
+    updateMeta();
+    // DO NOT auto-start
+  }catch(e){
+    console.error(e);
+    status('Couldn’t load CSV. Check publish link & permissions.');
+    elMetaText.textContent = "Ready";
+  }
+}
+function loadCSV(url){
+  return new Promise((resolve, reject)=>{
+    Papa.parse(url + (url.includes('?')?'&':'?') + "cb=" + Date.now(), {
+      download:true, header:true, skipEmptyLines:true,
+      complete: ({data}) => resolve(data||[]),
+      error: err => reject(err)
+    });
+  });
+}
+
+/* ====== QUIZ FLOW ====== */
+function resetRoundState(){
+  idx = 0; score = 0; selected = null; wrongStreak = 0;
+  if (!todays.length && allRows.length) todays = allRows.slice(0,12);
+  updateMeta();
+  elFB.innerHTML = '';
+  playAgainBtn.style.display = 'none';
+  showReadyUI();
+}
+function showReadyUI(){
+  elQ.textContent = "Press “Start Quiz”";
+  elOpts.innerHTML = '';
+  stopElapsed();
+  stopTimerBar();
+  setElapsed(0);
+}
+function updateMeta(){
+  elProgText.textContent = `${Math.min(idx, todays.length)}/${todays.length || 0}`;
+  elProgFill.style.width = `${todays.length ? (idx / todays.length) * 100 : 0}%`;
+  elScore.textContent = String(score);
+}
+
+function showQuestion(){
+  const q = todays[idx];
+  if (!q){
+    // end of set (success)
+    stopElapsed();
+    stopTimerBar();
+    elQ.textContent = "Done for today. Great work!";
+    elOpts.innerHTML = '';
+    elFB.innerHTML = '';
+    playAgainBtn.style.display = 'inline-flex';
+    return;
+  }
+  selected = null;
+  elFB.innerHTML = '';
+  playAgainBtn.style.display = 'none';
+
+  elMetaText.textContent = `${q.Difficulty || '—'} • ${q.Category || 'Quiz'}`;
+  elQ.textContent = q.Question || '—';
+
+  const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
+  elOpts.innerHTML = '';
+  opts.forEach((txt) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = txt;
+    btn.onclick = () => onSelect(btn, txt, q);
+    elOpts.appendChild(btn);
+  });
+
+  // start smooth 10s timer for this question
+  startTimerBar(10_000, ()=>{ // times up -> treat as wrong attempt
+    handleReveal(false, q, true);
+  });
+}
+
+function onSelect(btn, val, q){
+  // highlight selection
+  document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selected = val;
+  // check immediately (no Show Answer button)
+  if (!q) return;
+  const isCorrect = norm(val).toLowerCase() === norm(q.Answer).toLowerCase();
+  handleReveal(isCorrect, q, false, btn);
+}
+
+function handleReveal(isCorrect, q, timeoutFired=false, clickedBtn=null){
+  // stop question timer
+  stopTimerBar();
+
+  // audio/vibration
+  if (isCorrect){
+    beep(420,120,'sine',0.05);
+  }else{
+    beep(200,120,'sine',0.05);
+    buzz([60,40,60]);
+  }
+
+  // visual outline on chosen
+  const btns = [...document.querySelectorAll('.choice')];
+  btns.forEach(b => b.disabled = true);
+  if (clickedBtn){
+    clickedBtn.classList.add(isCorrect ? 'correct' : 'wrong');
+  }else{
+    // if time out, mark none, just show a quick wrong pulse on all
+    btns.forEach(b => b.classList.add('wrong'));
+  }
+
+  if (isCorrect){
+    wrongStreak = 0;
+    score++; idx++;
+    updateMeta();
+    setTimeout(()=> showQuestion(), 650);
+  }else{
+    wrongStreak++;
+    if (wrongStreak >= 2){
+      // game over — show in question box
+      stopElapsed();
+      elQ.textContent = "Game Over";
+      elOpts.innerHTML = '';
+      playAgainBtn.style.display = 'inline-flex';
+    }else{
+      // retry same question once more automatically
+      setTimeout(()=>{
+        // reset choices (same q)
+        showQuestion();
+      }, 700);
+    }
+  }
+}
+
+/* ====== TIMER BAR (smooth, right -> left) ====== */
+function startTimerBar(ms, onDone){
+  // reset instantly
+  elTimerFill.style.transition = 'none';
+  elTimerFill.style.transform = 'scaleX(1)'; // full
+  // next frame, animate to 0
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      elTimerFill.style.transition = `transform ${ms}ms linear`;
+      elTimerFill.style.transform = 'scaleX(0)';
+      clearTimeout(roundTimer);
+      roundTimer = setTimeout(()=> onDone && onDone(), ms);
+    });
+  });
+}
+function stopTimerBar(){
+  elTimerFill.style.transition = 'none';
+  elTimerFill.style.transform = 'scaleX(0)';
+  clearTimeout(roundTimer);
+}
+
+/* ====== ELAPSED TIMER ====== */
+function startElapsed(){
+  elapsedStartMs = Date.now();
+  clearInterval(elapsedTimer);
+  elapsedTimer = setInterval(()=>{
+    const s = (Date.now() -
