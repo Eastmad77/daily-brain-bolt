@@ -1,279 +1,422 @@
-/* Brain Bolt – app.js */
+<script>
+// ===========================
+// Brain ⚡ Bolt — App Script
+// ===========================
 
-/** CSV endpoints (LIVE / BANK) */
+// ---- CONFIG ----
 const LIVE_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
 const BANK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
-/** Elements */
-const elSplash = document.getElementById('splash');
-const elQ = document.getElementById('question');
-const elOpts = document.getElementById('options');
-const elMetaText = document.getElementById('metaText');
-const elToday = document.getElementById('today');
-const elProgText = document.getElementById('progressText');
-const elProgFill = document.getElementById('progressFill');
-const elScore = document.getElementById('score');
-const elStatus = document.getElementById('statusline');
-const elTimer = document.getElementById('timerFill');
-const elElapsed = document.getElementById('elapsed');
-const elFB = document.getElementById('feedback');
-const elPlayAgain = document.getElementById('playAgain');
-const btnStart = document.getElementById('startBtn');
-const btnShuffle = document.getElementById('shuffleBtn');
-const btnShare = document.getElementById('shareBtn');
-const btnMenu = document.getElementById('mmMenuBtn');
-const sideMenu = document.getElementById('mmSideMenu');
-const btnSignIn = document.getElementById('btnSignIn') || document.getElementById('btnSignIn2');
-const btnNotify = document.getElementById('btnNotify') || document.getElementById('btnNotify2');
-const themeToggle = document.getElementById('themeToggle');
-const muteBtn = document.getElementById('muteBtn');
+const QUIZ_LEN = 12;
+const PER_QUESTION_SECONDS = 10;
 
-/** Date */
-const now = new Date();
-const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
-if (elToday) elToday.textContent = todayKey;
+// ---- STATE ----
+let allRows = [];
+let todays = [];
+let idx = 0;
+let score = 0;
+let selected = null;
+let answeredWrongStreak = 0;
 
-/** State */
-let todays=[], idx=0, score=0, selected=null;
-let inRound=false, wrongStreak=0;
-let timerRAF=null, startTs=null, elapsedTimer=null;
-const ROUND_MS = 10000; // 10s
-let muted=false;
+let timerId = null;
+let timerStart = 0;
+let elapsedTick = null;
+let audioCtx = null;
+let muted = false;
 
-/** Splash control (homepage only) */
-(function splashShow(){
-  if (!elSplash) return; // not on this page
-  // Animate: show logo first, then title halfway, then fade out
-  setTimeout(()=>{ document.querySelector('.splash-title')?.style.setProperty('opacity','1'); }, 600);
-  setTimeout(()=>{ document.querySelector('.splash-sub')?.style.setProperty('opacity','1'); }, 850);
-  setTimeout(()=>{
-    elSplash.style.opacity='0';
-    setTimeout(()=>{ elSplash.remove(); }, 350);
-  }, 1700);
-})();
+// ---- DOM ----
+const qs  = (s, root=document) => root.querySelector(s);
+const qsa = (s, root=document) => [...root.querySelectorAll(s)];
 
-/** Menu open/close + auto-hide */
-let menuTimer=null;
-btnMenu?.addEventListener('click', () => {
-  sideMenu?.classList.add('open');
-  sideMenu?.setAttribute('aria-hidden','false');
-  if (menuTimer) clearTimeout(menuTimer);
-  menuTimer = setTimeout(() => {
-    sideMenu?.classList.remove('open');
-    sideMenu?.setAttribute('aria-hidden','true');
-  }, 5000);
-});
-document.addEventListener('keydown', e => { if (e.key==='Escape') closeMenu(); });
-function closeMenu() {
-  sideMenu?.classList.remove('open');
-  sideMenu?.setAttribute('aria-hidden','true');
-}
+// Layout
+const elSplash     = qs('#splash');
+const elHero       = qs('.hero');
+const elToday      = qs('#today');
+const elMetaText   = qs('#metaText');
+const elStatus     = qs('#statusline');
+const elQuestion   = qs('#question');
+const elOptions    = qs('#options');
+const elScore      = qs('#score');
+const elProgText   = qs('#progressText');
+const elProgFill   = qs('#progressFill');
+const elTimerBar   = qs('#timerBar');
+const elElapsed    = qs('#elapsed');
+const elFeedback   = qs('#feedback');
 
-/** Theme toggle */
-themeToggle?.addEventListener('click', ()=>{
-  const isDark = document.documentElement.getAttribute('data-theme')!=='light';
-  document.documentElement.setAttribute('data-theme', isDark?'light':'dark');
-});
+// Controls
+const btnStart   = qs('#startBtn');
+const btnShuffle = qs('#shuffleBtn');
+const btnShare   = qs('#shareBtn');
+const btnPlay    = qs('#playAgain');
+const btnTheme   = qs('#themeToggle');
+const btnMute    = qs('#muteBtn');
 
-/** Sound toggle */
-muteBtn?.addEventListener('click', ()=>{
-  muted = !muted;
-  muteBtn.textContent = muted ? '🔇' : '🔊';
-});
+// Menu (works on all pages that include these)
+const btnMenu    = qs('#mmMenuBtn');
+const sideMenu   = qs('#mmSideMenu');
 
-/** Utilities */
-function status(msg){ if (elStatus) elStatus.textContent = msg; console.log('[APP]', msg); }
-const norm = s => String(s||'').trim();
-function play(id){
-  if (muted) return;
-  const el = document.getElementById(id);
-  if (el) { el.currentTime=0; el.play().catch(()=>{}); }
-}
-function vibrate(ms){ if (navigator.vibrate) try{ navigator.vibrate(ms); }catch{} }
+// ---- UTIL ----
+const todayKey = () => {
+  const now = new Date();
+  return [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
+};
 
-/** CSV loader */
-async function fetchCSV(url){
-  const u = url + (url.includes('?') ? '&' : '?') + 'cb=' + Date.now();
-  const res = await fetch(u, { cache:'no-store' });
-  if (!res.ok) throw new Error('HTTP '+res.status);
-  const text = await res.text();
-  return parseCSV(text);
-}
-function parseCSV(text){
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length);
-  const headers = lines[0].split(',').map(h=>h.trim());
-  const rows = lines.slice(1).map(line => {
-    // simple split (assumes no embedded commas)
-    const cols = line.split(',');
-    const obj={};
-    headers.forEach((h,i)=> obj[h]=cols[i]!==undefined?cols[i].trim():'');
-    return obj;
-  });
-  return { headers, rows };
-}
-
-/** Build set */
-async function buildSet(){
-  try{
-    status('Loading today’s set…');
-    const { rows } = await fetchCSV(LIVE_CSV);
-    const valid = rows.filter(r => r && r.Date && r.Question);
-    if (!valid.length){
-      status('No live rows; loading from bank…');
-      const bk = await fetchCSV(BANK_CSV);
-      todays = bk.rows.slice(0,12);
-    } else {
-      todays = valid;
-    }
-    idx=0; score=0; wrongStreak=0; selected=null; inRound=false;
-    updateMeta();
-    if (elQ) elQ.textContent = 'Press Start Quiz';
-    if (elOpts) elOpts.innerHTML = '';
-    if (elFB) elFB.innerHTML = '';
-    if (elPlayAgain) elPlayAgain.style.display='none';
-    resetTimerBar();
-  }catch(err){
-    console.error(err);
-    status('Couldn’t load CSV. Ensure sheet is Published to the web.');
-    if (elQ) elQ.textContent = 'Press Start Quiz';
-  }
-}
-
-/** Meta/Progress */
-function updateMeta(){
-  if (!elProgText || !elProgFill || !elScore) return;
-  elProgText.textContent = `${idx}/${todays.length||0}`;
-  const pct = (todays.length ? (idx/todays.length) : 0) * 100;
+function status(msg){ if(elStatus) elStatus.textContent = msg || ''; }
+function setMeta(s){ if(elMetaText) elMetaText.textContent = s || ''; }
+function setQuestion(s){ if(elQuestion) elQuestion.textContent = s || ''; }
+function setProgress(){
+  if(!elProgText || !elProgFill) return;
+  elProgText.textContent = `${Math.min(idx, todays.length)}/${todays.length || 0}`;
+  const pct = todays.length ? (idx / todays.length) * 100 : 0;
   elProgFill.style.width = `${pct}%`;
   elScore.textContent = String(score);
 }
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
 
-/** Timer */
-function resetTimerBar(){ cancelAnimationFrame(timerRAF); if (elTimer) elTimer.style.width='100%'; startTs=null; }
-function startTimer(){
-  resetTimerBar();
-  startTs = performance.now();
-  const step = (ts)=>{
-    const t = ts - startTs;
-    const p = Math.min(1, t/ROUND_MS);
-    if (elTimer) elTimer.style.width = `${(1-p)*100}%`; // right-to-left fill
-    if (p<1 && inRound) { timerRAF = requestAnimationFrame(step); }
-    else if (p>=1 && inRound) { onReveal(false, null, true); }
+// ---- AUDIO / HAPTICS ----
+function ensureAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq=880, ms=120, gain=0.05){
+  if(muted) return;
+  const ctx = ensureAudio();
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type = 'sine';
+  o.frequency.value = freq;
+  g.gain.value = gain;
+  o.connect(g); g.connect(ctx.destination);
+  o.start();
+  setTimeout(()=>{ o.stop(); }, ms);
+}
+function vibrate(ms=40){
+  if(navigator.vibrate) navigator.vibrate(ms);
+}
+
+// Countdown 3-2-1-Go
+function countdown3(onDone){
+  const overlay = document.createElement('div');
+  overlay.className = 'count-overlay';
+  overlay.innerHTML = `
+    <div class="count-pod">
+      <div id="countDigit" class="count-digit">3</div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const seq = [3,2,1,'Go!'];
+  let i = 0;
+  const tick = () => {
+    const d = qs('#countDigit', overlay);
+    d.textContent = seq[i];
+    // fancy beep: go higher as we approach "Go!"
+    if(seq[i]==='Go!'){ beep(1200,120,0.06); vibrate(30); }
+    else { beep(700 + (i*120),120,0.04); }
+    i++;
+    if(i<seq.length) setTimeout(tick, 700);
+    else setTimeout(()=>{ overlay.remove(); onDone && onDone(); }, 400);
   };
-  timerRAF = requestAnimationFrame(step);
+  tick();
 }
-function startElapsed(){
-  const t0 = Date.now();
-  clearInterval(elapsedTimer);
-  if (!elElapsed) return;
-  elapsedTimer = setInterval(()=>{
-    const s = Math.floor((Date.now()-t0)/1000);
-    elElapsed.textContent = s+'s';
-  }, 250);
-}
-function stopElapsed(){ clearInterval(elapsedTimer); }
 
-/** Show question */
-function showQuestion(){
-  const q = todays[idx];
-  if (!q){
-    if (elFB) elFB.innerHTML = `<div class="gameover">Nice! Done for today.</div>`;
-    if (elPlayAgain) elPlayAgain.style.display='inline-flex';
-    return;
-  }
-  inRound = true;
-  wrongStreak = 0;
-  if (elFB) elFB.innerHTML='';
-  if (elPlayAgain) elPlayAgain.style.display='none';
-  if (elMetaText) elMetaText.textContent = `${q.Difficulty||'—'} • ${q.Category||'Quiz'}`;
-  if (elQ) elQ.textContent = q.Question || '—';
-  if (elOpts) elOpts.innerHTML = '';
-  const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
-  opts.forEach((optText)=>{
-    const btn = document.createElement('button');
-    btn.className = 'choice';
-    btn.textContent = optText;
-    btn.onmouseenter = ()=> btn.style.background='var(--blue-2, #4AC9FF20)';
-    btn.onmouseleave = ()=> btn.style.background='';
-    btn.onclick = ()=> onSelect(btn, optText);
-    elOpts?.appendChild(btn);
+// ---- TIMER ----
+// Smooth leftwards fill (right -> left) over PER_QUESTION_SECONDS
+function startQuestionTimer(onExpire){
+  stopQuestionTimer();
+  const total = PER_QUESTION_SECONDS * 1000;
+  const start = performance.now();
+  elTimerBar.style.transition = 'none';
+  elTimerBar.style.transform = 'scaleX(1)';
+  elTimerBar.getBoundingClientRect(); // reflow
+  elTimerBar.style.transition = `transform ${PER_QUESTION_SECONDS}s linear`;
+  // scale from right to left:
+  elTimerBar.style.transformOrigin = 'right center';
+  requestAnimationFrame(()=> {
+    elTimerBar.style.transform = 'scaleX(0)';
   });
-  startTimer();
+
+  timerId = setTimeout(()=>{
+    stopQuestionTimer();
+    onExpire && onExpire();
+  }, total);
+
+  // elapsed clock
+  timerStart = Date.now();
+  if(elElapsed){
+    if(elapsedTick) clearInterval(elapsedTick);
+    elapsedTick = setInterval(()=>{
+      const sec = Math.floor((Date.now()-timerStart)/1000);
+      const mm = String(Math.floor(sec/60)).padStart(2,'0');
+      const ss = String(sec%60).padStart(2,'0');
+      elElapsed.textContent = `${mm}:${ss}`;
+    }, 250);
+  }
+}
+function stopQuestionTimer(){
+  if(timerId){ clearTimeout(timerId); timerId = null; }
+  if(elTimerBar){
+    elTimerBar.style.transition = 'none';
+    elTimerBar.style.transform = 'scaleX(1)';
+  }
+  if(elapsedTick){ clearInterval(elapsedTick); elapsedTick = null; }
 }
 
-/** Select + auto reveal */
-function onSelect(btn, val){
-  if (!inRound) return;
-  document.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  selected = val;
-  const q = todays[idx];
-  if (!q) return;
-  const correct = norm(val).toLowerCase() === norm(q.Answer).toLowerCase();
-  onReveal(correct, btn, false);
+// ---- CSV ----
+async function fetchCSV(url){
+  const res = await fetch(url, { cache: 'no-store' });
+  if(!res.ok) throw new Error(`CSV fetch ${res.status}`);
+  const text = await res.text();
+  // very small CSV parser (no quotes w/ commas support — assumed clean sheet)
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  const headers = lines[0].split(',');
+  return lines.slice(1).map(line=>{
+    // handle commas inside Explanation by splitting only first 11 commas
+    let parts = [];
+    let curr = '';
+    let commas = 0;
+    for (let ch of line){
+      if(ch===',' && commas < headers.length-1){ parts.push(curr); curr=''; commas++; }
+      else curr += ch;
+    }
+    parts.push(curr);
+    const obj = {};
+    headers.forEach((h,i)=> obj[h.trim()] = (parts[i]||'').trim());
+    return obj;
+  });
 }
 
-/** Reveal logic */
-function onReveal(isCorrect, btn, timedOut){
-  inRound=false;
-  cancelAnimationFrame(timerRAF);
+async function loadData(){
+  setMeta(''); // don’t show “loading today’s set…”
+  status('Loading questions…');
 
-  if (isCorrect){
-    btn?.classList.add('correct');
-    play('sndCorrect');
-    wrongStreak=0;
-    score++; idx++;
-    updateMeta();
-    setTimeout(()=> showQuestion(), 700);
-  } else {
-    btn?.classList.add('wrong');
-    play('sndWrong'); vibrate(80);
-    wrongStreak++;
-    if (wrongStreak>=2 || timedOut){
-      stopElapsed();
-      if (elFB) elFB.innerHTML = `<div class="gameover">Game Over</div>`;
-      if (elPlayAgain) elPlayAgain.style.display='inline-flex';
-      document.querySelectorAll('.choice').forEach(b=>{ b.classList.add('disabled'); b.disabled=true; });
-    } else {
-      // restart same question
-      setTimeout(()=>{
-        inRound=true;
-        document.querySelectorAll('.choice').forEach(b=>{ b.classList.remove('wrong','selected'); });
-        resetTimerBar(); startTimer();
-      }, 600);
+  // Try live first
+  try{
+    const live = await fetchCSV(LIVE_CSV);
+    const rows = (live||[]).filter(r => r && r.Question);
+    if(rows.length){
+      status(`Loaded ${rows.length} from live`);
+      return rows.slice(0, QUIZ_LEN);
+    }
+  }catch(e){ console.warn('live csv failed', e); }
+
+  // Fallback bank
+  try{
+    const bank = await fetchCSV(BANK_CSV);
+    const rows = (bank||[]).filter(r => r && r.Question);
+    status(`Loaded ${rows.length} from bank`);
+    // pick the first daily slice of 12
+    return rows.slice(0, QUIZ_LEN);
+  }catch(e){
+    console.error('bank csv failed', e);
+    status('Could not load questions.');
+    return [];
+  }
+}
+
+// ---- QUIZ FLOW ----
+function resetQuizSet(set){
+  todays = [...set];
+  idx = 0;
+  score = 0;
+  answeredWrongStreak = 0;
+  setProgress();
+  setMeta('Ready');
+  setQuestion('Press Start Quiz');
+  elOptions.innerHTML = '';
+  elFeedback.innerHTML = '';
+  stopQuestionTimer();
+}
+
+function revealOutcome(isCorrect, q){
+  if(isCorrect){
+    // subtle green flash + beep
+    beep(880,120,0.06); vibrate(18);
+    elFeedback.innerHTML = `<div class="badge correct-badge">Correct</div>`;
+    score++;
+    idx++;
+    answeredWrongStreak = 0;
+    setProgress();
+    setTimeout(showQuestion, 600);
+  }else{
+    // red flash + buzz
+    beep(220,120,0.04); vibrate(60);
+    answeredWrongStreak++;
+    elFeedback.innerHTML = `<div class="badge wrong-badge">Incorrect — try again</div>`;
+    if(answeredWrongStreak >= 2){
+      // Game over
+      stopQuestionTimer();
+      elFeedback.innerHTML = `<div class="badge gameover-badge">Game Over</div>`;
+      btnPlay.style.display = 'inline-flex';
+      // disable option buttons
+      qsa('.choice').forEach(b => b.disabled = true);
+    }else{
+      // Restart same question after a short beat
+      setTimeout(()=> { showQuestion(/*retrySame*/true); }, 800);
     }
   }
 }
 
-/** Controls */
-btnStart?.addEventListener('click', ()=>{
-  if (!todays.length){ buildSet().then(()=>{ startElapsed(); showQuestion(); }); }
-  else { startElapsed(); showQuestion(); }
-});
-btnShuffle?.addEventListener('click', async ()=>{
-  await buildSet();
-});
-btnShare?.addEventListener('click', async ()=>{
-  const shareData = { title:'Brain Bolt', text:`I’m playing Brain Bolt! Can you beat my score?`, url: location.origin + '/' };
+function wireOptionButtons(q){
+  const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD].filter(Boolean);
+  elOptions.innerHTML = '';
+  opts.forEach((label) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = label;
+    btn.onmouseenter = ()=> btn.classList.add('hovering');
+    btn.onmouseleave = ()=> btn.classList.remove('hovering');
+    btn.onclick = () => {
+      if(btn.disabled) return;
+      qsa('.choice').forEach(b => b.classList.remove('selected','correct','incorrect'));
+      btn.classList.add('selected');
+      const isCorrect = (label.trim().toLowerCase() === (q.Answer||'').trim().toLowerCase());
+      // visual outlines only; don’t show the correct answer text
+      btn.classList.add(isCorrect ? 'correct' : 'incorrect');
+      stopQuestionTimer();
+      revealOutcome(isCorrect, q);
+    };
+    elOptions.appendChild(btn);
+  });
+}
+
+function showQuestion(retrySame=false){
+  elFeedback.innerHTML = '';
+  if(idx >= todays.length){
+    setMeta('Done for today!');
+    elQuestion.textContent = 'Nice! You finished the set.';
+    btnPlay.style.display = 'inline-flex';
+    elOptions.innerHTML = '';
+    stopQuestionTimer();
+    return;
+  }
+  const q = todays[retrySame ? idx : idx];
+  setMeta(`${q.Difficulty||'—'} • ${q.Category||'Quiz'}`);
+  setQuestion(q.Question || '—');
+  wireOptionButtons(q);
+  btnPlay.style.display = 'none';
+
+  // start per-question timer
+  startQuestionTimer(()=>{
+    // timer expired counts as incorrect attempt
+    qsa('.choice').forEach(b => b.classList.add('timeout'));
+    revealOutcome(false, q);
+  });
+}
+
+async function startQuiz(){
+  // 3-second countdown before first question
+  countdown3(async ()=>{
+    // ensure set is loaded
+    if(!todays.length){
+      resetQuizSet(await loadData());
+    }
+    idx = 0; score=0; answeredWrongStreak=0;
+    setProgress();
+    showQuestion();
+  });
+}
+
+function shuffleSet(){
+  if(!todays.length) return;
+  for(let i=todays.length-1;i>0;i--){
+    const j = Math.floor(Math.random()* (i+1));
+    [todays[i], todays[j]] = [todays[j], todays[i]];
+  }
+  idx = 0; score = 0; answeredWrongStreak=0;
+  setProgress();
+  setMeta('Shuffled');
+  setTimeout(()=> setMeta('Ready'), 600);
+  setQuestion('Press Start Quiz');
+  elOptions.innerHTML = '';
+  elFeedback.innerHTML = '';
+  stopQuestionTimer();
+}
+
+// ---- THEME ----
+function toggleTheme(){
+  const html = document.documentElement;
+  const cur = html.getAttribute('data-theme') || 'dark';
+  html.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark');
+}
+function toggleMute(){
+  muted = !muted;
+  if(btnMute) btnMute.textContent = muted ? '🔇' : '🔊';
+}
+
+// ---- MENU ----
+function openMenu(){
+  if(!sideMenu) return;
+  sideMenu.classList.add('open');
+  sideMenu.setAttribute('aria-hidden','false');
+  // auto-hide after 5s of no interaction
+  setTimeout(()=>{
+    if(sideMenu.classList.contains('open')) closeMenu();
+  }, 5000);
+}
+function closeMenu(){
+  if(!sideMenu) return;
+  sideMenu.classList.remove('open');
+  sideMenu.setAttribute('aria-hidden','true');
+}
+
+// ---- SHARE ----
+async function doShare(){
+  const url = location.origin + '/';
+  const text = `I’m playing Brain ⚡ Bolt — daily quiz! Join me: ${url}`;
   try{
-    if (navigator.share) await navigator.share(shareData);
-    else alert('Share not supported on this device.');
-  }catch{}
-});
-elPlayAgain?.addEventListener('click', ()=>{
-  buildSet().then(()=>{ /* wait for Start */ });
-});
+    if(navigator.share){
+      await navigator.share({ title:'Brain ⚡ Bolt', text, url });
+    }else{
+      await navigator.clipboard.writeText(text);
+      alert('Share text copied!');
+    }
+  }catch(e){}
+}
 
-/** Firebase placeholders (safe) */
-btnSignIn?.addEventListener('click', ()=>{
-  alert('Sign-in disabled in this build. Configure Firebase to enable.');
-});
-btnNotify?.addEventListener('click', async ()=>{
-  if (!('Notification' in window)) return alert('Notifications not supported.');
-  const perm = await Notification.requestPermission();
-  if (perm!=='granted') return alert('Notifications not enabled.');
-  new Notification('Brain Bolt', { body:'You’ll get a ping when the daily quiz is ready!', icon:'/icon-192.png' });
-});
+// ---- INIT ----
+document.addEventListener('DOMContentLoaded', async ()=>{
+  // today label
+  if(elToday) elToday.textContent = todayKey();
 
-/** Boot */
-buildSet();
+  // splash in, then out (only on index pages that have #splash)
+  if(elSplash){
+    elSplash.classList.remove('hidden'); // show
+    setTimeout(()=> elSplash.classList.add('hidden'), 1600);
+  }
+
+  // DO NOT show "loading today’s set…" beneath Ready
+  setMeta('Ready');
+  status('');
+
+  // wire buttons (guard if not present on content pages)
+  btnStart && (btnStart.onclick = startQuiz);
+  btnShuffle && (btnShuffle.onclick = shuffleSet);
+  btnShare && (btnShare.onclick = doShare);
+  btnPlay && (btnPlay.onclick = async ()=>{
+    resetQuizSet(await loadData());
+    setMeta('Ready');
+    setQuestion('Press Start Quiz');
+  });
+
+  btnTheme && (btnTheme.onclick = toggleTheme);
+  btnMute && (btnMute.onclick = toggleMute);
+
+  // menu
+  btnMenu && (btnMenu.onclick = openMenu);
+  // close menu by clicking outside
+  sideMenu && sideMenu.addEventListener('click', e=>{
+    if(e.target === sideMenu) closeMenu();
+  });
+
+  // preload data but don’t auto-start
+  try{
+    const set = await loadData();
+    resetQuizSet(set);
+  }catch(e){ /* handled in loadData */ }
+
+  // service worker (if present)
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+  }
+});
+</script>
