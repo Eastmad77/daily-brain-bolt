@@ -1,6 +1,4 @@
-// Optional Firebase config (kept off by default)
-window.FB_CONFIG = null;
-/*
+// Firebase config + Web Push VAPID — fill yours here
 window.FB_CONFIG = {
   apiKey: "YOUR_API_KEY",
   authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
@@ -8,6 +6,5 @@ window.FB_CONFIG = {
   storageBucket: "YOUR_PROJECT_ID.appspot.com",
   messagingSenderId: "YOUR_SENDER_ID",
   appId: "YOUR_APP_ID",
-  measurementId: "G-XXXXXXX"
 };
-*/
+window.FB_VAPID = "YOUR_WEB_PUSH_VAPID_PUBLIC_KEY";
