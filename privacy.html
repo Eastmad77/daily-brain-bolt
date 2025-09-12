@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,21 +7,11 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022">
+  <meta name="theme-color" content="#0E1E27">
   <link rel="stylesheet" href="/style.css">
-  <style>
-    .brand-title h1 .bolt{ color: rgb(74,201,255); -webkit-text-stroke: 2px rgb(255,140,0); text-shadow: 0 0 10px rgba(74,201,255,.35); }
-  </style>
 </head>
 <body>
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div class="topbar-right">
-      <button id="themeToggle" class="btn outline small">Theme</button>
-      <button id="muteBtn" class="mute-btn" aria-label="Mute/Unmute">🔊</button>
-    </div>
-  </div>
-
+  <div class="topbar"><button id="mmMenuBtn" class="menu-btn">☰</button></div>
   <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
@@ -30,39 +20,29 @@
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
-      <li><a href="/pro.html" class="menu-pro">Go Pro</a></li>
-      <li><button id="btnSignIn" class="btn outline full">Sign in with Google</button></li>
-      <li><button id="btnNotify" class="btn ghost full">Enable Notifications</button></li>
     </ul>
   </nav>
 
-  <header class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-inner brand-title">
-      <div class="hero-title">
-        <img src="/app-icon.svg" alt="" class="app-icon-large">
-        <h1>Privacy • Brain <span class="bolt">⚡</span> Bolt</h1>
-      </div>
-      <p class="subtitle">How we handle your data.</p>
-    </div>
+  <header class="hero"><div class="hero-overlay"></div>
+    <div class="hero-inner"><h1>Privacy Policy</h1></div>
   </header>
 
   <main class="container">
     <section class="card">
-      <p>We store minimal gameplay data and (optionally) your account info via Firebase. We never sell personal information. See the full policy for details.</p>
+      <p>We respect your privacy. Brain ⚡ Bolt does not collect personal data beyond optional sign-in features. Any data stored is only used to improve your quiz experience.</p>
     </section>
   </main>
 
-  <footer class="footer">
-    © 2025 Brain <span class="bolt">⚡</span> Bolt •
-    <a class="footer-link" href="/about.html">About</a> •
-    <a class="footer-link" href="/terms.html">Terms</a> •
-    <a class="footer-link" href="/privacy.html">Privacy</a> •
-    <a class="footer-link" href="/contact.html">Contact</a> •
-    <a class="footer-mail" href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>
+  <footer class="footer">© 2025 Brain ⚡ Bolt •
+    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> • <a href="/contact.html">Contact</a>
   </footer>
 
-  <script src="/firebase-config.js"></script>
-  <script src="/app.js"></script>
+  <script>
+    const mmMenuBtn=document.getElementById('mmMenuBtn');
+    const mmSideMenu=document.getElementById('mmSideMenu');
+    mmMenuBtn?.addEventListener('click',()=>{mmSideMenu?.classList.add('open');setTimeout(()=>mmSideMenu?.classList.remove('open'),5000)});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')mmSideMenu?.classList.remove('open')});
+  </script>
 </body>
 </html>
