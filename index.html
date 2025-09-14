@@ -20,13 +20,14 @@
 </head>
 <body>
   <!-- Initial SPLASH (blue theme, icon → title wipe) -->
-  <div id="splash" role="dialog" aria-label="Loading" data-active="1">
+  <div id="splash" role="dialog" aria-label="Loading">
     <div class="splash-inner">
       <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
       <h1 class="splash-title">
         <span class="title-mask">Brain <span class="bolt">⚡</span> Bolt</span>
       </h1>
       <div class="splash-wipe"></div>
+      <button id="skipSplash" class="skip-splash" aria-label="Skip intro">Skip</button>
     </div>
   </div>
 
@@ -48,7 +49,7 @@
   <div id="appRoot" class="app-root">
     <div class="topbar">
       <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-      <div>
+      <div class="topbar-actions">
         <button id="notifyBtn" class="sound-btn" title="Daily reminder">🔔</button>
         <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
       </div>
@@ -78,13 +79,19 @@
       <section id="daily" class="card">
         <div class="status-bar">
           <span id="dateLabel"></span>
+          <span id="progressLabel" class="pill pill-muted" aria-live="polite">Q 0/12</span>
           <span id="setLabel" class="pill">Ready</span>
         </div>
 
-        <div id="countdown" class="countdown" style="display:none;"></div>
+        <div id="countdown" class="countdown" style="display:none;" aria-live="polite"></div>
+
+        <!-- Subtle timer strip with elapsed time -->
         <div id="timerWrapper" class="timer-wrap" aria-hidden="true">
           <div id="timerBar" class="timer-bar"></div>
-          <span id="elapsedTime" class="elapsed">0s</span>
+          <div class="timer-meta">
+            <span class="timer-label">Elapsed</span>
+            <span id="elapsedTime" class="elapsed">0:00</span>
+          </div>
         </div>
 
         <div id="questionBox" class="question-box">Press Start Quiz</div>
@@ -110,17 +117,15 @@
     </footer>
   </div>
 
-  <!-- Hardened splash controller (self-contained; never freezes) -->
+  <!-- Hardened splash controller (never freezes; shows on first load & Home) -->
   <script>
     (function() {
-      const SPLASH_MS = 2000;   // normal play
-      const BACKUP_MS = 4000;   // backup
-      const ULTIMATE_MS = 7000; // absolute cut-off
-      const FORCE_KEY = 'bb_forceSplash';
-      const SEEN_KEY  = 'bb_seenSplash';
+      const SPLASH_MS = 2000, BACKUP_MS = 4000, ULTIMATE_MS = 7000;
+      const FORCE_KEY = 'bb_forceSplash', SEEN_KEY = 'bb_seenSplash';
 
       const splash = document.getElementById('splash');
       const root   = document.getElementById('appRoot');
+      const skip   = document.getElementById('skipSplash');
 
       function revealApp() {
         if (!splash || splash.dataset.revealed === '1') return;
@@ -133,28 +138,21 @@
       function runSplash() {
         if (!splash) return revealApp();
         splash.classList.add('show');
-
-        // mid-stage wipe animation
         setTimeout(()=> splash.classList.add('mid'), 550);
-
-        // Normal hide
-        const t1 = setTimeout(revealApp, SPLASH_MS);
-        // Backup hide
-        const t2 = setTimeout(revealApp, BACKUP_MS);
-        // Ultimate safety
-        const t3 = setTimeout(revealApp, ULTIMATE_MS);
-
-        // If page becomes visible after being hidden, try reveal again
+        setTimeout(revealApp, SPLASH_MS);
+        setTimeout(revealApp, BACKUP_MS);
+        setTimeout(revealApp, ULTIMATE_MS);
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') revealApp();
-        }, { once:false });
-
-        // If window fully loaded early, also reveal (in case timers were clamped)
+        });
         window.addEventListener('load', () => revealApp(), { once:true });
+        skip?.addEventListener('click', revealApp, { once:true });
+        splash.addEventListener('click', (e) => {
+          if (e.target === splash) revealApp();
+        });
       }
 
       function init() {
-        // Decide whether to show
         let want = false;
         try {
           want = sessionStorage.getItem(FORCE_KEY) === '1' ||
@@ -171,8 +169,8 @@
     })();
   </script>
 
+  <!-- SW register -->
   <script>
-    // Register SW early; independent from app logic
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
     }
