@@ -1,27 +1,18 @@
-/* Brain ⚡ Bolt — main app */
-
-// =========================
-// CONFIG (edit these if needed)
-// =========================
+/* Brain ⚡ Bolt — main app with robust CSV parsing + answer normalization */
 const LIVE_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
 const BANK_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
-const QUIZ_SECONDS = 10;                // timer per question
-const COUNTDOWN_SECONDS = 3;            // visible countdown before first question
-const SHOW_CORRECT_TEXT = false;        // we color outline only; no "Correct!" text panel
+const QUIZ_SECONDS = 10;
+const COUNTDOWN_SECONDS = 3;
+const SHOW_CORRECT_TEXT = false;
 const AUTO_GAMEOVER_ON_TWO_WRONG = true;
 
-// Theme state (light/dark toggle)
 let currentTheme = 'dark';
-
-// Sound / haptics state
 let soundOn = true;
 
-// =========================
-// ELEMENTS
-// =========================
+// Elements
 const elDate = document.getElementById('dateLabel');
 const elSet = document.getElementById('setLabel');
 const elCountdown = document.getElementById('countdown');
@@ -43,7 +34,7 @@ const sideMenu = document.getElementById('mmSideMenu');
 const today = new Date();
 elDate.textContent = today.toISOString().slice(0,10);
 
-// Splash menu open/close
+// Menu behavior
 let menuAutoHideTO = null;
 btnMenu?.addEventListener('click', () => {
   sideMenu?.classList.add('open');
@@ -57,10 +48,7 @@ btnMenu?.addEventListener('click', () => {
 document.addEventListener('click', (e) => {
   if (!sideMenu?.classList.contains('open')) return;
   const within = sideMenu.contains(e.target) || btnMenu.contains(e.target);
-  if (!within) {
-    sideMenu.classList.remove('open');
-    sideMenu.setAttribute('aria-hidden', 'true');
-  }
+  if (!within) { sideMenu.classList.remove('open'); sideMenu.setAttribute('aria-hidden','true'); }
 });
 
 // Sound toggle
@@ -69,9 +57,7 @@ btnSound?.addEventListener('click', () => {
   btnSound.textContent = soundOn ? '🔊' : '🔇';
 });
 
-// ==============
 // Audio beeps
-// ==============
 const audioCtx = (window.AudioContext) ? new AudioContext() : null;
 function beep(freq = 660, dur = 120) {
   if (!audioCtx || !soundOn) return;
@@ -81,15 +67,62 @@ function beep(freq = 660, dur = 120) {
   osc.frequency.value = freq;
   gain.gain.value = 0.08;
   osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start();
-  setTimeout(() => { osc.stop(); }, dur);
+  osc.start(); setTimeout(() => { osc.stop(); }, dur);
 }
 function vibrate(ms = 40){ if (navigator.vibrate) try { navigator.vibrate(ms); } catch(e){} }
 
-// =========================
-// DATA
-// =========================
-let rows = [];      // today's questions
+// ===== CSV LOADING =====
+function toCsvUrl(u){
+  if(!u) return '';
+  return u.replace(/\/pubhtml.*/, '/pub?output=csv')
+          .replace(/\/edit\?.*$/, '/pub?output=csv')
+          .replace(/output=tsv/g,'output=csv');
+}
+function loadCSV(url){
+  return new Promise((resolve,reject)=>{
+    const finalUrl = toCsvUrl(url);
+    Papa.parse(finalUrl, {
+      download: true, header: true, skipEmptyLines: true,
+      complete: ({ data }) => resolve(data || []),
+      error: (err) => reject(err)
+    });
+  });
+}
+
+// Normalization (fix “correct marked wrong”)
+function normText(s){
+  return String(s ?? '')
+    .replace(/[\u2018\u2019\u201A\u201B]/g,"'")
+    .replace(/[\u201C\u201D\u201E]/g,'"')
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g,' ')
+    .toLowerCase();
+}
+function normalizeRow(r){
+  const opts = [r.OptionA, r.OptionB, r.OptionC, r.OptionD].filter(Boolean).map(v => String(v).trim());
+  return {
+    date: String(r.Date||'').trim(),
+    q: String(r.Question||'').trim(),
+    a: String(r.Answer||'').trim(),
+    opts,
+    expl: String(r.Explanation||'').trim(),
+    cat: String(r.Category||'').trim(),
+    diff: String(r.Difficulty||'').trim()
+  };
+}
+function isCorrectSelection(row, selected){
+  const ans = String(row.a || '').trim();
+  const sel = String(selected || '').trim();
+  if (/^[ABCD]$/i.test(ans)) {
+    const index = 'ABCD'.indexOf(ans[0].toUpperCase());
+    const correctText = row.opts[index] || '';
+    return normText(sel) === normText(correctText);
+  }
+  return normText(sel) === normText(ans);
+}
+
+let rows = [];
 let idx = 0;
 let wrongStreak = 0;
 let elapsed = 0;
@@ -97,87 +130,36 @@ let elapsedInterval = null;
 let timerRAF = null;
 let qStartTime = 0;
 
-// parse CSV minimally
-async function fetchCSV(url){
-  const res = await fetch(url, {cache:'no-store'});
-  if(!res.ok) throw new Error('CSV fetch failed');
-  const text = await res.text();
-
-  // Basic CSV parse (no quotes in your dataset ideally)
-  const lines = text.trim().split(/\r?\n/);
-  const headers = lines[0].split(',');
-  const out = [];
-  for(let i=1;i<lines.length;i++){
-    const cols = lines[i].split(',');
-    const obj = {};
-    headers.forEach((h,ix) => obj[h.trim()] = (cols[ix]||'').trim());
-    out.push(obj);
-  }
-  return out;
-}
-
-function normalizeRow(r){
-  return {
-    date: (r.Date||'').trim(),
-    q: (r.Question||'').trim(),
-    a: (r.Answer||'').trim(),
-    opts: [r.OptionA, r.OptionB, r.OptionC, r.OptionD].filter(Boolean).map(s=>s.trim()),
-    expl: (r.Explanation||'').trim(),
-    cat: (r.Category||'').trim(),
-    diff: (r.Difficulty||'').trim()
-  };
-}
-
 async function loadTodays(){
-  // Try live first
+  const key = today.toISOString().slice(0,10);
   try{
-    const live = (await fetchCSV(LIVE_CSV_URL)).map(normalizeRow);
-    const key = today.toISOString().slice(0,10);
+    const live = (await loadCSV(LIVE_CSV_URL)).map(normalizeRow);
     const todays = live.filter(r=>r.date===key);
-    if (todays.length >= 1) {
-      rows = todays.slice(0, 12);
-      return;
-    }
-  }catch(e){ /* ignore, fallback to bank */ }
-
-  // Fallback: take first 12 bank rows
-  const bank = (await fetchCSV(BANK_CSV_URL)).map(normalizeRow);
+    if (todays.length >= 1) { rows = todays.slice(0, 12); return; }
+  }catch(e){}
+  const bank = (await loadCSV(BANK_CSV_URL)).map(normalizeRow);
   rows = bank.slice(0, 12);
 }
 
-// =========================
-// RENDER
-// =========================
+// Render
 function showQuestion(){
   const q = rows[idx];
-  if(!q){
-    endQuiz(); // safety
-    return;
-  }
+  if(!q){ endQuiz(); return; }
   elGameOver.style.display = 'none';
   elQ.textContent = q.q || '—';
-
   elChoices.innerHTML = '';
   q.opts.forEach((opt) => {
     const b = document.createElement('button');
     b.className = 'choice';
     b.textContent = opt;
-    b.onclick = () => onSelect(b, opt, q.a);
+    b.onclick = () => onSelect(b, opt, q);
     elChoices.appendChild(b);
   });
 }
+function disableChoices(){ [...document.querySelectorAll('.choice')].forEach(b => { b.classList.add('disabled'); b.disabled = true; }); }
+function clearChoiceStates(){ [...document.querySelectorAll('.choice')].forEach(b => { b.classList.remove('correct','incorrect','disabled'); b.disabled = false; }); }
 
-function disableChoices(){
-  [...document.querySelectorAll('.choice')].forEach(b => b.classList.add('disabled'));
-}
-
-function clearChoiceStates(){
-  [...document.querySelectorAll('.choice')].forEach(b => b.classList.remove('correct','incorrect','disabled'));
-}
-
-// =========================
-// QUIZ FLOW
-// =========================
+// Flow
 function resetGame(){
   idx = 0; wrongStreak = 0; elapsed = 0;
   if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval=null; }
@@ -191,16 +173,9 @@ function resetGame(){
   btnAgain.classList.remove('pulse');
   btnAgain.style.display = 'none';
 }
-function startElapsed(){
-  if (elapsedInterval) clearInterval(elapsedInterval);
-  elapsedInterval = setInterval(()=>{ elapsed++; elElapsed.textContent = `${elapsed}s`; }, 1000);
-}
-function stopElapsed(){
-  if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval=null; }
-}
-
+function startElapsed(){ if (elapsedInterval) clearInterval(elapsedInterval); elapsedInterval = setInterval(()=>{ elapsed++; elElapsed.textContent = `${elapsed}s`; }, 1000); }
+function stopElapsed(){ if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval=null; } }
 function startCountdownThenQuiz(){
-  // 3..2..1 with beeps
   elCountdown.style.display = 'flex';
   elTimerWrap.classList.remove('active');
   elChoices.innerHTML = '';
@@ -210,63 +185,37 @@ function startCountdownThenQuiz(){
   beep(660);
   const tick = setInterval(()=>{
     c -= 1;
-    if (c > 0) {
-      elCountdown.textContent = c;
-      beep(660);
-    } else {
-      clearInterval(tick);
-      elCountdown.style.display='none';
-      startQuiz();
-    }
+    if (c > 0) { elCountdown.textContent = c; beep(660); }
+    else { clearInterval(tick); elCountdown.style.display='none'; startQuiz(); }
   }, 1000);
 }
-
 async function startQuiz(){
-  // prevent auto-start if not loaded rows
   if (!rows.length) {
-    try{
-      elSet.textContent = 'Loading…';
-      await loadTodays();
-      elSet.textContent = 'Ready';
-    }catch(e){
-      elSet.textContent = 'Error loading set';
-      return;
-    }
+    try{ elSet.textContent = 'Loading…'; await loadTodays(); elSet.textContent = 'Ready'; }
+    catch(e){ elSet.textContent = 'Error loading set'; return; }
   }
   if (!rows.length) return;
-
   idx = 0; wrongStreak = 0; elapsed = 0;
   startElapsed();
   elElapsed.textContent = '0s';
   elTimerWrap.classList.add('active');
   nextQuestion();
 }
-
 function nextQuestion(){
-  if (idx >= rows.length) {
-    endQuiz();
-    return;
-  }
+  if (idx >= rows.length) { endQuiz(); return; }
   clearChoiceStates();
   showQuestion();
-  runTimer(QUIZ_SECONDS, () => {
-    // time up → treat as incorrect attempt
-    handleAnswer(false);
-  });
+  runTimer(QUIZ_SECONDS, () => { handleAnswer(false); });
 }
-
 function endQuiz(){
-  cancelTimer();
-  stopElapsed();
+  cancelTimer(); stopElapsed();
   elGameOver.style.display='block';
   btnAgain.style.display='inline-block';
   btnAgain.classList.add('pulse');
   elSet.textContent = 'Done';
 }
 
-// =========================
-// TIMER — smooth (right→left)
-// =========================
+// Timer
 function runTimer(seconds, onExpire){
   cancelTimer();
   const total = seconds * 1000;
@@ -274,13 +223,10 @@ function runTimer(seconds, onExpire){
   const raf = (now) => {
     const elapsedMs = now - qStartTime;
     const pct = Math.min(1, elapsedMs / total);
-    const remainingTranslate = (1 - pct) * 100; // 100% → 0% from right
+    const remainingTranslate = (1 - pct) * 100;
     elTimerBar.style.transform = `translateX(${remainingTranslate}%)`;
-    if (pct < 1) {
-      timerRAF = requestAnimationFrame(raf);
-    } else {
-      onExpire?.();
-    }
+    if (pct < 1) { timerRAF = requestAnimationFrame(raf); }
+    else { onExpire?.(); }
   };
   timerRAF = requestAnimationFrame(raf);
 }
@@ -290,51 +236,36 @@ function cancelTimer(){
   elTimerBar.style.transform = 'translateX(0)';
 }
 
-// =========================
-// ANSWER HANDLING
-// =========================
-function onSelect(btn, val, answer){
+// Answers
+function onSelect(btn, val, row){
   if (btn.classList.contains('disabled')) return;
-
-  // disable other choices from spamming
   disableChoices();
-
-  const correct = (String(val).trim().toLowerCase() === String(answer).trim().toLowerCase());
+  const correct = isCorrectSelection(row, val);
   handleAnswer(correct, btn);
 }
-
 function handleAnswer(correct, btn=null){
   cancelTimer();
-
   if (correct){
     if (btn){ btn.classList.add('correct'); }
-    wrongStreak = 0;
-    beep(820, 100);
-    // small delay then next
+    wrongStreak = 0; beep(820, 100);
     setTimeout(()=>{ idx++; nextQuestion(); }, 600);
   } else {
     if (btn){ btn.classList.add('incorrect'); }
     vibrate(80);
     wrongStreak += 1;
-
     if (AUTO_GAMEOVER_ON_TWO_WRONG && wrongStreak >= 2){
-      // game ends
       elGameOver.style.display='block';
       btnAgain.style.display='inline-block';
       btnAgain.classList.add('pulse');
       stopElapsed();
     } else {
-      // retry same question (no reveal)
       setTimeout(()=>{ clearChoiceStates(); showQuestion(); runTimer(QUIZ_SECONDS, ()=>handleAnswer(false)); }, 700);
     }
   }
 }
 
-// =========================
-// BUTTONS
-// =========================
+// Buttons
 btnStart?.addEventListener('click', () => {
-  // Ensure data is loaded, then start countdown
   if (!rows.length){
     loadTodays().then(()=>{ elSet.textContent='Ready'; startCountdownThenQuiz(); })
       .catch(()=> elSet.textContent='Error loading set');
@@ -342,11 +273,9 @@ btnStart?.addEventListener('click', () => {
     startCountdownThenQuiz();
   }
 });
-
 btnShuffle?.addEventListener('click', async () => {
   try{
-    const bank = (await fetchCSV(BANK_CSV_URL)).map(normalizeRow);
-    // pick any 12 at random
+    const bank = (await loadCSV(BANK_CSV_URL)).map(normalizeRow);
     for (let i = bank.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [bank[i], bank[j]] = [bank[j], bank[i]];
@@ -354,21 +283,16 @@ btnShuffle?.addEventListener('click', async () => {
     rows = bank.slice(0,12);
     resetGame();
     elQ.textContent = 'Press Start Quiz';
-  }catch(e){
-    alert('Could not shuffle from bank.');
-  }
-});
-
-btnShare?.addEventListener('click', async () => {
-  const shareData = { title: 'Brain ⚡ Bolt', text: 'Daily quiz — join me!', url: 'https://dailybrainbolt.com/' };
-  try{
-    if (navigator.share) { await navigator.share(shareData); }
-    else { await navigator.clipboard.writeText(shareData.url); alert('Link copied!'); }
   }catch(e){}
 });
-
+btnShare?.addEventListener('click', async () => {
+  const shareData = { title: 'Brain ⚡ Bolt', text: 'Daily quiz — join me!', url: location.origin + '/' };
+  try{
+    if (navigator.share) { await navigator.share(shareData); }
+    else { await navigator.clipboard.writeText(shareData.url); }
+  }catch(e){}
+});
 btnTheme?.addEventListener('click', () => {
-  // simple toggle that flips --bg / --bg-2 quickly
   if (currentTheme === 'dark'){
     document.documentElement.style.setProperty('--bg', '#f8fbfc');
     document.documentElement.style.setProperty('--bg-2','#e5f1f6');
@@ -383,16 +307,7 @@ btnTheme?.addEventListener('click', () => {
     currentTheme = 'dark';
   }
 });
+btnAgain?.addEventListener('click', () => { btnAgain.classList.remove('pulse'); resetGame(); });
 
-btnAgain?.addEventListener('click', () => {
-  btnAgain.classList.remove('pulse');
-  resetGame();
-});
-
-// =========================
-// INIT
-// =========================
-(function init(){
-  elSet.textContent = 'Ready';  // no "loading today’s set…" under Ready
-  resetGame();
-})();
+// Init
+(function init(){ elSet.textContent = 'Ready'; resetGame(); })();
