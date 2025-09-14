@@ -1,14 +1,28 @@
 /* Brain ⚡ Bolt — Service Worker */
-const VERSION = 'v1.1.0';
+const VERSION = 'v1.2.0';          // ⬅ bump when assets change
 const STATIC_CACHE = `bb-static-${VERSION}`;
 const RUNTIME_CACHE = `bb-runtime-${VERSION}`;
 
 const STATIC_ASSETS = [
-  '/', '/index.html', '/style.css', '/app.js',
-  '/firebase-config.js', '/site.webmanifest',
-  '/favicon.svg', '/icon-192.png', '/icon-512.png',
-  '/app-icon.svg', '/header-graphic.svg',
-  '/about.html','/terms.html','/privacy.html','/contact.html','/menu.html','/pro.html','/404.html'
+  '/',
+  '/index.html',
+  '/style.css',
+  '/app.js',
+  '/firebase-config.js',
+  '/site.webmanifest',
+  '/favicon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/app-icon.svg',
+  '/header-graphic.svg',
+  '/about.html',
+  '/terms.html',
+  '/privacy.html',
+  '/contact.html',
+  '/menu.html',
+  '/pro.html',
+  '/admin.html',
+  '/404.html'
 ];
 
 self.addEventListener('install', (event) => {
@@ -29,13 +43,20 @@ const isSameOrigin = (url) => new URL(url, self.location.origin).origin === self
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
   if (request.method !== 'GET') return;
 
+  const url = new URL(request.url);
   const isSheets = url.hostname.includes('docs.google.com') && url.pathname.includes('/spreadsheets/');
-  if (isSheets) { event.respondWith(networkFirst(request)); return; }
 
-  if (isSameOrigin(request.url)) { event.respondWith(cacheFirst(request)); return; }
+  if (isSheets) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  if (isSameOrigin(request.url)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
 
   event.respondWith(fetch(request));
 });
@@ -56,7 +77,6 @@ async function cacheFirst(request) {
     throw err;
   }
 }
-
 async function networkFirst(request) {
   const cache = await caches.open(RUNTIME_CACHE);
   try {
