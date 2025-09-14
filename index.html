@@ -4,71 +4,120 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
+
+  <!-- PWA / Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="icon" sizes="192x192" href="/icon-192.png">
+  <link rel="icon" sizes="512x512" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#152021">
-  <link rel="stylesheet" href="/style.css">
+  <meta name="theme-color" content="#162022" />
+
+  <!-- Social -->
+  <meta property="og:title" content="Brain ⚡ Bolt">
+  <meta property="og:description" content="Daily trivia, riddles & logic challenges. Keep your streak alive!">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://dailybrainbolt.com/">
+  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.svg">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css" />
+
+  <!-- App scripts (config first) -->
+  <script src="/firebase-config.js"></script>
+  <script defer src="/app.js"></script>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="splash" class="splash" aria-hidden="true">
-    <img src="/app-icon.svg" alt="Brain Bolt App Icon" class="splash-logo">
-    <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
+  <!-- Splash -->
+  <div id="splash">
+    <div class="splash-inner">
+      <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
+      <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
+    </div>
   </div>
 
+  <!-- Topbar -->
+  <div class="topbar">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
+  </div>
+
+  <!-- Slide-out Menu -->
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <ul>
+      <li><a href="/index.html" class="menu-home">Home</a></li>
+      <li><a href="/menu.html">Menu</a></li>
+      <li><a href="/about.html">About</a></li>
+      <li><a href="/terms.html">Terms</a></li>
+      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
+    </ul>
+  </nav>
+
+  <!-- Header -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <div class="header-actions">
-        <a class="menu-link" href="/menu.html" aria-label="Menu">☰ Menu</a>
-      </div>
-      <div class="hero-title">
-        <h1 class="hero-h1">Brain <span class="bolt">⚡</span> Bolt</h1>
-      </div>
-      <p class="subtitle">12 fresh questions — every day.</p>
+      <h1 class="hero-title">Brain <span class="bolt">⚡</span> Bolt</h1>
+      <p class="subtitle">Your Daily Challenge</p>
     </div>
   </header>
 
+  <!-- Main -->
   <main class="container">
-    <section class="card bar-card">
-      <div class="bar-top">
-        <div><strong>Score:</strong> <span id="score">0</span></div>
-        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
-      </div>
-      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
-    </section>
-
-    <section class="card" id="quiz-card">
-      <div class="meta">
-        <span id="metaText" class="meta-text">Ready</span>
-        <span class="spacer"></span>
-        <span id="today" class="meta-date"></span>
+    <section id="daily" class="card">
+      <div class="status-bar">
+        <span id="dateLabel"></span>
+        <span id="setLabel">Ready</span>
       </div>
 
-      <div id="question" class="question">Press Start Quiz</div>
-      <div id="options" class="options"></div>
+      <div id="countdown" class="countdown" aria-live="polite" style="display:none;"></div>
 
-      <div id="feedback" class="feedback" aria-live="polite"></div>
+      <div id="timerWrapper" class="timer-wrap" aria-hidden="true">
+        <div id="timerBar" class="timer-bar"></div>
+        <span id="elapsedTime" class="elapsed">0s</span>
+      </div>
+
+      <div id="questionBox" class="question-box">Press Start Quiz</div>
+      <div id="choices" class="choices"></div>
+
+      <div id="gameOverBox" class="game-over" style="display:none;">Game Over</div>
 
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <button id="playAgainBtn" class="btn ghost hidden">Play Again</button>
+        <button id="themeBtn" class="btn outline">Theme</button>
+        <button id="playAgainBtn" class="btn again" style="display:none;">Play Again</button>
       </div>
     </section>
   </main>
 
   <footer class="footer">
     © 2025 Brain ⚡ Bolt •
-    <a href="/about.html">About</a> •
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
+    <a href="/about.html" class="footer-link">About</a> •
+    <a href="/terms.html" class="footer-link">Terms</a> •
+    <a href="/privacy.html" class="footer-link">Privacy</a> •
+    <a href="/contact.html" class="footer-link">Contact</a>
   </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="/app.js"></script>
+  <!-- SW registration + Splash autoclose -->
+  <script>
+    window.addEventListener('load', () => {
+      const s = document.getElementById('splash');
+      s?.classList.add('show');
+      setTimeout(() => s?.classList.add('show-title'), 900);
+      setTimeout(() => s?.classList.add('hide'), 2200);
+    });
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .catch(err => console.log('SW reg failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>
