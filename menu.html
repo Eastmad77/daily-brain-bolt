@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Menu • Brain ⚡ Bolt</title>
+  <link rel="stylesheet" href="/style.css" />
   <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
   <link rel="manifest" href="/site.webmanifest" />
   <meta name="theme-color" content="#162022" />
-  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div class="topbar">
@@ -30,7 +30,7 @@
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <h1>Menu</h1>
+      <h1 class="hero-title">Menu</h1>
       <p class="subtitle">All pages in one place</p>
     </div>
   </header>
@@ -61,7 +61,7 @@
   <script>
     const b=document.getElementById('mmMenuBtn'), m=document.getElementById('mmSideMenu');
     b?.addEventListener('click',()=>{m?.classList.add('open');m?.setAttribute('aria-hidden','false');setTimeout(()=>{m?.classList.remove('open');m?.setAttribute('aria-hidden','true')},5000)});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')m?.classList.remove('open')});
+    document.addEventListener('click',e=>{ if(!m?.classList.contains('open')) return; if(!(m.contains(e.target)||b.contains(e.target))){ m.classList.remove('open'); m.setAttribute('aria-hidden','true'); }});
   </script>
 </body>
 </html>
