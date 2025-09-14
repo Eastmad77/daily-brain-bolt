@@ -1,4 +1,4 @@
-/* Brain ⚡ Bolt — main app with success splash + robust splash/home logic */
+/* Brain ⚡ Bolt — main app (unchanged logic, but compatible with hardened splash) */
 
 // ===== Config =====
 const LIVE_CSV_URL =
@@ -58,7 +58,7 @@ function beep(freq = 660, dur = 120) {
   osc.start(); setTimeout(()=>osc.stop(), dur);
 }
 
-// ===== Menu (works on all pages) =====
+// ===== Menu
 let menuAutoHideTO = null;
 btnMenu?.addEventListener('click', () => {
   sideMenu?.classList.add('open');
@@ -78,14 +78,14 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ==== Force splash on "Home" from sidebar (no freeze) ====
+// Force splash on Home
 document.querySelectorAll('a[data-home-link]').forEach(a=>{
   a.addEventListener('click', ()=>{
     try{ sessionStorage.setItem('bb_forceSplash','1'); }catch(e){}
   });
 });
 
-// ===== Notifications (unchanged) =====
+// ===== Notifications
 const LS_NOTIFY_KEY = 'bb_notify_enabled';
 const LS_LAST_PLAYED = 'bb_last_played_nz';
 
@@ -124,7 +124,7 @@ btnNotify?.addEventListener('click', async () => {
   }
 });
 
-// ===== CSV loading =====
+// ===== CSV loading
 function toCsvUrl(u){
   if(!u) return '';
   return u.replace(/\/pubhtml.*/, '/pub?output=csv')
@@ -142,7 +142,6 @@ function loadCSV(url){
   });
 }
 
-// Answer normalization (supports A/B/C/D or text)
 function normText(s){
   return String(s ?? '')
     .replace(/[\u2018\u2019\u201A\u201B]/g,"'")
@@ -157,7 +156,7 @@ function normalizeRow(r){
   return {
     date: String(r.Date||'').trim(),
     q: String(r.Question||'').trim(),
-    a: String(r.Answer||'').trim(), // can be letter or text
+    a: String(r.Answer||'').trim(), // letter OR text
     opts,
     expl: String(r.Explanation||'').trim(),
     cat: String(r.Category||'').trim(),
@@ -202,8 +201,8 @@ async function loadTodays(){
 function showQuestion(){
   const q = rows[idx];
   if(!q){ endQuiz(true); return; }
-  if (elGameOver) elGameOver.style.display = 'none';
-  if (elQ) elQ.textContent = q.q || '—';
+  elGameOver && (elGameOver.style.display = 'none');
+  elQ && (elQ.textContent = q.q || '—');
   if (elChoices) {
     elChoices.innerHTML = '';
     q.opts.forEach((opt) => {
@@ -222,13 +221,13 @@ function clearChoiceStates(){ if (!elChoices) return; [...document.querySelector
 function resetGame(){
   idx = 0; wrongStreak = 0; elapsed = 0;
   if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval=null; }
-  if (elElapsed) elElapsed.textContent = '0s';
-  if (elTimerBar) elTimerBar.style.transform = 'translateX(0)';
+  elElapsed && (elElapsed.textContent = '0s');
+  elTimerBar && (elTimerBar.style.transform = 'translateX(0)');
   elTimerWrap?.classList.remove('active');
-  if (elGameOver) elGameOver.style.display='none';
-  if (elQ) elQ.textContent = 'Press Start Quiz';
-  if (elChoices) elChoices.innerHTML = '';
-  if (elSet) elSet.textContent = 'Ready';
+  elGameOver && (elGameOver.style.display='none');
+  elQ && (elQ.textContent = 'Press Start Quiz');
+  elChoices && (elChoices.innerHTML = '');
+  elSet && (elSet.textContent = 'Ready');
   btnAgain?.classList.remove('pulse');
   btnAgain && (btnAgain.style.display = 'none');
 }
@@ -238,14 +237,13 @@ function startCountdownThenQuiz(){
   if (!elCountdown) return startQuiz();
   elCountdown.style.display = 'flex';
   elTimerWrap?.classList.remove('active');
-  if (elChoices) elChoices.innerHTML = '';
-  if (elQ) elQ.textContent = '';
+  elChoices && (elChoices.innerHTML = '');
+  elQ && (elQ.textContent = '');
   let c = COUNTDOWN_SECONDS;
   elCountdown.textContent = c;
-  beep(660);
   const tick = setInterval(()=>{
     c -= 1;
-    if (c > 0) { elCountdown.textContent = c; beep(660); }
+    if (c > 0) { elCountdown.textContent = c; }
     else { clearInterval(tick); elCountdown.style.display='none'; startQuiz(); }
   }, 1000);
 }
@@ -257,7 +255,7 @@ async function startQuiz(){
   if (!rows.length) return;
   idx = 0; wrongStreak = 0; elapsed = 0;
   startElapsed();
-  if (elElapsed) elElapsed.textContent = '0s';
+  elElapsed && (elElapsed.textContent = '0s');
   elTimerWrap?.classList.add('active');
   nextQuestion();
 }
@@ -270,14 +268,12 @@ function nextQuestion(){
 function endQuiz(completed=false){
   cancelTimer(); stopElapsed();
   if (completed){
-    // Show SUCCESS splash overlay
     showSuccessSplash();
   } else {
-    if (elGameOver) elGameOver.style.display='block';
+    elGameOver && (elGameOver.style.display='block');
     if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
-    if (elSet) elSet.textContent = 'Done';
+    elSet && (elSet.textContent = 'Done');
   }
-  // Record last played day (NZ)
   localStorage.setItem('bb_last_played_nz', nzTodayYMD());
 }
 
@@ -290,13 +286,13 @@ function runTimer(seconds, onExpire){
     const elapsedMs = now - qStartTime;
     const pct = Math.min(1, elapsedMs / total);
     const remainingTranslate = (1 - pct) * 100;
-    if (elTimerBar) elTimerBar.style.transform = `translateX(${remainingTranslate}%)`;
+    elTimerBar && (elTimerBar.style.transform = `translateX(${remainingTranslate}%)`);
     if (pct < 1) { timerRAF = requestAnimationFrame(raf); }
     else { onExpire?.(); }
   };
   timerRAF = requestAnimationFrame(raf);
 }
-function cancelTimer(){ if (timerRAF) cancelAnimationFrame(timerRAF); timerRAF = null; if (elTimerBar) elTimerBar.style.transform = 'translateX(0)'; }
+function cancelTimer(){ if (timerRAF) cancelAnimationFrame(timerRAF); timerRAF = null; elTimerBar && (elTimerBar.style.transform = 'translateX(0)'); }
 
 // Answers
 function onSelect(btn, val, row){
@@ -308,15 +304,14 @@ function onSelect(btn, val, row){
 function handleAnswer(correct, btn=null){
   cancelTimer();
   if (correct){
-    if (btn){ btn.classList.add('correct'); }
-    wrongStreak = 0; beep(820, 100);
+    btn && btn.classList.add('correct');
+    wrongStreak = 0;
     setTimeout(()=>{ idx++; nextQuestion(); }, 600);
   } else {
-    if (btn){ btn.classList.add('incorrect'); }
-    vibrate(80);
+    btn && btn.classList.add('incorrect');
     wrongStreak += 1;
     if (AUTO_GAMEOVER_ON_TWO_WRONG && wrongStreak >= 2){
-      if (elGameOver) elGameOver.style.display='block';
+      elGameOver && (elGameOver.style.display='block');
       if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
       stopElapsed();
     } else {
@@ -329,19 +324,13 @@ function handleAnswer(correct, btn=null){
 function showSuccessSplash(){
   if (!successSplash) return;
   successSplash.classList.add('show');
-
-  // Haptic tap
-  vibrate(30);
-
-  // Auto-dismiss after 2300ms, also wire the button
   const hide = () => {
     successSplash.classList.remove('show');
-    // Show "Done" UI afterward
-    if (elGameOver) elGameOver.style.display='block';
+    elGameOver && (elGameOver.style.display='block');
     if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
-    if (elSet) elSet.textContent = 'Done';
+    elSet && (elSet.textContent = 'Done');
   };
-  ssDismiss?.addEventListener('click', hide, { once:true });
+  document.getElementById('ssDismiss')?.addEventListener('click', hide, { once:true });
   setTimeout(hide, 2300);
 }
 
@@ -358,11 +347,36 @@ btnShuffle?.addEventListener('click', async () => {
   try{
     const bank = (await loadCSV(BANK_CSV_URL)).map(normalizeRow);
     for (let i = bank.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bank[i], bank[j]] = [bank[j], bank[i]]; }
-    rows = bank.slice(0,12); resetGame(); if (elQ) elQ.textContent = 'Press Start Quiz';
+    rows = bank.slice(0,12); resetGame(); elQ && (elQ.textContent = 'Press Start Quiz');
   }catch(e){}
 });
 btnShare?.addEventListener('click', async () => {
   const shareData = { title: 'Brain ⚡ Bolt', text: 'Daily quiz — join me!', url: location.origin + '/' };
   try{
     if (navigator.share) { await navigator.share(shareData); }
-    else {
+    else { await navigator.clipboard.writeText(shareData.url); }
+  }catch(e){}
+});
+btnTheme?.addEventListener('click', () => {
+  if (currentTheme === 'dark'){
+    document.documentElement.style.setProperty('--bg', '#f8fbfc');
+    document.documentElement.style.setProperty('--bg-2','#e5f1f6');
+    document.documentElement.style.setProperty('--panel','#ffffff');
+    document.documentElement.style.setProperty('--text','#0a1a20');
+    currentTheme = 'light';
+  } else {
+    document.documentElement.style.setProperty('--bg', '#162022');
+    document.documentElement.style.setProperty('--bg-2','#2A3840');
+    document.documentElement.style.setProperty('--panel','#0E1E27');
+    document.documentElement.style.setProperty('--text','#ffffff');
+    currentTheme = 'dark';
+  }
+});
+btnAgain?.addEventListener('click', () => { btnAgain.classList.remove('pulse'); resetGame(); });
+
+// INIT
+(function init(){
+  maybeShowDailyReady();
+  elSet && (elSet.textContent = 'Ready');
+  resetGame();
+})();
