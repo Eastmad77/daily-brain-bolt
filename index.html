@@ -1,137 +1,107 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Brain <span class="bolt">⚡</span> Bolt</title>
+  <title>Brain ⚡ Bolt</title>
 
-  <!-- PWA / Icons -->
+  <!-- PWA + Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" sizes="192x192" href="/icon-192.png">
-  <link rel="icon" sizes="512x512" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#152021" />
+  <meta name="theme-color" content="#152021">
 
-  <meta property="og:title" content="Brain ⚡ Bolt">
-  <meta property="og:description" content="Daily trivia, riddles & logic challenges. Keep your streak alive!">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://dailybrainbolt.com/">
-  <meta property="og:image" content="https://dailybrainbolt.com/og-image-dark.svg">
-  <meta name="twitter:card" content="summary_large_image">
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css">
 
-  <link rel="stylesheet" href="/style.css" />
+  <!-- Config (keep before app.js so config is available) -->
   <script src="/firebase-config.js"></script>
-  <script defer src="/app.js"></script>
-
-  <style>
-    /* Hide body until splash ends (prevents content flash) */
-    body.splash-lock { overflow: hidden; height: 100vh; }
-    main, header, .topbar, footer { visibility: hidden; }
-    body.ready main, body.ready header, body.ready .topbar, body.ready footer { visibility: visible; }
-  </style>
 </head>
-<body class="splash-lock">
-  <!-- Solid blue animated splash (icon → title swap) -->
-  <div id="splash">
-    <div class="splash-inner">
-      <img src="/app-icon.svg" alt="Logo" class="splash-logo" />
-      <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
-    </div>
+<body>
+  <!-- Splash Screen (logo first, title fades in mid-way) -->
+  <div id="splash" class="splash" aria-hidden="true">
+    <img src="/app-icon.svg" alt="Brain Bolt App Icon" class="splash-logo">
+    <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
   </div>
 
   <!-- Topbar -->
   <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div class="topbar-right">
-      <button id="notifyBtn" class="btn tiny outline">Notify</button>
-      <button id="signInBtn" class="btn tiny outline">Sign in</button>
-      <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
-      <button id="themeBtn" class="btn tiny outline">Theme</button>
-    </div>
+    <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <button id="soundBtn" class="sound-btn" aria-label="Toggle sound">🔊</button>
   </div>
 
   <!-- Slide-out Menu -->
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+  <nav id="sideMenu" class="side-menu" aria-hidden="true">
     <ul>
-      <li><a href="/index.html" class="menu-home">Home</a></li>
+      <li><a href="/index.html" class="active">Home</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
       <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
+      <li><button id="btnNotify" class="btn ghost">Enable Notifications</button></li>
+      <li><button id="signInBtn" class="btn ghost">Sign in with Google</button></li>
     </ul>
   </nav>
 
-  <!-- Header -->
+  <!-- Hero -->
   <header class="hero">
+    <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <h1 class="hero-title">Brain <span class="bolt">⚡</span> Bolt</h1>
-      <p class="subtitle">Your Daily Challenge</p>
+      <div class="hero-title">
+        <!-- (No inline favicon image here, per your request) -->
+        <h1 class="hero-h1">
+          Brain <span class="bolt">⚡</span> Bolt
+        </h1>
+      </div>
+      <p class="subtitle">Your Daily Challenge Awaits</p>
     </div>
   </header>
 
   <!-- Main -->
   <main class="container">
-    <section id="daily" class="card">
-      <div class="status-bar">
-        <span id="dateLabel"></span>
-        <span id="setLabel">Ready</span>
+    <section class="card quiz-area">
+
+      <!-- Status / Meta -->
+      <div id="statusBar" class="statusbar">
+        <span id="quizDate" class="meta-chip">—</span>
+        <span id="elapsedTime" class="meta-chip">00:00</span>
       </div>
 
-      <div id="countdown" class="countdown" aria-live="polite" style="display:none;"></div>
-
-      <div id="timerWrapper" class="timer-wrap" aria-hidden="true">
-        <div id="timerBar" class="timer-bar"></div>
-        <span id="elapsedTime" class="elapsed">0s</span>
-      </div>
-
+      <!-- Question -->
       <div id="questionBox" class="question-box">Press Start Quiz</div>
-      <div id="choices" class="choices"></div>
-      <div id="gameOverBox" class="game-over" style="display:none;">Game Over</div>
 
+      <!-- Options -->
+      <div id="options" class="options"></div>
+
+      <!-- Feedback -->
+      <div id="resultBox" class="result-box" aria-live="polite"></div>
+
+      <!-- Timer -->
+      <div class="timer-wrap">
+        <div id="timerBar" class="timer-bar"></div>
+      </div>
+
+      <!-- CTAs -->
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
         <button id="shareBtn" class="btn outline">Share</button>
-        <button id="playAgainBtn" class="btn again" style="display:none;">Play Again</button>
+        <button id="playAgainBtn" class="btn ghost hidden">Play Again</button>
       </div>
     </section>
   </main>
 
+  <!-- Footer -->
   <footer class="footer">
     © 2025 Brain ⚡ Bolt •
-    <a href="/about.html" class="footer-link">About</a> •
-    <a href="/terms.html" class="footer-link">Terms</a> •
-    <a href="/privacy.html" class="footer-link">Privacy</a> •
-    <a href="/contact.html" class="footer-link">Contact</a>
+    <a href="/about.html">About</a> • 
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a>
   </footer>
 
-  <!-- SW registration + Splash timing -->
-  <script>
-    // Splash sequence: icon first, title mid-way, then unlock UI
-    window.addEventListener('load', () => {
-      const s = document.getElementById('splash');
-      const body = document.body;
-      s?.classList.add('show');
-      // beep + vibrate lightly as it animates
-      try { navigator.vibrate && navigator.vibrate(30); } catch(e){}
-      setTimeout(() => {
-        s?.classList.add('show-title');
-        try { navigator.vibrate && navigator.vibrate([20,30,20]); } catch(e){}
-      }, 800);
-      setTimeout(() => {
-        s?.classList.add('hide');
-        body.classList.add('ready');
-        body.classList.remove('splash-lock');
-      }, 1800);
-    });
-
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-      });
-    }
-  </script>
+  <!-- App logic -->
+  <script src="/app.js"></script>
 </body>
 </html>
