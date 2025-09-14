@@ -5,105 +5,130 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
 
-  <!-- PWA / Icons -->
+  <!-- Icons / PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#162022" />
 
-  <!-- Styles -->
   <link rel="stylesheet" href="/style.css" />
 
-  <!-- Config/script deps -->
+  <!-- App config and libs -->
   <script src="/firebase-config.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script defer src="/app.js"></script>
+
+  <!-- Splash-first: keep app shell hidden until splash completes -->
+  <style>
+    .app-root{opacity:0; transition:opacity .25s ease;}
+    /* Make splash visible immediately to avoid page flash */
+    #splash{opacity:1 !important; pointer-events:auto !important;}
+  </style>
 </head>
 <body>
-  <!-- Splash -->
-  <div id="splash" role="dialog" aria-label="Loading">
+  <!-- Splash (blue fill, icon→title wipe). Starts visible to avoid flicker -->
+  <div id="splash" class="show" role="dialog" aria-label="Loading">
     <div class="splash-inner">
       <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
-      <h1 class="splash-title"><span class="title-mask">Brain <span class="bolt">⚡</span> Bolt</span></h1>
+      <h1 class="splash-title">
+        <span class="title-mask">Brain <span class="bolt">⚡</span> Bolt</span>
+      </h1>
       <div class="splash-wipe"></div>
     </div>
   </div>
 
-  <!-- Topbar -->
-  <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn">☰</button>
-    <button id="soundBtn" class="sound-btn">🔊</button>
-  </div>
-
-  <!-- Side Menu -->
-  <nav id="mmSideMenu" class="side-menu">
-    <ul>
-      <li><a href="/index.html" aria-current="page">Home</a></li>
-      <li><a href="/menu.html">Menu</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-      <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
-    </ul>
-  </nav>
-
-  <!-- Header -->
-  <header class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-inner">
-      <h1 class="hero-title">Brain <span class="bolt">⚡</span> Bolt</h1>
-      <p class="subtitle">Your Daily Challenge</p>
+  <!-- App shell (hidden until splash ends) -->
+  <div id="appRoot" class="app-root">
+    <!-- Topbar -->
+    <div class="topbar">
+      <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+      <div>
+        <button id="notifyBtn" class="sound-btn" title="Daily reminder">🔔</button>
+        <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
+      </div>
     </div>
-  </header>
 
-  <!-- Main Quiz Area -->
-  <main class="container">
-    <section id="daily" class="card">
-      <div class="status-bar">
-        <span id="dateLabel"></span>
-        <span id="setLabel" class="pill">Ready</span>
+    <!-- Side Menu -->
+    <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+      <ul>
+        <li><a href="/index.html" aria-current="page">Home</a></li>
+        <li><a href="/about.html">About</a></li>
+        <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
+        <li><a href="/signin.html">Sign In</a></li>
+        <li><a href="/terms.html">Terms</a></li>
+        <li><a href="/privacy.html">Privacy</a></li>
+        <li><a href="/contact.html">Contact</a></li>
+      </ul>
+    </nav>
+
+    <!-- Header -->
+    <header class="hero">
+      <div class="hero-overlay"></div>
+      <div class="hero-inner">
+        <h1 class="hero-title">Brain <span class="bolt">⚡</span> Bolt</h1>
+        <p class="subtitle">Your Daily Challenge</p>
       </div>
+    </header>
 
-      <div id="countdown" class="countdown" style="display:none;"></div>
-      <div id="timerWrapper" class="timer-wrap">
-        <div id="timerBar" class="timer-bar"></div>
-        <span id="elapsedTime" class="elapsed">0s</span>
-      </div>
+    <!-- Main -->
+    <main class="container">
+      <section id="daily" class="card">
+        <div class="status-bar">
+          <span id="dateLabel"></span>
+          <span id="setLabel" class="pill">Ready</span>
+        </div>
 
-      <div id="questionBox" class="question-box">Press Start Quiz</div>
-      <div id="choices" class="choices"></div>
-      <div id="gameOverBox" class="game-over">Game Over</div>
+        <div id="countdown" class="countdown" style="display:none;"></div>
+        <div id="timerWrapper" class="timer-wrap" aria-hidden="true">
+          <div id="timerBar" class="timer-bar"></div>
+          <span id="elapsedTime" class="elapsed">0s</span>
+        </div>
 
-      <div class="cta-row">
-        <button id="startBtn" class="btn primary">Start Quiz</button>
-        <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
-        <button id="shareBtn" class="btn outline">Share</button>
-        <button id="themeBtn" class="btn outline">Theme</button>
-        <button id="playAgainBtn" class="btn again">Play Again</button>
-      </div>
-    </section>
-  </main>
+        <div id="questionBox" class="question-box">Press Start Quiz</div>
+        <div id="choices" class="choices"></div>
+        <div id="gameOverBox" class="game-over" style="display:none;">Game Over</div>
 
-  <!-- Footer -->
-  <footer class="footer">
-    © 2025 Brain ⚡ Bolt •
-    <a href="/about.html" class="footer-link">About</a> •
-    <a href="/terms.html" class="footer-link">Terms</a> •
-    <a href="/privacy.html" class="footer-link">Privacy</a> •
-    <a href="/contact.html" class="footer-link">Contact</a>
-  </footer>
+        <div class="cta-row">
+          <button id="startBtn" class="btn primary">Start Quiz</button>
+          <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
+          <button id="shareBtn" class="btn outline">Share</button>
+          <button id="themeBtn" class="btn outline">Theme</button>
+          <button id="playAgainBtn" class="btn again" style="display:none;">Play Again</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      © 2025 Brain ⚡ Bolt •
+      <a href="/about.html" class="footer-link">About</a> •
+      <a href="/terms.html" class="footer-link">Terms</a> •
+      <a href="/privacy.html" class="footer-link">Privacy</a> •
+      <a href="/contact.html" class="footer-link">Contact</a>
+    </footer>
+  </div><!-- /appRoot -->
 
   <script>
+    // Splash sequence (start visible; then animate; then reveal appRoot)
     window.addEventListener('load', () => {
       const s = document.getElementById('splash');
-      s?.classList.add('show');
+      const root = document.getElementById('appRoot');
+
+      // mid-stage for sharp wipe + icon rise
       setTimeout(() => s?.classList.add('mid'), 650);
-      setTimeout(() => s?.classList.add('hide'), 2200);
+
+      // hide splash, reveal app
+      setTimeout(() => {
+        s?.classList.add('hide');
+        root && (root.style.opacity = '1');
+      }, 2200);
     });
+
+    // Register SW
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
     }
   </script>
+
+  <script defer src="/app.js"></script>
 </body>
 </html>
