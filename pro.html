@@ -4,70 +4,57 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Go Pro • Brain ⚡ Bolt</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#152021">
-  <link rel="stylesheet" href="/style.css">
-  <script src="/firebase-config.js"></script>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <meta name="theme-color" content="#162022" />
+  <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
   <div class="topbar">
-    <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <button id="soundBtn" class="sound-btn" aria-label="Sound">🔊</button>
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
   </div>
 
-  <nav id="sideMenu" class="side-menu" aria-hidden="true">
+  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
+      <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
       <li><a href="/privacy.html">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
-      <li><a href="/pro.html" class="active">Go Pro</a></li>
-      <li><button id="btnNotify" class="btn ghost">Enable Notifications</button></li>
-      <li><button id="signInBtn" class="btn ghost">Sign in with Google</button></li>
+      <li><a href="/pro.html" aria-current="page" class="pro-link">Go Pro</a></li>
     </ul>
   </nav>
 
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <div class="hero-title">
-        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
-        <h1>Go Pro</h1>
-      </div>
-      <p class="subtitle">Unlock more control & features.</p>
+      <h1>Go Pro</h1>
+      <p class="subtitle">Extra features, no distractions, early access.</p>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <ul>
-        <li>Choose categories & difficulty anytime (not just daily set).</li>
-        <li>Early access to upcoming sets.</li>
-        <li>Streak backup & cross-device sync.</li>
-        <li>Optional daily push notifications.</li>
-      </ul>
-      <a href="#" class="btn primary">Upgrade</a>
-    </section>
-
-    <section class="card" style="margin-top:16px">
-      <h2>Manage Your Subscription</h2>
-      <p>If you purchased via the App Store or Google Play, please manage your subscription in your store account.</p>
-      <p>If you purchased directly from us, manage your subscription here:</p>
-      <a href="https://YOUR_STRIPE_PORTAL_URL" class="btn outline">Manage Subscription</a>
+    <section class="card page-card">
+      <div class="prose">
+        <p><strong>Brain ⚡ Bolt Pro</strong> is our optional supporter tier. By going Pro you help keep the daily quiz free for everyone.</p>
+        <h2>Benefits</h2>
+        <ul>
+          <li>No ads</li>
+          <li>Extended archives of past daily sets</li>
+          <li>Extra packs: Logic, Trivia, Pop Culture</li>
+          <li>Early access to new features</li>
+        </ul>
+        <h2>Pricing</h2>
+        <p>Pro is available as a small monthly subscription. All proceeds go toward hosting and question curation.</p>
+        <p><em>Coming soon — check back for launch details.</em></p>
+      </div>
     </section>
   </main>
 
   <footer class="footer">
     © 2025 Brain ⚡ Bolt •
-    <a href="/about.html">About</a> • 
-    <a href="/terms.html">Terms</a> •
-    <a href="/privacy.html">Privacy</a> •
-    <a href="/contact.html">Contact</a>
-  </footer>
-
-  <script src="/app.js"></script>
-</body>
-</html>
+    <a href="/about.html" class="footer-link">About</a> •
+    <a href="/terms.html" class="footer-link">Terms</a> •
+    <a href="/privacy.html" class="footer-link">Privacy
