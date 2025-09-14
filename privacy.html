@@ -4,151 +4,70 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Privacy Policy • Brain ⚡ Bolt</title>
-
-  <!-- Icons / PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="icon" sizes="192x192" href="/icon-192.png">
-  <link rel="icon" sizes="512x512" href="/icon-512.png">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022">
-
-  <!-- Styles -->
+  <meta name="theme-color" content="#152021">
   <link rel="stylesheet" href="/style.css">
-
-  <!-- App (optional if you don’t need JS here) -->
   <script src="/firebase-config.js"></script>
-  <script defer src="/app.js"></script>
 </head>
 <body>
-  <!-- Topbar -->
   <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <button id="soundBtn" class="sound-btn" aria-label="Sound">🔊</button>
   </div>
 
-  <!-- Slide-out Menu -->
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+  <nav id="sideMenu" class="side-menu" aria-hidden="true">
     <ul>
       <li><a href="/index.html">Home</a></li>
-      <li><a href="/menu.html">Menu</a></li>
       <li><a href="/about.html">About</a></li>
       <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
+      <li><a href="/privacy.html" class="active">Privacy</a></li>
       <li><a href="/contact.html">Contact</a></li>
+      <li><a href="/pro.html">Go Pro</a></li>
+      <li><button id="btnNotify" class="btn ghost">Enable Notifications</button></li>
+      <li><button id="signInBtn" class="btn ghost">Sign in with Google</button></li>
     </ul>
   </nav>
 
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
-      <h1>Privacy Policy</h1>
-      <p class="subtitle">Last updated: 2025-09-12</p>
+      <div class="hero-title">
+        <img src="/app-icon.svg" alt="BrainBolt Icon" class="app-icon-large">
+        <h1>Privacy Policy</h1>
+      </div>
+      <p class="subtitle">Your data. Your control.</p>
     </div>
   </header>
 
   <main class="container">
-    <section class="card">
-      <h2>Overview</h2>
-      <p>
-        Brain ⚡ Bolt (“we”, “us”, “our”) respects your privacy. This policy explains what data we collect,
-        how we use it, and your choices. By using our website or app (the “Service”), you agree to this policy.
-      </p>
-    </section>
+    <section class="card prose">
+      <h2>Information We Collect</h2>
+      <p>We collect minimal data to run the game: scores, elapsed time, and (if you sign in) your account ID for syncing.</p>
 
-    <section class="card">
-      <h2>What We Collect</h2>
-      <ul>
-        <li><strong>Usage data (minimal):</strong> basic analytics such as page views or feature usage (aggregated/anonymous).</li>
-        <li><strong>Quiz session data:</strong> when you finish a game, we may store the date, score, elapsed time, and non-identifying session info in our database to power leaderboards and trends.</li>
-        <li><strong>Notifications (optional):</strong> if you enable web push, your browser may create a device token so we can send a “daily quiz is ready” message.</li>
-        <li><strong>Sign-in (optional):</strong> if you choose to sign in (e.g., with Google), we receive your basic profile (name, email, avatar) for account features like syncing progress.</li>
-      </ul>
-    </section>
-
-    <section class="card">
       <h2>How We Use Data</h2>
-      <ul>
-        <li>Provide and improve the quiz experience.</li>
-        <li>Deliver optional daily notifications (if you opted in).</li>
-        <li>Maintain security, debug issues, and prevent abuse.</li>
-        <li>Offer account features like saved progress (if signed in).</li>
-      </ul>
-    </section>
+      <p>We use data to power daily sets, track performance, and enable optional notifications. We do not sell your data.</p>
 
-    <section class="card">
-      <h2>Legal Bases</h2>
-      <p>
-        If you are in the EEA/UK, our legal bases include: <em>legitimate interests</em> (to operate and improve the Service),
-        <em>consent</em> (for notifications and sign-in), and <em>contract</em> (to provide features you request).
-      </p>
-    </section>
+      <h2>Data Control</h2>
+      <p>You can request deletion anytime by emailing <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>.</p>
 
-    <section class="card">
-      <h2>Sharing & Service Providers</h2>
-      <p>
-        We do not sell your data. We may use trusted providers to host infrastructure or deliver services (e.g., Firebase for
-        authentication, database, and notifications). These providers process data on our behalf under appropriate safeguards.
-      </p>
-    </section>
+      <h2>Cookies & Local Storage</h2>
+      <p>Used for preferences (theme, sound) and offline support (PWA).</p>
 
-    <section class="card">
-      <h2>Data Retention</h2>
-      <p>
-        We retain data only as long as necessary to provide the Service and for legitimate business needs (troubleshooting,
-        legal compliance). You may request deletion of your account data if you signed in.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Security</h2>
-      <p>
-        We use reasonable administrative, technical, and organizational measures to protect data. No system is 100% secure.
-        Please use strong, unique passwords for any connected accounts.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Your Choices & Rights</h2>
-      <ul>
-        <li><strong>Notifications:</strong> you can enable/disable web push in your browser settings and within the app.</li>
-        <li><strong>Access/Deletion:</strong> if you signed in, you can request access or deletion of your account data.</li>
-        <li><strong>Consent withdrawal:</strong> you may withdraw consent (e.g., notifications, sign-in) at any time.</li>
-        <li><strong>Regional rights:</strong> depending on your location (e.g., EEA/UK/California), you may have additional rights such as data portability or objection. Contact us to exercise your rights.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Children’s Privacy</h2>
-      <p>
-        The Service is not directed to children under the age of 13, and we do not knowingly collect personal information from them.
-        If you believe a child has provided us personal information, please contact us and we will delete it.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>International Transfers</h2>
-      <p>
-        Your information may be processed in countries other than your own. We implement appropriate safeguards for such transfers
-        where required by law.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Changes to This Policy</h2>
-      <p>
-        We may update this policy from time to time. Material changes will be highlighted within the Service and the “Last updated” date will change.
-      </p>
-    </section>
-
-    <section class="card">
-      <h2>Contact</h2>
-      <p>
-        Questions or requests? Email us at
-        <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a>.
-      </p>
+      <h2>Changes</h2>
+      <p>We may update this policy as the product evolves.</p>
     </section>
   </main>
 
   <footer class="footer">
     © 2025 Brain ⚡ Bolt •
-    <a href="/about.html">About</a> • <a href="/terms.html">Terms</a> •
+    <a href="/about.html">About</a> • 
+    <a href="/terms.html">Terms</a> •
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/contact.html">Contact</a>
+  </footer>
+
+  <script src="/app.js"></script>
+</body>
+</html>
