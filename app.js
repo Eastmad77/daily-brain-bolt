@@ -1,4 +1,4 @@
-/* Brain ⚡ Bolt — main app with robust CSV parsing + answer normalization + notifications */
+/* Brain ⚡ Bolt — main app with success splash + robust splash/home logic */
 
 // ===== Config =====
 const LIVE_CSV_URL =
@@ -14,7 +14,7 @@ const AUTO_GAMEOVER_ON_TWO_WRONG = true;
 let currentTheme = 'dark';
 let soundOn = true;
 
-// ===== Elements (guard for pages without quiz DOM) =====
+// ===== Elements =====
 const elDate = document.getElementById('dateLabel');
 const elSet = document.getElementById('setLabel');
 const elCountdown = document.getElementById('countdown');
@@ -34,6 +34,9 @@ const btnSound = document.getElementById('soundBtn');
 const btnNotify = document.getElementById('notifyBtn');
 const sideMenu = document.getElementById('mmSideMenu');
 
+const successSplash = document.getElementById('successSplash');
+const ssDismiss = document.getElementById('ssDismiss');
+
 // ===== Utilities =====
 function nzTodayYMD() {
   try {
@@ -42,7 +45,6 @@ function nzTodayYMD() {
     return `${parts.year}-${parts.month}-${parts.day}`;
   } catch { return new Date().toISOString().slice(0,10); }
 }
-const today = new Date();
 if (elDate) elDate.textContent = nzTodayYMD();
 
 function vibrate(ms=40){ if (navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
@@ -56,7 +58,7 @@ function beep(freq = 660, dur = 120) {
   osc.start(); setTimeout(()=>osc.stop(), dur);
 }
 
-// ===== Menu wiring (works on every page) =====
+// ===== Menu (works on all pages) =====
 let menuAutoHideTO = null;
 btnMenu?.addEventListener('click', () => {
   sideMenu?.classList.add('open');
@@ -76,18 +78,18 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// ===== Sound toggle =====
-btnSound?.addEventListener('click', () => {
-  soundOn = !soundOn;
-  btnSound.textContent = soundOn ? '🔊' : '🔇';
+// ==== Force splash on "Home" from sidebar (no freeze) ====
+document.querySelectorAll('a[data-home-link]').forEach(a=>{
+  a.addEventListener('click', ()=>{
+    try{ sessionStorage.setItem('bb_forceSplash','1'); }catch(e){}
+  });
 });
 
-// ===== Notifications (simple daily reminder on next visit) =====
+// ===== Notifications (unchanged) =====
 const LS_NOTIFY_KEY = 'bb_notify_enabled';
 const LS_LAST_PLAYED = 'bb_last_played_nz';
 
 function canNotify(){ return 'Notification' in window; }
-
 async function requestNotifyPermission(){
   if (!canNotify()) return false;
   if (Notification.permission === 'granted') return true;
@@ -107,12 +109,10 @@ function maybeShowDailyReady(){
   if (!enabled) return;
   const last = localStorage.getItem(LS_LAST_PLAYED) || '';
   const todayNZ = nzTodayYMD();
-  // If the last played date is before todayNZ, cue a "ready" notification
   if (last && last !== todayNZ) {
     showLocalNotification('Today’s quiz is ready!', 'Come take the new Brain ⚡ Bolt set.');
   }
 }
-
 btnNotify?.addEventListener('click', async () => {
   const granted = await requestNotifyPermission();
   if (granted) {
@@ -124,7 +124,7 @@ btnNotify?.addEventListener('click', async () => {
   }
 });
 
-// ===== CSV loading via PapaParse =====
+// ===== CSV loading =====
 function toCsvUrl(u){
   if(!u) return '';
   return u.replace(/\/pubhtml.*/, '/pub?output=csv')
@@ -142,7 +142,7 @@ function loadCSV(url){
   });
 }
 
-// Answer normalization
+// Answer normalization (supports A/B/C/D or text)
 function normText(s){
   return String(s ?? '')
     .replace(/[\u2018\u2019\u201A\u201B]/g,"'")
@@ -153,11 +153,11 @@ function normText(s){
     .toLowerCase();
 }
 function normalizeRow(r){
-  const opts = [r.OptionA, r.OptionB, r.OptionC, r.OptionD].filter(Boolean).map(v => String(v).trim());
+  const opts = [r.OptionA, r.OptionB, r.OptionC, r.OptionD].filter(v => v !== undefined).map(v => String(v).trim());
   return {
     date: String(r.Date||'').trim(),
     q: String(r.Question||'').trim(),
-    a: String(r.Answer||'').trim(),
+    a: String(r.Answer||'').trim(), // can be letter or text
     opts,
     expl: String(r.Explanation||'').trim(),
     cat: String(r.Category||'').trim(),
@@ -167,15 +167,18 @@ function normalizeRow(r){
 function isCorrectSelection(row, selected){
   const ans = String(row.a || '').trim();
   const sel = String(selected || '').trim();
+
+  // If the answer is a letter, map to option text
   if (/^[ABCD]$/i.test(ans)) {
     const index = 'ABCD'.indexOf(ans[0].toUpperCase());
     const correctText = row.opts[index] || '';
     return normText(sel) === normText(correctText);
   }
+  // Otherwise compare text-to-text
   return normText(sel) === normText(ans);
 }
 
-// ===== Quiz state (only if quiz DOM exists) =====
+// ===== Quiz state =====
 let rows = [];
 let idx = 0;
 let wrongStreak = 0;
@@ -198,7 +201,7 @@ async function loadTodays(){
 // Render
 function showQuestion(){
   const q = rows[idx];
-  if(!q){ endQuiz(); return; }
+  if(!q){ endQuiz(true); return; }
   if (elGameOver) elGameOver.style.display = 'none';
   if (elQ) elQ.textContent = q.q || '—';
   if (elChoices) {
@@ -259,18 +262,23 @@ async function startQuiz(){
   nextQuestion();
 }
 function nextQuestion(){
-  if (idx >= rows.length) { endQuiz(); return; }
+  if (idx >= rows.length) { endQuiz(true); return; }
   clearChoiceStates();
   showQuestion();
   runTimer(QUIZ_SECONDS, () => { handleAnswer(false); });
 }
-function endQuiz(){
+function endQuiz(completed=false){
   cancelTimer(); stopElapsed();
-  if (elGameOver) elGameOver.style.display='block';
-  if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
-  if (elSet) elSet.textContent = 'Done';
+  if (completed){
+    // Show SUCCESS splash overlay
+    showSuccessSplash();
+  } else {
+    if (elGameOver) elGameOver.style.display='block';
+    if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
+    if (elSet) elSet.textContent = 'Done';
+  }
   // Record last played day (NZ)
-  localStorage.setItem(LS_LAST_PLAYED, nzTodayYMD());
+  localStorage.setItem('bb_last_played_nz', nzTodayYMD());
 }
 
 // Timer
@@ -317,7 +325,27 @@ function handleAnswer(correct, btn=null){
   }
 }
 
-// Buttons (only if present)
+// ===== Success splash control =====
+function showSuccessSplash(){
+  if (!successSplash) return;
+  successSplash.classList.add('show');
+
+  // Haptic tap
+  vibrate(30);
+
+  // Auto-dismiss after 2300ms, also wire the button
+  const hide = () => {
+    successSplash.classList.remove('show');
+    // Show "Done" UI afterward
+    if (elGameOver) elGameOver.style.display='block';
+    if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
+    if (elSet) elSet.textContent = 'Done';
+  };
+  ssDismiss?.addEventListener('click', hide, { once:true });
+  setTimeout(hide, 2300);
+}
+
+// ===== Buttons =====
 btnStart?.addEventListener('click', () => {
   if (!rows.length){
     loadTodays().then(()=>{ elSet && (elSet.textContent='Ready'); startCountdownThenQuiz(); })
@@ -337,31 +365,4 @@ btnShare?.addEventListener('click', async () => {
   const shareData = { title: 'Brain ⚡ Bolt', text: 'Daily quiz — join me!', url: location.origin + '/' };
   try{
     if (navigator.share) { await navigator.share(shareData); }
-    else { await navigator.clipboard.writeText(shareData.url); }
-  }catch(e){}
-});
-btnTheme?.addEventListener('click', () => {
-  if (currentTheme === 'dark'){
-    document.documentElement.style.setProperty('--bg', '#f8fbfc');
-    document.documentElement.style.setProperty('--bg-2','#e5f1f6');
-    document.documentElement.style.setProperty('--panel','#ffffff');
-    document.documentElement.style.setProperty('--text','#0a1a20');
-    currentTheme = 'light';
-  } else {
-    document.documentElement.style.setProperty('--bg', '#162022');
-    document.documentElement.style.setProperty('--bg-2','#2A3840');
-    document.documentElement.style.setProperty('--panel','#0E1E27');
-    document.documentElement.style.setProperty('--text','#ffffff');
-    currentTheme = 'dark';
-  }
-});
-btnAgain?.addEventListener('click', () => { btnAgain.classList.remove('pulse'); resetGame(); });
-
-// INIT (runs on all pages)
-(function init(){
-  maybeShowDailyReady();
-  // No-op on content pages if quiz DOM missing
-  if (!elSet) return;
-  elSet.textContent = 'Ready';
-  resetGame();
-})();
+    else {
