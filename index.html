@@ -16,13 +16,11 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
   <!-- Keep app hidden until splash finishes -->
-  <style>
-    .app-root{opacity:0; transition:opacity .25s ease;}
-  </style>
+  <style>.app-root{opacity:0;transition:opacity .25s ease}</style>
 </head>
 <body>
   <!-- Initial SPLASH (blue theme, icon → title wipe) -->
-  <div id="splash" role="dialog" aria-label="Loading">
+  <div id="splash" role="dialog" aria-label="Loading" data-active="1">
     <div class="splash-inner">
       <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
       <h1 class="splash-title">
@@ -112,35 +110,74 @@
     </footer>
   </div>
 
+  <!-- Hardened splash controller (self-contained; never freezes) -->
   <script>
-    // Controlled splash — plays on first visit or when forced by Home-link
-    (function splashBoot(){
-      const splash = document.getElementById('splash');
-      const root = document.getElementById('appRoot');
-      const key = 'bb_forceSplash';
-      const want = sessionStorage.getItem(key) === '1' || !sessionStorage.getItem('bb_seenSplash');
+    (function() {
+      const SPLASH_MS = 2000;   // normal play
+      const BACKUP_MS = 4000;   // backup
+      const ULTIMATE_MS = 7000; // absolute cut-off
+      const FORCE_KEY = 'bb_forceSplash';
+      const SEEN_KEY  = 'bb_seenSplash';
 
-      function run(){
-        splash.classList.add('show');
-        // mid-stage wipe
-        setTimeout(()=>splash.classList.add('mid'), 550);
-        // hide & reveal
-        setTimeout(()=>{
-          splash.classList.add('hide');
-          root.style.opacity = '1';
-          sessionStorage.setItem('bb_seenSplash','1');
-          sessionStorage.removeItem(key);
-        }, 2000);
-        // failsafe (never freeze)
-        setTimeout(()=>{
-          splash.classList.add('hide');
-          root.style.opacity = '1';
-        }, 4000);
+      const splash = document.getElementById('splash');
+      const root   = document.getElementById('appRoot');
+
+      function revealApp() {
+        if (!splash || splash.dataset.revealed === '1') return;
+        splash.dataset.revealed = '1';
+        splash.classList.add('hide');
+        if (root) root.style.opacity = '1';
+        try { sessionStorage.setItem(SEEN_KEY,'1'); sessionStorage.removeItem(FORCE_KEY); } catch(_) {}
       }
 
-      if (want) run(); else { splash.classList.add('hide'); root.style.opacity='1'; }
-    })();
+      function runSplash() {
+        if (!splash) return revealApp();
+        splash.classList.add('show');
 
-    // Register SW
+        // mid-stage wipe animation
+        setTimeout(()=> splash.classList.add('mid'), 550);
+
+        // Normal hide
+        const t1 = setTimeout(revealApp, SPLASH_MS);
+        // Backup hide
+        const t2 = setTimeout(revealApp, BACKUP_MS);
+        // Ultimate safety
+        const t3 = setTimeout(revealApp, ULTIMATE_MS);
+
+        // If page becomes visible after being hidden, try reveal again
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') revealApp();
+        }, { once:false });
+
+        // If window fully loaded early, also reveal (in case timers were clamped)
+        window.addEventListener('load', () => revealApp(), { once:true });
+      }
+
+      function init() {
+        // Decide whether to show
+        let want = false;
+        try {
+          want = sessionStorage.getItem(FORCE_KEY) === '1' ||
+                 !sessionStorage.getItem(SEEN_KEY);
+        } catch(_) {}
+        if (want) runSplash(); else revealApp();
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init, { once:true });
+      } else {
+        init();
+      }
+    })();
+  </script>
+
+  <script>
+    // Register SW early; independent from app logic
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorke
+      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+    }
+  </script>
+
+  <script defer src="/app.js"></script>
+</body>
+</html>
