@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
 
-  <!-- Icons / PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
@@ -13,20 +12,17 @@
 
   <link rel="stylesheet" href="/style.css" />
 
-  <!-- App config and libs -->
   <script src="/firebase-config.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
-  <!-- Splash-first: keep app shell hidden until splash completes -->
+  <!-- Keep app hidden until splash finishes -->
   <style>
     .app-root{opacity:0; transition:opacity .25s ease;}
-    /* Make splash visible immediately to avoid page flash */
-    #splash{opacity:1 !important; pointer-events:auto !important;}
   </style>
 </head>
 <body>
-  <!-- Splash (blue fill, icon→title wipe). Starts visible to avoid flicker -->
-  <div id="splash" class="show" role="dialog" aria-label="Loading">
+  <!-- Initial SPLASH (blue theme, icon → title wipe) -->
+  <div id="splash" role="dialog" aria-label="Loading">
     <div class="splash-inner">
       <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
       <h1 class="splash-title">
@@ -36,9 +32,22 @@
     </div>
   </div>
 
-  <!-- App shell (hidden until splash ends) -->
+  <!-- SUCCESS SPLASH (shown after completing all 12) -->
+  <div id="successSplash" aria-hidden="true">
+    <div class="ss-confetti"></div>
+    <div class="ss-confetti delay1"></div>
+    <div class="ss-confetti delay2"></div>
+
+    <div class="ss-card">
+      <img class="ss-logo" src="/app-icon.svg" alt="" />
+      <h2 class="ss-title">Nice work! 🎉</h2>
+      <p class="ss-sub">You finished today’s quiz</p>
+      <button id="ssDismiss" class="btn primary">Continue</button>
+    </div>
+  </div>
+
+  <!-- App shell -->
   <div id="appRoot" class="app-root">
-    <!-- Topbar -->
     <div class="topbar">
       <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
       <div>
@@ -47,10 +56,9 @@
       </div>
     </div>
 
-    <!-- Side Menu -->
     <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
       <ul>
-        <li><a href="/index.html" aria-current="page">Home</a></li>
+        <li><a href="/index.html" data-home-link>Home</a></li>
         <li><a href="/about.html">About</a></li>
         <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
         <li><a href="/signin.html">Sign In</a></li>
@@ -60,7 +68,6 @@
       </ul>
     </nav>
 
-    <!-- Header -->
     <header class="hero">
       <div class="hero-overlay"></div>
       <div class="hero-inner">
@@ -69,7 +76,6 @@
       </div>
     </header>
 
-    <!-- Main -->
     <main class="container">
       <section id="daily" class="card">
         <div class="status-bar">
@@ -97,7 +103,6 @@
       </section>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
       © 2025 Brain ⚡ Bolt •
       <a href="/about.html" class="footer-link">About</a> •
@@ -105,30 +110,37 @@
       <a href="/privacy.html" class="footer-link">Privacy</a> •
       <a href="/contact.html" class="footer-link">Contact</a>
     </footer>
-  </div><!-- /appRoot -->
+  </div>
 
   <script>
-    // Splash sequence (start visible; then animate; then reveal appRoot)
-    window.addEventListener('load', () => {
-      const s = document.getElementById('splash');
+    // Controlled splash — plays on first visit or when forced by Home-link
+    (function splashBoot(){
+      const splash = document.getElementById('splash');
       const root = document.getElementById('appRoot');
+      const key = 'bb_forceSplash';
+      const want = sessionStorage.getItem(key) === '1' || !sessionStorage.getItem('bb_seenSplash');
 
-      // mid-stage for sharp wipe + icon rise
-      setTimeout(() => s?.classList.add('mid'), 650);
+      function run(){
+        splash.classList.add('show');
+        // mid-stage wipe
+        setTimeout(()=>splash.classList.add('mid'), 550);
+        // hide & reveal
+        setTimeout(()=>{
+          splash.classList.add('hide');
+          root.style.opacity = '1';
+          sessionStorage.setItem('bb_seenSplash','1');
+          sessionStorage.removeItem(key);
+        }, 2000);
+        // failsafe (never freeze)
+        setTimeout(()=>{
+          splash.classList.add('hide');
+          root.style.opacity = '1';
+        }, 4000);
+      }
 
-      // hide splash, reveal app
-      setTimeout(() => {
-        s?.classList.add('hide');
-        root && (root.style.opacity = '1');
-      }, 2200);
-    });
+      if (want) run(); else { splash.classList.add('hide'); root.style.opacity='1'; }
+    })();
 
     // Register SW
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
-    }
-  </script>
-
-  <script defer src="/app.js"></script>
-</body>
-</html>
+      navigator.serviceWorke
