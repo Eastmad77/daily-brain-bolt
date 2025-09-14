@@ -1,4 +1,6 @@
-/* Brain ⚡ Bolt — main app with robust CSV parsing + answer normalization */
+/* Brain ⚡ Bolt — main app with robust CSV parsing + answer normalization + notifications */
+
+// ===== Config =====
 const LIVE_CSV_URL =
   "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
 const BANK_CSV_URL =
@@ -12,7 +14,7 @@ const AUTO_GAMEOVER_ON_TWO_WRONG = true;
 let currentTheme = 'dark';
 let soundOn = true;
 
-// Elements
+// ===== Elements (guard for pages without quiz DOM) =====
 const elDate = document.getElementById('dateLabel');
 const elSet = document.getElementById('setLabel');
 const elCountdown = document.getElementById('countdown');
@@ -29,12 +31,32 @@ const btnTheme = document.getElementById('themeBtn');
 const btnAgain = document.getElementById('playAgainBtn');
 const btnMenu = document.getElementById('mmMenuBtn');
 const btnSound = document.getElementById('soundBtn');
+const btnNotify = document.getElementById('notifyBtn');
 const sideMenu = document.getElementById('mmSideMenu');
 
+// ===== Utilities =====
+function nzTodayYMD() {
+  try {
+    const f = new Intl.DateTimeFormat('en-NZ', { timeZone: 'Pacific/Auckland', year:'numeric', month:'2-digit', day:'2-digit' });
+    const parts = f.formatToParts(new Date()).reduce((o,p)=> (o[p.type]=p.value,o),{});
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  } catch { return new Date().toISOString().slice(0,10); }
+}
 const today = new Date();
-elDate.textContent = today.toISOString().slice(0,10);
+if (elDate) elDate.textContent = nzTodayYMD();
 
-// Menu behavior
+function vibrate(ms=40){ if (navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
+const audioCtx = (window.AudioContext) ? new AudioContext() : null;
+function beep(freq = 660, dur = 120) {
+  if (!audioCtx || !soundOn) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine'; osc.frequency.value = freq; gain.gain.value = 0.08;
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); setTimeout(()=>osc.stop(), dur);
+}
+
+// ===== Menu wiring (works on every page) =====
 let menuAutoHideTO = null;
 btnMenu?.addEventListener('click', () => {
   sideMenu?.classList.add('open');
@@ -47,31 +69,62 @@ btnMenu?.addEventListener('click', () => {
 });
 document.addEventListener('click', (e) => {
   if (!sideMenu?.classList.contains('open')) return;
-  const within = sideMenu.contains(e.target) || btnMenu.contains(e.target);
-  if (!within) { sideMenu.classList.remove('open'); sideMenu.setAttribute('aria-hidden','true'); }
+  const within = sideMenu.contains(e.target) || btnMenu?.contains(e.target);
+  if (!within) {
+    sideMenu.classList.remove('open');
+    sideMenu.setAttribute('aria-hidden','true');
+  }
 });
 
-// Sound toggle
+// ===== Sound toggle =====
 btnSound?.addEventListener('click', () => {
   soundOn = !soundOn;
   btnSound.textContent = soundOn ? '🔊' : '🔇';
 });
 
-// Audio beeps
-const audioCtx = (window.AudioContext) ? new AudioContext() : null;
-function beep(freq = 660, dur = 120) {
-  if (!audioCtx || !soundOn) return;
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = freq;
-  gain.gain.value = 0.08;
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start(); setTimeout(() => { osc.stop(); }, dur);
-}
-function vibrate(ms = 40){ if (navigator.vibrate) try { navigator.vibrate(ms); } catch(e){} }
+// ===== Notifications (simple daily reminder on next visit) =====
+const LS_NOTIFY_KEY = 'bb_notify_enabled';
+const LS_LAST_PLAYED = 'bb_last_played_nz';
 
-// ===== CSV LOADING =====
+function canNotify(){ return 'Notification' in window; }
+
+async function requestNotifyPermission(){
+  if (!canNotify()) return false;
+  if (Notification.permission === 'granted') return true;
+  const res = await Notification.requestPermission();
+  return res === 'granted';
+}
+function showLocalNotification(title, body){
+  try {
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body, icon: '/icon-192.png', badge: '/icon-192.png' });
+    }
+  } catch {}
+}
+function maybeShowDailyReady(){
+  if (!canNotify()) return;
+  const enabled = localStorage.getItem(LS_NOTIFY_KEY) === '1';
+  if (!enabled) return;
+  const last = localStorage.getItem(LS_LAST_PLAYED) || '';
+  const todayNZ = nzTodayYMD();
+  // If the last played date is before todayNZ, cue a "ready" notification
+  if (last && last !== todayNZ) {
+    showLocalNotification('Today’s quiz is ready!', 'Come take the new Brain ⚡ Bolt set.');
+  }
+}
+
+btnNotify?.addEventListener('click', async () => {
+  const granted = await requestNotifyPermission();
+  if (granted) {
+    localStorage.setItem(LS_NOTIFY_KEY, '1');
+    showLocalNotification('Notifications on', 'We’ll remind you when a new daily set is ready.');
+  } else {
+    localStorage.removeItem(LS_NOTIFY_KEY);
+    alert('Notifications disabled or not supported.');
+  }
+});
+
+// ===== CSV loading via PapaParse =====
 function toCsvUrl(u){
   if(!u) return '';
   return u.replace(/\/pubhtml.*/, '/pub?output=csv')
@@ -89,7 +142,7 @@ function loadCSV(url){
   });
 }
 
-// Normalization (fix “correct marked wrong”)
+// Answer normalization
 function normText(s){
   return String(s ?? '')
     .replace(/[\u2018\u2019\u201A\u201B]/g,"'")
@@ -122,6 +175,7 @@ function isCorrectSelection(row, selected){
   return normText(sel) === normText(ans);
 }
 
+// ===== Quiz state (only if quiz DOM exists) =====
 let rows = [];
 let idx = 0;
 let wrongStreak = 0;
@@ -131,7 +185,7 @@ let timerRAF = null;
 let qStartTime = 0;
 
 async function loadTodays(){
-  const key = today.toISOString().slice(0,10);
+  const key = nzTodayYMD();
   try{
     const live = (await loadCSV(LIVE_CSV_URL)).map(normalizeRow);
     const todays = live.filter(r=>r.date===key);
@@ -145,41 +199,44 @@ async function loadTodays(){
 function showQuestion(){
   const q = rows[idx];
   if(!q){ endQuiz(); return; }
-  elGameOver.style.display = 'none';
-  elQ.textContent = q.q || '—';
-  elChoices.innerHTML = '';
-  q.opts.forEach((opt) => {
-    const b = document.createElement('button');
-    b.className = 'choice';
-    b.textContent = opt;
-    b.onclick = () => onSelect(b, opt, q);
-    elChoices.appendChild(b);
-  });
+  if (elGameOver) elGameOver.style.display = 'none';
+  if (elQ) elQ.textContent = q.q || '—';
+  if (elChoices) {
+    elChoices.innerHTML = '';
+    q.opts.forEach((opt) => {
+      const b = document.createElement('button');
+      b.className = 'choice';
+      b.textContent = opt;
+      b.onclick = () => onSelect(b, opt, q);
+      elChoices.appendChild(b);
+    });
+  }
 }
-function disableChoices(){ [...document.querySelectorAll('.choice')].forEach(b => { b.classList.add('disabled'); b.disabled = true; }); }
-function clearChoiceStates(){ [...document.querySelectorAll('.choice')].forEach(b => { b.classList.remove('correct','incorrect','disabled'); b.disabled = false; }); }
+function disableChoices(){ if (!elChoices) return; [...document.querySelectorAll('.choice')].forEach(b => { b.classList.add('disabled'); b.disabled = true; }); }
+function clearChoiceStates(){ if (!elChoices) return; [...document.querySelectorAll('.choice')].forEach(b => { b.classList.remove('correct','incorrect','disabled'); b.disabled = false; }); }
 
 // Flow
 function resetGame(){
   idx = 0; wrongStreak = 0; elapsed = 0;
   if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval=null; }
-  elElapsed.textContent = '0s';
-  elTimerBar.style.transform = 'translateX(0)';
-  elTimerWrap.classList.remove('active');
-  elGameOver.style.display='none';
-  elQ.textContent = 'Press Start Quiz';
-  elChoices.innerHTML = '';
-  elSet.textContent = 'Ready';
-  btnAgain.classList.remove('pulse');
-  btnAgain.style.display = 'none';
+  if (elElapsed) elElapsed.textContent = '0s';
+  if (elTimerBar) elTimerBar.style.transform = 'translateX(0)';
+  elTimerWrap?.classList.remove('active');
+  if (elGameOver) elGameOver.style.display='none';
+  if (elQ) elQ.textContent = 'Press Start Quiz';
+  if (elChoices) elChoices.innerHTML = '';
+  if (elSet) elSet.textContent = 'Ready';
+  btnAgain?.classList.remove('pulse');
+  btnAgain && (btnAgain.style.display = 'none');
 }
-function startElapsed(){ if (elapsedInterval) clearInterval(elapsedInterval); elapsedInterval = setInterval(()=>{ elapsed++; elElapsed.textContent = `${elapsed}s`; }, 1000); }
+function startElapsed(){ if (!elElapsed) return; if (elapsedInterval) clearInterval(elapsedInterval); elapsedInterval = setInterval(()=>{ elapsed++; elElapsed.textContent = `${elapsed}s`; }, 1000); }
 function stopElapsed(){ if (elapsedInterval){ clearInterval(elapsedInterval); elapsedInterval=null; } }
 function startCountdownThenQuiz(){
+  if (!elCountdown) return startQuiz();
   elCountdown.style.display = 'flex';
-  elTimerWrap.classList.remove('active');
-  elChoices.innerHTML = '';
-  elQ.textContent = '';
+  elTimerWrap?.classList.remove('active');
+  if (elChoices) elChoices.innerHTML = '';
+  if (elQ) elQ.textContent = '';
   let c = COUNTDOWN_SECONDS;
   elCountdown.textContent = c;
   beep(660);
@@ -191,14 +248,14 @@ function startCountdownThenQuiz(){
 }
 async function startQuiz(){
   if (!rows.length) {
-    try{ elSet.textContent = 'Loading…'; await loadTodays(); elSet.textContent = 'Ready'; }
-    catch(e){ elSet.textContent = 'Error loading set'; return; }
+    try{ elSet && (elSet.textContent = 'Loading…'); await loadTodays(); elSet && (elSet.textContent = 'Ready'); }
+    catch(e){ elSet && (elSet.textContent = 'Error loading set'); return; }
   }
   if (!rows.length) return;
   idx = 0; wrongStreak = 0; elapsed = 0;
   startElapsed();
-  elElapsed.textContent = '0s';
-  elTimerWrap.classList.add('active');
+  if (elElapsed) elElapsed.textContent = '0s';
+  elTimerWrap?.classList.add('active');
   nextQuestion();
 }
 function nextQuestion(){
@@ -209,10 +266,11 @@ function nextQuestion(){
 }
 function endQuiz(){
   cancelTimer(); stopElapsed();
-  elGameOver.style.display='block';
-  btnAgain.style.display='inline-block';
-  btnAgain.classList.add('pulse');
-  elSet.textContent = 'Done';
+  if (elGameOver) elGameOver.style.display='block';
+  if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
+  if (elSet) elSet.textContent = 'Done';
+  // Record last played day (NZ)
+  localStorage.setItem(LS_LAST_PLAYED, nzTodayYMD());
 }
 
 // Timer
@@ -224,17 +282,13 @@ function runTimer(seconds, onExpire){
     const elapsedMs = now - qStartTime;
     const pct = Math.min(1, elapsedMs / total);
     const remainingTranslate = (1 - pct) * 100;
-    elTimerBar.style.transform = `translateX(${remainingTranslate}%)`;
+    if (elTimerBar) elTimerBar.style.transform = `translateX(${remainingTranslate}%)`;
     if (pct < 1) { timerRAF = requestAnimationFrame(raf); }
     else { onExpire?.(); }
   };
   timerRAF = requestAnimationFrame(raf);
 }
-function cancelTimer(){
-  if (timerRAF) cancelAnimationFrame(timerRAF);
-  timerRAF = null;
-  elTimerBar.style.transform = 'translateX(0)';
-}
+function cancelTimer(){ if (timerRAF) cancelAnimationFrame(timerRAF); timerRAF = null; if (elTimerBar) elTimerBar.style.transform = 'translateX(0)'; }
 
 // Answers
 function onSelect(btn, val, row){
@@ -254,9 +308,8 @@ function handleAnswer(correct, btn=null){
     vibrate(80);
     wrongStreak += 1;
     if (AUTO_GAMEOVER_ON_TWO_WRONG && wrongStreak >= 2){
-      elGameOver.style.display='block';
-      btnAgain.style.display='inline-block';
-      btnAgain.classList.add('pulse');
+      if (elGameOver) elGameOver.style.display='block';
+      if (btnAgain){ btnAgain.style.display='inline-block'; btnAgain.classList.add('pulse'); }
       stopElapsed();
     } else {
       setTimeout(()=>{ clearChoiceStates(); showQuestion(); runTimer(QUIZ_SECONDS, ()=>handleAnswer(false)); }, 700);
@@ -264,11 +317,11 @@ function handleAnswer(correct, btn=null){
   }
 }
 
-// Buttons
+// Buttons (only if present)
 btnStart?.addEventListener('click', () => {
   if (!rows.length){
-    loadTodays().then(()=>{ elSet.textContent='Ready'; startCountdownThenQuiz(); })
-      .catch(()=> elSet.textContent='Error loading set');
+    loadTodays().then(()=>{ elSet && (elSet.textContent='Ready'); startCountdownThenQuiz(); })
+      .catch(()=> elSet && (elSet.textContent='Error loading set'));
   } else {
     startCountdownThenQuiz();
   }
@@ -276,13 +329,8 @@ btnStart?.addEventListener('click', () => {
 btnShuffle?.addEventListener('click', async () => {
   try{
     const bank = (await loadCSV(BANK_CSV_URL)).map(normalizeRow);
-    for (let i = bank.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [bank[i], bank[j]] = [bank[j], bank[i]];
-    }
-    rows = bank.slice(0,12);
-    resetGame();
-    elQ.textContent = 'Press Start Quiz';
+    for (let i = bank.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bank[i], bank[j]] = [bank[j], bank[i]]; }
+    rows = bank.slice(0,12); resetGame(); if (elQ) elQ.textContent = 'Press Start Quiz';
   }catch(e){}
 });
 btnShare?.addEventListener('click', async () => {
@@ -309,5 +357,11 @@ btnTheme?.addEventListener('click', () => {
 });
 btnAgain?.addEventListener('click', () => { btnAgain.classList.remove('pulse'); resetGame(); });
 
-// Init
-(function init(){ elSet.textContent = 'Ready'; resetGame(); })();
+// INIT (runs on all pages)
+(function init(){
+  maybeShowDailyReady();
+  // No-op on content pages if quiz DOM missing
+  if (!elSet) return;
+  elSet.textContent = 'Ready';
+  resetGame();
+})();
