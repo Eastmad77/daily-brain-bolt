@@ -36,10 +36,7 @@ a:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius
 .side-menu.open{left:0}
 .side-menu ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
 .side-menu a{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:14px;text-decoration:none;background:var(--choice);color:var(--text);border:1px solid rgba(255,255,255,.08);font-weight:700;position:relative;overflow:hidden;transition:background .25s ease, color .25s ease}
-.side-menu a::before{content: attr(href);position:absolute;inset:0;background:var(--blue);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-fill-color:transparent;opacity:0;transition:opacity .25s ease;pointer-events:none}
 .side-menu a:hover,.side-menu a[aria-current="page"]{background:var(--blue);color:#01202a}
-.side-menu a:hover::before,.side-menu a[aria-current="page"]::before{opacity:1}
-.side-menu .pro-link{background:linear-gradient(180deg,#0f2c35,#0c2026);border:1px solid var(--blue);box-shadow:0 0 0 2px rgba(74,201,255,.15) inset}
 
 /* Hero */
 .hero{position:relative;padding-top:84px;background:var(--bg)}
@@ -97,21 +94,21 @@ a:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius
 .footer a.footer-link{color:#FF8C00}
 .footer a.footer-link:hover{text-decoration:underline}
 
-/* ===== Initial SPLASH (blue + icon→title wipe) ===== */
-#splash{position:fixed; inset:0; background-color:var(--splash-blue); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .35s ease; overflow:hidden}
+/* ===== Initial SPLASH ===== */
+#splash{position:fixed; inset:0; background-color:var(--splash-blue); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .35s ease; overflow:hidden; will-change:opacity}
 #splash.show{opacity:1; pointer-events:auto;}
 #splash.hide{opacity:0; pointer-events:none;}
 .splash-inner{position:relative; display:flex; flex-direction:column; align-items:center; gap:12px}
 .splash-logo{width:120px;height:120px; transform:translateY(14px) scale(.98); filter:drop-shadow(0 12px 32px rgba(0,0,0,.35)); transition:transform .55s cubic-bezier(.2,.8,.2,1)}
 .splash-title{margin:0; font-size:clamp(30px,6vw,44px); font-weight:800; letter-spacing:.2px; color:#fff; position:relative}
 .title-mask{display:inline-block; --clip: polygon(0 0, 0 0, 0 100%, 0 100%); clip-path: var(--clip); transition: clip-path .45s cubic-bezier(.25,.85,.25,1)}
-#splash.mid .splash-logo{ transform:translateY(-6px) scale(1) }
-#splash.mid .title-mask{ --clip: polygon(0 0, 100% 0, 100% 100%, 0 100%) }
+#splash.show .splash-logo{ transform:translateY(-6px) scale(1) }
+#splash.show .title-mask{ --clip: polygon(0 0, 100% 0, 100% 100%, 0 100%) }
 .splash-wipe{content:""; position:absolute; top:0; bottom:0; left:-45%; width:45%; transform:skewX(-18deg); opacity:0; background:linear-gradient(90deg, transparent, var(--splash-sheen), transparent)}
-#splash.mid .splash-wipe{ animation:wipeAcross .7s ease forwards }
+#splash.show .splash-wipe{ animation:wipeAcross .7s ease forwards }
 @keyframes wipeAcross{ 0%{left:-45%; opacity:0} 10%{opacity:.75} 100%{left:120%; opacity:0} }
 
-/* ===== SUCCESS SPLASH (completion) ===== */
+/* ===== SUCCESS SPLASH ===== */
 #successSplash{
   position:fixed; inset:0; z-index:110; display:none; align-items:center; justify-content:center;
   background: radial-gradient(1200px 600px at 50% -10%, rgba(58,178,255,.45), rgba(0,0,0,0)) , linear-gradient(180deg, rgba(14,30,39,.9), rgba(14,30,39,.98));
