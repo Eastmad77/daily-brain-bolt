@@ -1,5 +1,5 @@
 /* Brain ⚡ Bolt — Service Worker */
-const VERSION = 'v1.7.0';  // bumped: success splash + splash fix
+const VERSION = 'v1.7.1';  // bump to purge old cached splash
 const STATIC_CACHE = `bb-static-${VERSION}`;
 const RUNTIME_CACHE = `bb-runtime-${VERSION}`;
 
