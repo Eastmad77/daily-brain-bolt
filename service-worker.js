@@ -1,5 +1,5 @@
 /* Brain ⚡ Bolt — Service Worker */
-const VERSION = 'v1.5.0';
+const VERSION = 'v1.6.0';  // bump for splash-first + notif UI
 const STATIC_CACHE = `bb-static-${VERSION}`;
 const RUNTIME_CACHE = `bb-runtime-${VERSION}`;
 
@@ -19,10 +19,11 @@ const STATIC_ASSETS = [
   '/terms.html',
   '/privacy.html',
   '/contact.html',
-  '/menu.html',
   '/pro.html',
   '/admin.html',
+  '/signin.html',
   '/404.html'
+  // NOTE: menu.html removed
 ];
 
 self.addEventListener('install', (event) => {
