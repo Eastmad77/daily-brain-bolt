@@ -1,21 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Contact • Brain ⚡ Bolt</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-  <link rel="apple-touch-icon" href="/icon-192.png" />
-  <link rel="manifest" href="/site.webmanifest" />
-  <meta name="theme-color" content="#162022" />
-  <link rel="stylesheet" href="/style.css" />
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div class="topbar">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <button id="mmMenuBtn" class="menu-btn">☰</button>
   </div>
-
-  <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
+  <nav id="mmSideMenu" class="side-menu">
     <ul>
       <li><a href="/index.html">Home</a></li>
       <li><a href="/menu.html">Menu</a></li>
@@ -26,40 +21,14 @@
       <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
     </ul>
   </nav>
-
-  <header class="hero">
-    <div class="hero-overlay"></div>
-    <div class="hero-inner">
-      <h1>Contact</h1>
-      <p class="subtitle">Spotted a typo? Want to contribute questions? Get in touch.</p>
-    </div>
-  </header>
-
-  <main class="container">
-    <section class="card page-card">
-      <div class="prose">
-        <h2>Email</h2>
-        <p><a href="mailto:hello@dailybrainbolt.com">hello@dailybrainbolt.com</a></p>
-        <h2>Question submissions</h2>
-        <p>We welcome well-sourced questions with a short explanation. Ideal categories: General Knowledge, Logic, Trivia, Pop Culture.</p>
-        <h2>Support</h2>
-        <p>If the quiz doesn’t load, try a hard refresh. If it persists, include your browser + device and the time of day in your email.</p>
-      </div>
-    </section>
+  <main class="container page-card">
+    <h1>Contact</h1>
+    <p>Email us at <a href="mailto:support@dailybrainbolt.com">support@dailybrainbolt.com</a></p>
   </main>
-
   <footer class="footer">
-    © 2025 Brain ⚡ Bolt •
-    <a href="/about.html" class="footer-link">About</a> •
-    <a href="/terms.html" class="footer-link">Terms</a> •
-    <a href="/privacy.html" class="footer-link">Privacy</a> •
-    <a href="/contact.html" class="footer-link">Contact</a>
+    <a href="/privacy.html">Privacy</a> •
+    <a href="/terms.html">Terms</a> •
+    <a href="/about.html">About</a>
   </footer>
-
-  <script>
-    const b=document.getElementById('mmMenuBtn'), m=document.getElementById('mmSideMenu');
-    b?.addEventListener('click',()=>{m?.classList.add('open');m?.setAttribute('aria-hidden','false');setTimeout(()=>{m?.classList.remove('open');m?.setAttribute('aria-hidden','true')},5000)});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')m?.classList.remove('open')});
-  </script>
 </body>
 </html>
