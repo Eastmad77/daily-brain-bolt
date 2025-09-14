@@ -10,7 +10,6 @@
   --panel:#0E1E27; --panel-outline:#4AC9FF;
   --choice:#162a31; --choice-hover:#103b45;
 
-  /* Splash */
   --splash-blue:#1e88e5;
   --splash-sheen:rgba(255,255,255,.22);
 }
@@ -19,9 +18,9 @@
 html,body{margin:0;padding:0;height:100%;background:var(--bg);color:var(--text);font-family:var(--font)}
 h1,h2,h3{letter-spacing:.2px;font-weight:800}
 
-/* Themed links (blue hover, orange focus/active) */
+/* Links */
 a{color:var(--blue);text-decoration:none}
-a:hover{opacity:.9;text-decoration:underline}
+a:hover{text-decoration:underline}
 a:active{color:var(--orange)}
 a:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius:4px}
 
@@ -98,7 +97,7 @@ a:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius
 .footer a.footer-link{color:#FF8C00}
 .footer a.footer-link:hover{text-decoration:underline}
 
-/* ===== SPLASH (blue + icon→title wipe) ===== */
+/* ===== Initial SPLASH (blue + icon→title wipe) ===== */
 #splash{position:fixed; inset:0; background-color:var(--splash-blue); display:flex; align-items:center; justify-content:center; z-index:100; opacity:0; pointer-events:none; transition:opacity .35s ease; overflow:hidden}
 #splash.show{opacity:1; pointer-events:auto;}
 #splash.hide{opacity:0; pointer-events:none;}
@@ -111,6 +110,46 @@ a:focus-visible{outline:2px solid var(--orange);outline-offset:2px;border-radius
 .splash-wipe{content:""; position:absolute; top:0; bottom:0; left:-45%; width:45%; transform:skewX(-18deg); opacity:0; background:linear-gradient(90deg, transparent, var(--splash-sheen), transparent)}
 #splash.mid .splash-wipe{ animation:wipeAcross .7s ease forwards }
 @keyframes wipeAcross{ 0%{left:-45%; opacity:0} 10%{opacity:.75} 100%{left:120%; opacity:0} }
+
+/* ===== SUCCESS SPLASH (completion) ===== */
+#successSplash{
+  position:fixed; inset:0; z-index:110; display:none; align-items:center; justify-content:center;
+  background: radial-gradient(1200px 600px at 50% -10%, rgba(58,178,255,.45), rgba(0,0,0,0)) , linear-gradient(180deg, rgba(14,30,39,.9), rgba(14,30,39,.98));
+}
+#successSplash.show{display:flex; animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.ss-card{
+  position:relative; z-index:2; text-align:center;
+  background:linear-gradient(180deg,#0f2c35,#0c2026);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:20px; padding:22px 20px; width:min(520px,92vw);
+  box-shadow:0 20px 60px rgba(0,0,0,.45), 0 0 0 2px rgba(74,201,255,.15) inset;
+  transform:translateY(12px) scale(.98); opacity:0; animation:cardPop .45s cubic-bezier(.2,.8,.2,1) .08s forwards;
+}
+@keyframes cardPop{to{opacity:1; transform:translateY(0) scale(1)}}
+.ss-logo{width:84px;height:84px; filter:drop-shadow(0 10px 26px rgba(0,0,0,.45))}
+.ss-title{margin:10px 0 6px; font-size:clamp(26px,4.8vw,34px)}
+.ss-sub{margin:0 0 14px; color:#cfe6ec}
+
+.ss-confetti,.ss-confetti::before,.ss-confetti::after{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:1;
+  background-image:
+    radial-gradient(3px 3px at 20% 10%, #4AC9FF 60%, transparent 61%),
+    radial-gradient(4px 4px at 80% 18%, #FF8C00 60%, transparent 61%),
+    radial-gradient(3px 3px at 15% 70%, #37FFF9 60%, transparent 61%),
+    radial-gradient(4px 4px at 65% 85%, #ffffff 60%, transparent 61%),
+    radial-gradient(3px 3px at 35% 40%, #25D366 60%, transparent 61%);
+  background-repeat:no-repeat;
+  animation:confettiFall 1600ms ease-in infinite;
+}
+.ss-confetti.delay1{animation-delay:300ms}
+.ss-confetti.delay2{animation-delay:600ms}
+@keyframes confettiFall{
+  0%{transform:translateY(-15%) rotate(0deg); opacity:0}
+  15%{opacity:1}
+  100%{transform:translateY(25%) rotate(25deg); opacity:0}
+}
 
 /* Responsive */
 @media (min-width:720px){
