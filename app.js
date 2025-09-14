@@ -1,244 +1,124 @@
-/* ===== CONFIG: update these two URLs to your published CSVs =====
-   They must be the "Publish to web" links with ?output=csv&gid=...
-*/
+// LIVE = today's 12 questions
 const LIVE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=1410250735";
+
+// BANK = full question bank
 const BANK_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?output=csv&gid=2009978011";
 
-/* ===== DOM ===== */
-const elDate = document.getElementById('quizDate');
-const elElapsed = document.getElementById('elapsedTime');
-const elStatus = document.getElementById('statusMsg');
-const elQ = document.getElementById('questionBox');
-const elOpts = document.getElementById('options');
-const elRes = document.getElementById('resultBox');
-const elTimerBar = document.getElementById('timerBar');
+const elQ=document.getElementById('question'),
+      elOpts=document.getElementById('options'),
+      elFB=document.getElementById('feedback'),
+      elMetaText=document.getElementById('metaText'),
+      elToday=document.getElementById('today'),
+      elProgText=document.getElementById('progressText'),
+      elProgFill=document.getElementById('progressFill'),
+      elScore=document.getElementById('score'),
+      elStart=document.getElementById('startBtn'),
+      elShuffle=document.getElementById('shuffleBtn'),
+      elShare=document.getElementById('shareBtn'),
+      elAgain=document.getElementById('playAgainBtn');
 
-const btnStart = document.getElementById('startBtn');
-const btnShuffle = document.getElementById('shuffleBtn');
-const btnShare = document.getElementById('shareBtn');
-const btnPlayAgain = document.getElementById('playAgainBtn');
+let allRows=[],todays=[],idx=0,score=0,selected=null,started=false;
+const now=new Date();
+const todayKey=[now.getFullYear(),String(now.getMonth()+1).padStart(2,'0'),String(now.getDate()).padStart(2,'0')].join('-');
+elToday.textContent=todayKey;
 
-const menuBtn = document.getElementById('menuBtn');
-const soundBtn = document.getElementById('soundBtn');
-const sideMenu = document.getElementById('sideMenu');
+// Splash auto-hide
+(function(){const s=document.getElementById('splash');if(!s)return;setTimeout(()=>{s.style.display='none';},3000);})();
 
-/* ===== State ===== */
-const now = new Date();
-const todayKey = [ now.getFullYear(), String(now.getMonth()+1).padStart(2,'0'), String(now.getDate()).padStart(2,'0') ].join('-');
-elDate.textContent = todayKey;
-
-let rounds = [];       // array of question objects for today
-let idx = 0;           // current question index
-let score = 0;
-let selected = null;
-let running = false;
-
-let timerMs = 10000;   // 10 seconds
-let timerStart = 0;
-let timerRAF = 0;
-let elapsedSec = 0;
-let elapsedTicker = 0;
-let soundOn = true;
-
-/* ===== Utils ===== */
-const setStatus = (t) => { if (elStatus) elStatus.textContent = t; };
-const norm = (s) => String(s||'').trim();
-const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-const beep = () => {
-  if (!soundOn) return;
-  try {
-    const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = 'sine';
-    o.frequency.value = 800;
-    g.gain.value = 0.04;
-    o.connect(g); g.connect(ctx.destination);
-    o.start();
-    setTimeout(()=>{o.stop(); ctx.close();}, 120);
-  } catch(e){}
-};
-const vibrate = (ms=30) => { if (navigator.vibrate) navigator.vibrate(ms); };
-
-/* ===== Menu ===== */
-const openMenu = ()=>{ sideMenu?.classList.add('open'); sideMenu?.setAttribute('aria-hidden','false'); };
-const closeMenu = ()=>{ sideMenu?.classList.remove('open'); sideMenu?.setAttribute('aria-hidden','true'); };
-
-menuBtn?.addEventListener('click', openMenu);
-document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeMenu(); });
-sideMenu?.addEventListener('click', (e)=>{
-  if (e.target.tagName === 'A') closeMenu();
-});
-
-/* ===== Splash auto-hide after CSS anim (2.8s) ===== */
-window.addEventListener('load', ()=>{
-  const splash = document.getElementById('splash');
-  setTimeout(()=> splash?.remove(), 3000);
-});
-
-/* ===== Timer ===== */
-function startTimer(){
-  timerStart = performance.now();
-  elTimerBar.style.transitionDuration = '0ms';
-  elTimerBar.style.width = '100%';
-  // next frame, animate to 0% width linearly
-  requestAnimationFrame(()=>{
-    elTimerBar.style.transitionProperty = 'width';
-    elTimerBar.style.transitionTimingFunction = 'linear';
-    elTimerBar.style.transitionDuration = `${timerMs}ms`;
-    elTimerBar.style.width = '0%';
-  });
-  // elapsed stopwatch
-  const t0 = Date.now();
-  clearInterval(elapsedTicker);
-  elapsedTicker = setInterval(()=>{
-    elapsedSec = Math.floor((Date.now()-t0)/1000);
-    elElapsed.textContent = new Date(elapsedSec*1000).toISOString().substring(14,19);
-  }, 250);
+function toCsvUrl(u){
+  if(!u) return '';
+  return u.replace(/\/pubhtml.*/, '/pub?output=csv')
+          .replace(/\/edit\?.*$/, '/pub?output=csv')
+          .replace(/output=tsv/g,'output=csv');
 }
 
-function stopTimer(){
-  elTimerBar.style.transitionDuration = '0ms';
-  elTimerBar.style.width = '0%';
-  clearInterval(elapsedTicker);
-}
-
-/* ===== CSV LOADING ===== */
-async function loadCSV(url){
-  return new Promise((resolve, reject)=>{
-    Papa.parse(url + `&cb=${Date.now()}`, {
-      download:true, header:true, skipEmptyLines:true,
-      complete: ({data}) => resolve(data||[]),
-      error: (err) => reject(err)
+function loadCSV(url){
+  return new Promise((resolve,reject)=>{
+    const finalUrl=toCsvUrl(url);
+    Papa.parse(finalUrl,{
+      download:true,
+      header:true,
+      skipEmptyLines:true,
+      complete:({data})=>resolve((data||[]).filter(r=>r&&r.Question)),
+      error:(err)=>reject(err)
     });
   });
 }
 
-async function loadToday(){
-  setStatus('Loading…');
-  try {
-    let rows = await loadCSV(LIVE_CSV_URL);
-    rows = rows.filter(r => r && r.Date && r.Question);
-    // if live is empty, fallback to bank
-    if (!rows.length) {
-      const bankRows = await loadCSV(BANK_CSV_URL);
-      rows = bankRows.filter(r => r && r.Date && r.Question && norm(r.Date) === todayKey);
-    }
-    if (!rows.length) throw new Error('No quiz rows found for today');
+// --- fallback questions (12 items: General Knowledge, Logic, Trivia, Pop Culture)
+const FALLBACK_ROWS = [
+  {Date:"",Question:"What is the capital city of Canada?",OptionA:"Ottawa",OptionB:"Toronto",OptionC:"Vancouver",OptionD:"Montreal",Answer:"Ottawa",Explanation:"Ottawa is the federal capital of Canada.",Category:"General Knowledge",Difficulty:"Easy",ID:"GK-CA-CAP"},
+  {Date:"",Question:"In logic, what does '∧' represent?",OptionA:"AND",OptionB:"OR",OptionC:"NOT",OptionD:"IF",Answer:"AND",Explanation:"∧ is logical conjunction.",Category:"Logic",Difficulty:"Medium",ID:"LG-AND"},
+  {Date:"",Question:"Which artist painted 'The Starry Night'?",OptionA:"Vincent van Gogh",OptionB:"Claude Monet",OptionC:"Pablo Picasso",OptionD:"Paul Cézanne",Answer:"Vincent van Gogh",Explanation:"Painted in 1889 while at Saint-Rémy.",Category:"Trivia",Difficulty:"Easy",ID:"TR-STARRY"},
+  {Date:"",Question:"What is the chemical symbol for potassium?",OptionA:"K",OptionB:"P",OptionC:"Pt",OptionD:"Po",Answer:"K",Explanation:"From Neo-Latin 'kalium'.",Category:"General Knowledge",Difficulty:"Easy",ID:"GK-K"},
+  {Date:"",Question:"If all Bloops are Razzies and all Razzies are Lazzies, are all Bloops Lazzies?",OptionA:"Yes",OptionB:"No",OptionC:"Only some",OptionD:"Cannot be determined",Answer:"Yes",Explanation:"Syllogism: transitive inclusion.",Category:"Logic",Difficulty:"Medium",ID:"LG-BR"},
+  {Date:"",Question:"Who directed the film 'Inception' (2010)?",OptionA:"Christopher Nolan",OptionB:"Steven Spielberg",OptionC:"Denis Villeneuve",OptionD:"James Cameron",Answer:"Christopher Nolan",Explanation:"Released in 2010.",Category:"Pop Culture",Difficulty:"Easy",ID:"PC-INCEPTION"},
+  {Date:"",Question:"Which planet has the largest number of moons?",OptionA:"Saturn",OptionB:"Jupiter",OptionC:"Uranus",OptionD:"Neptune",Answer:"Saturn",Explanation:"As of recent counts, Saturn leads.",Category:"General Knowledge",Difficulty:"Medium",ID:"GK-SATURN"},
+  {Date:"",Question:"In Boolean algebra, what is the identity element for OR?",OptionA:"0",OptionB:"1",OptionC:"x",OptionD:"-1",Answer:"0",Explanation:"x OR 0 = x.",Category:"Logic",Difficulty:"Medium",ID:"LG-OR-ID"},
+  {Date:"",Question:"Which singer released the album '1989'?",OptionA:"Taylor Swift",OptionB:"Adele",OptionC:"Katy Perry",OptionD:"Lady Gaga",Answer:"Taylor Swift",Explanation:"Originally 2014, re-released as '1989 (Taylor’s Version)'.",Category:"Pop Culture",Difficulty:"Easy",ID:"PC-1989"},
+  {Date:"",Question:"What is the largest bone in the human body?",OptionA:"Femur",OptionB:"Tibia",OptionC:"Humerus",OptionD:"Pelvis",Answer:"Femur",Explanation:"Thigh bone; strongest and longest.",Category:"General Knowledge",Difficulty:"Easy",ID:"GK-FEMUR"},
+  {Date:"",Question:"If 5 workers finish a job in 12 days, how many days would 10 workers take (same rate)?",OptionA:"6",OptionB:"12",OptionC:"3",OptionD:"10",Answer:"6",Explanation:"Work ∝ workers × days.",Category:"Logic",Difficulty:"Easy",ID:"LG-WORK"},
+  {Date:"",Question:"Which streaming platform first released 'The Mandalorian'?",OptionA:"Disney+",OptionB:"Netflix",OptionC:"HBO Max",OptionD:"Amazon Prime Video",Answer:"Disney+",Explanation:"Premiered in 2019.",Category:"Pop Culture",Difficulty:"Easy",ID:"PC-MANDALORIAN"}
+];
 
-    rounds = rows.map(r => ({
-      q: r.Question,
-      a: [r.OptionA, r.OptionB, r.OptionC, r.OptionD].filter(Boolean),
-      ans: r.Answer,
-      expl: r.Explanation||'',
-      cat: r.Category||'',
-      diff: r.Difficulty||'',
-    }));
-    setStatus('Ready');
-    elQ.textContent = 'Press Start Quiz';
-    elOpts.innerHTML = '';
-    elRes.textContent = '';
-    idx = 0; score = 0; selected = null; running = false;
-  } catch(e){
-    setStatus('Couldn’t load CSV — check Publish settings / URLs');
-    elQ.textContent = 'Couldn’t load questions.';
-    console.error(e);
-  }
+async function loadData(){
+  try{const live=await loadCSV(LIVE_CSV_URL); if(live.length) return live;}catch(e){}
+  try{const bank=await loadCSV(BANK_CSV_URL);
+    if(bank.length){
+      const today=bank.filter(r=>(r.Date||'').trim()===todayKey).slice(0,12);
+      return today.length?today:bank.slice(0,12);
+    }}catch(e){}
+  try{const local=await loadCSV('/questions.csv'); if(local.length) return local.slice(0,12);}catch(e){}
+  return FALLBACK_ROWS;
 }
 
-/* ===== Quiz logic ===== */
-function renderQuestion(){
-  const cur = rounds[idx];
-  if (!cur){
-    elRes.textContent = 'Done — great job!';
-    btnPlayAgain.classList.remove('hidden');
-    stopTimer();
-    running = false;
-    return;
-  }
-  elQ.textContent = cur.q || '—';
-  elOpts.innerHTML = '';
-  elRes.textContent = '';
-  selected = null;
-
-  cur.a.forEach((t)=>{
-    const b = document.createElement('button');
-    b.className = 'choice';
-    b.textContent = t;
-    b.onclick = () => onSelect(b, t);
-    elOpts.appendChild(b);
+function norm(s){return String(s||'').trim();}
+function updateMeta(){elProgText.textContent=`${idx}/${todays.length||0}`;const pct=(todays.length?(idx/todays.length):0)*100;elProgFill.style.inset=`0 ${100-pct}% 0 0`;elScore.textContent=String(score);}
+function showQuestion(){
+  const q=todays[idx];
+  if(!q){elFB.innerHTML='';elQ.textContent='All done!';elAgain.classList.remove('hidden');return}
+  selected=null;elAgain.classList.add('hidden');elFB.innerHTML='';
+  elMetaText.textContent=`${q.Difficulty||'—'} • ${q.Category||'Quiz'}`;
+  elQ.textContent=q.Question||'—';
+  const opts=[q.OptionA,q.OptionB,q.OptionC,q.OptionD].filter(Boolean);
+  elOpts.innerHTML='';
+  opts.forEach((optText)=>{
+    const btn=document.createElement('button');
+    btn.className='choice';
+    btn.textContent=optText;
+    btn.onclick=()=>onSelect(btn,optText);
+    elOpts.appendChild(btn);
   });
-
-  // timer
-  startTimer();
-  // force end if time runs out
-  setTimeout(()=>{
-    if (!running || selected) return;
-    // mark incorrect and move on
-    elRes.textContent = 'Time’s up!';
-    idx++;
-    renderQuestion();
-  }, timerMs);
 }
-
-function onSelect(btn, val){
-  if (selected) return;
-  selected = val;
-  // style selection
-  document.querySelectorAll('.choice').forEach(b => b.classList.add('disabled'));
-  const cur = rounds[idx];
-  const isCorrect = norm(val).toLowerCase() === norm(cur.ans).toLowerCase();
-  if (isCorrect){
-    btn.classList.add('correct');
-    elRes.textContent = 'Correct!';
-    beep();
-    idx++; score++;
+function onSelect(btn,val){
+  if(!started)return;
+  document.querySelectorAll('.choice').forEach(b=>{b.classList.add('disabled');b.disabled=true});
+  selected=val;
+  const q=todays[idx];
+  const isCorrect=norm(selected).toLowerCase()===norm(q.Answer).toLowerCase();
+  if(isCorrect){btn.classList.add('correct');elFB.textContent='Correct!';score++;idx++;}else{btn.classList.add('incorrect');elFB.textContent='Incorrect.';idx++;}
+  updateMeta();setTimeout(showQuestion,700);
+}
+document.getElementById('startBtn')?.addEventListener('click',async()=>{
+  if(!allRows.length){elQ.textContent='Loading…';
+    try{allRows=await loadData();}catch(e){elQ.textContent='Couldn’t load CSV. Ensure sheet is Published to web.';return}}
+  todays=(allRows||[]).filter(r=>norm(r.Date)===todayKey);
+  if(!todays.length)todays=(allRows||[]).slice(0,12);
+  idx=0;score=0;started=true;updateMeta();showQuestion();
+});
+document.getElementById('shuffleBtn')?.addEventListener('click',()=>{
+  if(!todays.length)return;
+  for(let i=todays.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[todays[i],todays[j]]=[todays[j],todays[i]]}
+  idx=0;score=0;started=true;updateMeta();showQuestion();
+});
+document.getElementById('shareBtn')?.addEventListener('click',async()=>{
+  const url=location.href;
+  if(navigator.share){
+    try{await navigator.share({title:'Brain Bolt',text:'Try today’s set!',url})}catch(e){}
   }else{
-    btn.classList.add('incorrect');
-    elRes.textContent = 'Incorrect.';
-    vibrate(40);
-    idx = 0;  // (simple penalty; change if you want different behavior)
-    score = 0;
+    try{await navigator.clipboard.writeText(url)}catch(e){}
   }
-  stopTimer();
-  setTimeout(renderQuestion, 700);
-}
-
-/* ===== Buttons (no pop-up notifications) ===== */
-btnStart?.addEventListener('click', async ()=>{
-  if (!rounds.length) await loadToday();
-  running = true;
-  idx = 0; score = 0; selected = null;
-  renderQuestion();
 });
-btnShuffle?.addEventListener('click', ()=>{
-  if (!rounds.length) return;
-  // shuffle current set and restart
-  for (let i=rounds.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [rounds[i],rounds[j]] = [rounds[j],rounds[i]];
-  }
-  idx = 0; score = 0; selected = null;
-  running = true;
-  renderQuestion();
+document.getElementById('playAgainBtn')?.addEventListener('click',()=>{
+  if(!todays.length)return;idx=0;score=0;started=true;elFB.textContent='';updateMeta();showQuestion();
 });
-btnShare?.addEventListener('click', async ()=>{
-  const msg = `I'm playing Brain Bolt! ${score}/${rounds.length||12} — ${location.href}`;
-  try{
-    if (navigator.share) await navigator.share({text: msg, url: location.href, title: 'Brain Bolt'});
-    else navigator.clipboard?.writeText(msg);
-  }catch(e){}
-});
-btnPlayAgain?.addEventListener('click', ()=>{
-  btnPlayAgain.classList.add('hidden');
-  idx = 0; score = 0; selected = null; running = true;
-  renderQuestion();
-});
-
-soundBtn?.addEventListener('click', ()=>{
-  soundOn = !soundOn;
-  soundBtn.textContent = soundOn ? '🔊' : '🔈';
-});
-
-/* Initial load (don’t auto-start the game) */
-loadToday();
