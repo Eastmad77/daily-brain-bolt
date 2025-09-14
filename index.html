@@ -4,85 +4,53 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
-
-  <!-- Icons / PWA -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
   <meta name="theme-color" content="#152021">
-
-  <!-- Styles -->
   <link rel="stylesheet" href="/style.css">
-
-  <!-- PapaParse (CSV) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" defer></script>
-  <!-- Your config (optional) -->
-  <script src="/firebase-config.js" defer></script>
-  <!-- App logic -->
-  <script src="/app.js" defer></script>
 </head>
 <body>
-  <!-- Splash: icon → title swap -->
+  <!-- Splash Screen -->
   <div id="splash" class="splash" aria-hidden="true">
     <img src="/app-icon.svg" alt="Brain Bolt App Icon" class="splash-logo">
     <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
   </div>
 
-  <!-- Topbar -->
-  <div class="topbar">
-    <button id="menuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-    <div class="topbar-spacer"></div>
-    <button id="soundBtn" class="sound-btn" aria-label="Toggle sound">🔊</button>
-  </div>
-
-  <!-- Slide-out Menu -->
-  <nav id="sideMenu" class="side-menu" aria-hidden="true">
-    <ul>
-      <li><a href="/index.html" class="active">Home</a></li>
-      <li><a href="/about.html">About</a></li>
-      <li><a href="/terms.html">Terms</a></li>
-      <li><a href="/privacy.html">Privacy</a></li>
-      <li><a href="/contact.html">Contact</a></li>
-    </ul>
-  </nav>
-
-  <!-- Hero -->
   <header class="hero">
     <div class="hero-overlay"></div>
     <div class="hero-inner">
+      <div class="header-actions">
+        <a class="menu-link" href="/menu.html" aria-label="Menu">☰ Menu</a>
+      </div>
       <div class="hero-title">
-        <!-- Icon removed here per request to keep header clean -->
         <h1 class="hero-h1">Brain <span class="bolt">⚡</span> Bolt</h1>
       </div>
-      <p class="subtitle">Your Daily Challenge Awaits</p>
+      <p class="subtitle">12 fresh questions — every day.</p>
     </div>
   </header>
 
-  <!-- Main -->
   <main class="container">
-    <section class="card quiz-area">
-      <!-- Meta/status row -->
-      <div id="statusBar" class="statusbar">
-        <span id="quizDate" class="meta-chip">—</span>
-        <span id="elapsedTime" class="meta-chip">00:00</span>
-        <span id="statusMsg" class="meta-chip dim">Ready</span>
+    <section class="card bar-card">
+      <div class="bar-top">
+        <div><strong>Score:</strong> <span id="score">0</span></div>
+        <div><strong>Progress:</strong> <span id="progressText">0/0</span></div>
+      </div>
+      <div class="progress"><div id="progressFill" class="progress-fill"></div></div>
+    </section>
+
+    <section class="card" id="quiz-card">
+      <div class="meta">
+        <span id="metaText" class="meta-text">Ready</span>
+        <span class="spacer"></span>
+        <span id="today" class="meta-date"></span>
       </div>
 
-      <!-- Question -->
-      <div id="questionBox" class="question-box">Press Start Quiz</div>
-
-      <!-- Options -->
+      <div id="question" class="question">Press Start Quiz</div>
       <div id="options" class="options"></div>
 
-      <!-- Result -->
-      <div id="resultBox" class="result-box" aria-live="polite"></div>
+      <div id="feedback" class="feedback" aria-live="polite"></div>
 
-      <!-- Timer -->
-      <div class="timer-wrap">
-        <div id="timerBar" class="timer-bar"></div>
-      </div>
-
-      <!-- CTAs -->
       <div class="cta-row">
         <button id="startBtn" class="btn primary">Start Quiz</button>
         <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
@@ -92,7 +60,6 @@
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     © 2025 Brain ⚡ Bolt •
     <a href="/about.html">About</a> •
@@ -100,5 +67,8 @@
     <a href="/privacy.html">Privacy</a> •
     <a href="/contact.html">Contact</a>
   </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="/app.js"></script>
 </body>
 </html>
