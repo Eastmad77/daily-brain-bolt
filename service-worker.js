@@ -1,5 +1,5 @@
 /* Brain ⚡ Bolt — Service Worker */
-const VERSION = 'v1.2.0';          // ⬅ bump when assets change
+const VERSION = 'v1.5.0';
 const STATIC_CACHE = `bb-static-${VERSION}`;
 const RUNTIME_CACHE = `bb-runtime-${VERSION}`;
 
