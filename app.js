@@ -24,6 +24,7 @@ const elElapsed = document.getElementById('elapsedTime');
 const elQ = document.getElementById('questionBox');
 const elChoices = document.getElementById('choices');
 const elGameOver = document.getElementById('gameOverBox');
+const elGameOverText = document.getElementById('gameOverText');
 const btnStart = document.getElementById('startBtn');
 const btnAgain = document.getElementById('playAgainBtn');
 const menuBtn = document.getElementById('mmMenuBtn');
@@ -85,7 +86,7 @@ async function ensureFreshLiveSet() {
   try {
     const res = await fetch(`${GAS_WEBAPP_URL}?action=status`, { cache: 'no-store' });
     const data = await res.json();
-    // If your status endpoint returns {ok, today, liveDate, count}, check for today's 12:
+    // If your status endpoint returns {ok, today, liveDate, count}, check & build as needed
     if (!(data && data.ok)) {
       await fetch(`${GAS_WEBAPP_URL}?action=build`, { cache: 'no-store' });
     }
@@ -213,8 +214,14 @@ function handleAnswer(btn, row){
 
 function endGame(){
   stopElapsedTimer();
+  const total = rows.length || 12;
+  const mm = Math.floor(elapsedSeconds/60);
+  const ss = String(elapsedSeconds%60).padStart(2,'0');
+  const scoreLine = `You answered ${correctCount} / ${total} correctly in ${mm}:${ss}!`;
+
   elGameOver && (elGameOver.style.display='block');
-  elGameOver && (elGameOver.textContent = `You answered ${correctCount} / 12 correctly!`);
+  if (elGameOverText) elGameOverText.textContent = scoreLine;
+
   btnAgain && (btnAgain.style.display='inline-block');
   localStorage.setItem(LS_LAST_PLAYED, nzTodayYMD());
   showSuccessSplash();
@@ -228,9 +235,55 @@ function showSuccessSplash(){
   setTimeout(()=> successSplash.classList.remove('show'), 2500);
 }
 
-/* ===== INIT & Buttons ===== */
-const LS_LAST_PLAYED = 'bb_last_played_nz';
+/* ===== Share: include score + elapsed time ===== */
+function shareScore(text) {
+  if (navigator.share) {
+    navigator.share({
+      title: 'Brain ⚡ Bolt',
+      text,
+      url: window.location.href
+    }).catch(err => console.error('Share failed:', err));
+  } else {
+    navigator.clipboard.writeText(`${text} - ${window.location.href}`)
+      .then(()=>alert('Score copied to clipboard!'))
+      .catch(()=>alert('Could not copy to clipboard.'));
+  }
+}
 
+// Game Over "Play Again"
+document.getElementById('goPlayAgain')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  startGame();
+});
+
+// Game Over "Share" — includes score + time
+document.getElementById('goShareScore')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const total = rows.length || 12;
+  const mm = Math.floor(elapsedSeconds/60);
+  const ss = String(elapsedSeconds%60).padStart(2,'0');
+  const text = `I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`;
+  shareScore(text);
+});
+
+// Success Splash "Play Again"
+document.getElementById('ssPlayAgain')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  successSplash.classList.remove('show');
+  startGame();
+});
+
+// Success Splash "Share" — includes score + time
+document.getElementById('ssShareScore')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  const total = rows.length || 12;
+  const mm = Math.floor(elapsedSeconds/60);
+  const ss = String(elapsedSeconds%60).padStart(2,'0');
+  const text = `I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`;
+  shareScore(text);
+});
+
+/* ===== INIT & Buttons ===== */
 document.getElementById('startBtn')?.addEventListener('click', startGame);
 document.getElementById('playAgainBtn')?.addEventListener('click', startGame);
 
