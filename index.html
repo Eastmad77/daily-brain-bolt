@@ -5,177 +5,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
 
+  <!-- PWA + Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#162022" />
+  <meta name="theme-color" content="#152021">
 
-  <link rel="stylesheet" href="/style.css" />
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css">
 
+  <!-- Config -->
   <script src="/firebase-config.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
-  <!-- Keep app hidden until splash finishes -->
-  <style>.app-root{opacity:0;transition:opacity .25s ease}</style>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <!-- Initial SPLASH (blue theme, icon → title wipe) -->
-  <div id="splash" role="dialog" aria-label="Loading">
-    <div class="splash-inner">
-      <img src="/app-icon.svg" alt="Brain Bolt Logo" class="splash-logo" />
-      <h1 class="splash-title">
-        <span class="title-mask">Brain <span class="bolt">⚡</span> Bolt</span>
-      </h1>
-      <div class="splash-wipe"></div>
-      <button id="skipSplash" class="skip-splash" aria-label="Skip intro">Skip</button>
-    </div>
+  <!-- Splash Screen -->
+  <div id="splash" class="splash" aria-hidden="true">
+    <img src="/app-icon.svg" alt="Brain Bolt Icon" class="splash-logo">
+    <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
   </div>
 
-  <!-- SUCCESS SPLASH (shown after completing all 12) -->
-  <div id="successSplash" aria-hidden="true">
-    <div class="ss-confetti"></div>
-    <div class="ss-confetti delay1"></div>
-    <div class="ss-confetti delay2"></div>
-
-    <div class="ss-card">
-      <img class="ss-logo" src="/app-icon.svg" alt="" />
-      <h2 class="ss-title">Nice work! 🎉</h2>
-      <p class="ss-sub">You finished today’s quiz</p>
-      <button id="ssDismiss" class="btn primary">Continue</button>
-    </div>
-  </div>
-
-  <!-- App shell -->
-  <div id="appRoot" class="app-root">
-    <div class="topbar">
-      <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
-      <div class="topbar-actions">
-        <button id="notifyBtn" class="sound-btn" title="Daily reminder">🔔</button>
-        <button id="soundBtn" class="sound-btn" aria-label="Toggle sound" title="Sound on/off">🔊</button>
-      </div>
-    </div>
-
-    <nav id="mmSideMenu" class="side-menu" aria-hidden="true">
-      <ul>
-        <li><a href="/index.html" data-home-link>Home</a></li>
-        <li><a href="/about.html">About</a></li>
-        <li><a href="/pro.html" class="pro-link">Go Pro</a></li>
-        <li><a href="/signin.html">Sign In</a></li>
-        <li><a href="/terms.html">Terms</a></li>
-        <li><a href="/privacy.html">Privacy</a></li>
-        <li><a href="/contact.html">Contact</a></li>
-      </ul>
+  <!-- Side Menu -->
+  <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <button id="mmMenuBtn" class="menu-btn">☰</button>
+    <nav class="menu-nav">
+      <a href="/index.html">🏠 Home</a>
+      <a href="/about.html">ℹ️ About</a>
+      <a href="/contact.html">✉️ Contact</a>
+      <a href="/privacy.html">🔒 Privacy</a>
+      <a href="/terms.html">📄 Terms</a>
+      <a href="/signin.html">🔑 Sign In</a>
     </nav>
+    <div class="menu-controls">
+      <button id="themeBtn" aria-label="Toggle theme"></button>
+      <button id="soundBtn" aria-label="Toggle sound">🔊</button>
+      <button id="notifyBtn" aria-label="Enable notifications">🔔</button>
+    </div>
+  </aside>
 
-    <header class="hero">
-      <div class="hero-overlay"></div>
-      <div class="hero-inner">
-        <h1 class="hero-title">Brain <span class="bolt">⚡</span> Bolt</h1>
-        <p class="subtitle">Your Daily Challenge</p>
-      </div>
+  <!-- Main App -->
+  <main>
+    <header class="topbar">
+      <div id="dateLabel"></div>
+      <div id="setLabel">Ready</div>
+      <div id="progressLabel">Q 0/12</div>
     </header>
 
-    <main class="container">
-      <section id="daily" class="card">
-        <div class="status-bar">
-          <span id="dateLabel"></span>
-          <span id="progressLabel" class="pill pill-muted" aria-live="polite">Q 0/12</span>
-          <span id="setLabel" class="pill">Ready</span>
-        </div>
+    <!-- Countdown -->
+    <div id="countdown" class="countdown"></div>
 
-        <div id="countdown" class="countdown" style="display:none;" aria-live="polite"></div>
+    <!-- Timer -->
+    <div id="timerWrapper" class="timer-wrapper">
+      <div id="timerBar" class="timer-bar"></div>
+    </div>
+    <div id="elapsedTime" class="elapsed-time">0:00</div>
 
-        <!-- Subtle timer strip with elapsed time -->
-        <div id="timerWrapper" class="timer-wrap" aria-hidden="true">
-          <div id="timerBar" class="timer-bar"></div>
-          <div class="timer-meta">
-            <span class="timer-label">Elapsed</span>
-            <span id="elapsedTime" class="elapsed">0:00</span>
-          </div>
-        </div>
+    <!-- Question -->
+    <section>
+      <div id="questionBox" class="question-box">Press Start Quiz</div>
+      <div id="choices" class="choices"></div>
+    </section>
 
-        <div id="questionBox" class="question-box">Press Start Quiz</div>
-        <div id="choices" class="choices"></div>
-        <div id="gameOverBox" class="game-over" style="display:none;">Game Over</div>
+    <!-- Controls -->
+    <div class="controls">
+      <button id="startBtn">▶️ Start Quiz</button>
+      <button id="shuffleBtn">🔀 Shuffle</button>
+      <button id="shareBtn">📤 Share</button>
+      <button id="playAgainBtn" style="display:none;">🔄 Play Again</button>
+    </div>
 
-        <div class="cta-row">
-          <button id="startBtn" class="btn primary">Start Quiz</button>
-          <button id="shuffleBtn" class="btn shuffle">Shuffle</button>
-          <button id="shareBtn" class="btn outline">Share</button>
-          <button id="themeBtn" class="btn outline">Theme</button>
-          <button id="playAgainBtn" class="btn again" style="display:none;">Play Again</button>
-        </div>
-      </section>
-    </main>
+    <!-- Game Over -->
+    <div id="gameOverBox" class="game-over" style="display:none;">
+      <h2>Game Over</h2>
+    </div>
+  </main>
 
-    <footer class="footer">
-      © 2025 Brain ⚡ Bolt •
-      <a href="/about.html" class="footer-link">About</a> •
-      <a href="/terms.html" class="footer-link">Terms</a> •
-      <a href="/privacy.html" class="footer-link">Privacy</a> •
-      <a href="/contact.html" class="footer-link">Contact</a>
-    </footer>
+  <!-- Success Splash -->
+  <div id="successSplash" class="success-splash">
+    <div class="success-content">
+      <h2>🎉 Well done!</h2>
+      <p>You completed today’s quiz!</p>
+      <button id="ssDismiss">OK</button>
+    </div>
   </div>
 
-  <!-- Hardened splash controller (never freezes; shows on first load & Home) -->
-  <script>
-    (function() {
-      const SPLASH_MS = 2000, BACKUP_MS = 4000, ULTIMATE_MS = 7000;
-      const FORCE_KEY = 'bb_forceSplash', SEEN_KEY = 'bb_seenSplash';
-
-      const splash = document.getElementById('splash');
-      const root   = document.getElementById('appRoot');
-      const skip   = document.getElementById('skipSplash');
-
-      function revealApp() {
-        if (!splash || splash.dataset.revealed === '1') return;
-        splash.dataset.revealed = '1';
-        splash.classList.add('hide');
-        if (root) root.style.opacity = '1';
-        try { sessionStorage.setItem(SEEN_KEY,'1'); sessionStorage.removeItem(FORCE_KEY); } catch(_) {}
-      }
-
-      function runSplash() {
-        if (!splash) return revealApp();
-        splash.classList.add('show');
-        setTimeout(()=> splash.classList.add('mid'), 550);
-        setTimeout(revealApp, SPLASH_MS);
-        setTimeout(revealApp, BACKUP_MS);
-        setTimeout(revealApp, ULTIMATE_MS);
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') revealApp();
-        });
-        window.addEventListener('load', () => revealApp(), { once:true });
-        skip?.addEventListener('click', revealApp, { once:true });
-        splash.addEventListener('click', (e) => {
-          if (e.target === splash) revealApp();
-        });
-      }
-
-      function init() {
-        let want = false;
-        try {
-          want = sessionStorage.getItem(FORCE_KEY) === '1' ||
-                 !sessionStorage.getItem(SEEN_KEY);
-        } catch(_) {}
-        if (want) runSplash(); else revealApp();
-      }
-
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init, { once:true });
-      } else {
-        init();
-      }
-    })();
-  </script>
-
-  <!-- SW register -->
+  <!-- Scripts -->
+  <script src="/app.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+      navigator.serviceWorker.register('/service-worker.js').then(reg => {
+        if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          nw?.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              nw.postMessage('SKIP_WAITING');
+            }
+          });
+        });
+      });
     }
   </script>
-
-  <script defer src="/app.js"></script>
 </body>
 </html>
