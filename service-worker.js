@@ -1,5 +1,5 @@
 /* Brain ⚡ Bolt — Service Worker (CSV freshness hardened) */
-const VERSION = 'v2.0.1';
+const VERSION = 'v2.0.4'; // bump to force clients to fetch new files
 const STATIC_CACHE = `bb-static-${VERSION}`;
 const RUNTIME_CACHE = `bb-runtime-${VERSION}`;
 
@@ -24,20 +24,16 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
     const keys = await caches.keys();
-    await Promise.all(
-      keys.map((k) => {
-        if (![STATIC_CACHE, RUNTIME_CACHE].includes(k)) return caches.delete(k);
-      })
-    );
+    await Promise.all(keys.map((k) => {
+      if (![STATIC_CACHE, RUNTIME_CACHE].includes(k)) return caches.delete(k);
+    }));
     if ('navigationPreload' in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
@@ -64,9 +60,9 @@ self.addEventListener('fetch', (event) => {
 
   const urlStr = request.url;
 
-  // Always fetch published Google Sheets CSV fresh
+  // Always fetch Google Sheets CSV fresh
   if (isSheetsCsv(urlStr)) {
-    event.respondWith(fetch(request, { cache: 'no-store' }));
+    event.respondWith(fetchSafe(request, { cache: 'no-store' }));
     return;
   }
 
@@ -74,62 +70,61 @@ self.addEventListener('fetch', (event) => {
   if (isSameOrigin(urlStr)) {
     const url = new URL(urlStr);
 
-    // Navigations: prefer network, fall back to cached index
     if (request.mode === 'navigate') {
       event.respondWith(networkFirstNavigate(event));
       return;
     }
 
-    // Known static assets: cache-first
     if (STATIC_ASSETS.includes(url.pathname)) {
       event.respondWith(cacheFirst(request));
       return;
     }
 
-    // Other same-origin requests: stale-while-revalidate
     event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
-  // Cross-origin: just fetch
-  event.respondWith(fetch(request));
+  // Cross-origin: direct fetch (don’t cache)
+  event.respondWith(fetchSafe(request));
 });
+
+async function fetchSafe(request, init) {
+  try {
+    return await fetch(request, init);
+  } catch {
+    return Response.error();
+  }
+}
 
 async function cacheFirst(request) {
   const cache = await caches.open(STATIC_CACHE);
   const cached = await cache.match(request, { ignoreVary: true, ignoreSearch: true });
   if (cached) return cached;
-  const res = await fetch(request);
+  const res = await fetchSafe(request);
   if (res && res.ok) cache.put(request, res.clone());
-  return res;
+  return res || Response.error();
 }
 
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(RUNTIME_CACHE);
   const cached = await cache.match(request);
-  const fetchPromise = fetch(request)
-    .then((res) => {
-      if (res && res.ok) cache.put(request, res.clone());
-      return res;
-    })
-    .catch(() => cached || Promise.reject(new Error('Network error')));
+  const fetchPromise = fetchSafe(request).then((res) => {
+    if (res && res.ok) cache.put(request, res.clone());
+    return res || cached || Response.error();
+  });
   return cached || fetchPromise;
 }
 
 async function networkFirstNavigate(event) {
   const cache = await caches.open(STATIC_CACHE);
   const preloaded = await event.preloadResponse;
-  if (preloaded) {
-    cache.put(event.request, preloaded.clone());
-    return preloaded;
-  }
+  if (preloaded) { cache.put(event.request, preloaded.clone()); return preloaded; }
   try {
-    const res = await fetch(event.request, { cache: 'no-store' });
+    const res = await fetchSafe(event.request, { cache: 'no-store' });
     if (res && res.ok) cache.put(event.request, res.clone());
-    return res;
-  } catch (err) {
+    return res || (await cache.match('/index.html')) || Response.error();
+  } catch {
     const fallback = await cache.match('/index.html');
-    if (fallback) return fallback;
-    throw err;
+    return fallback || Response.error();
   }
 }
