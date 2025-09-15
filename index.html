@@ -9,7 +9,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#0e1e27" />
 
   <!-- Styles -->
   <link rel="stylesheet" href="/style.css" />
@@ -37,7 +37,6 @@
       <a href="/signin.html">🔑 Sign In</a>
     </nav>
     <div class="menu-controls">
-      <button id="themeBtn" aria-label="Toggle theme"></button>
       <button id="soundBtn" aria-label="Toggle sound">🔊</button>
       <button id="notifyBtn" aria-label="Enable notifications">🔔</button>
     </div>
@@ -73,16 +72,40 @@
       <button id="playAgainBtn" style="display:none;" aria-label="Play again">🔄 Play Again</button>
     </div>
 
-    <!-- Game over summary -->
-    <div id="gameOverBox" class="game-over" style="display:none;"></div>
+    <!-- Game over summary (with share/footer links) -->
+    <div id="gameOverBox" class="game-over" style="display:none;">
+      <p id="gameOverText"></p>
+      <footer class="footer inline-footer">
+        <p>
+          <a href="#" id="goPlayAgain">🔄 Play Again</a> ·
+          <a href="/index.html">🏠 Home</a> ·
+          <a href="#" id="goShareScore">📤 Share</a>
+        </p>
+      </footer>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2025 Brain ⚡ Bolt ·
+        <a href="/privacy.html">Privacy</a> ·
+        <a href="/terms.html">Terms</a>
+      </p>
+    </footer>
   </main>
 
-  <!-- Success splash -->
+  <!-- Success splash (with share/footer links) -->
   <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
     <div class="success-content">
       <h2>🎉 Well done!</h2>
       <p>You completed today’s quiz!</p>
       <button id="ssDismiss" class="btn primary">OK</button>
+      <footer class="footer">
+        <p>
+          <a href="#" id="ssPlayAgain">🔄 Play Again</a> ·
+          <a href="/index.html">🏠 Home</a> ·
+          <a href="#" id="ssShareScore">📤 Share</a>
+        </p>
+      </footer>
     </div>
   </div>
 
