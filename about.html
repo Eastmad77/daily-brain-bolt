@@ -10,9 +10,8 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Menu -->
+  <!-- Sidebar -->
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmMenuBtn" class="menu-btn">☰</button>
     <nav class="menu-nav">
       <a href="/index.html">🏠 Home</a>
       <a href="/about.html">ℹ️ About</a>
@@ -21,19 +20,25 @@
       <a href="/terms.html">📄 Terms</a>
       <a href="/signin.html">🔑 Sign In</a>
     </nav>
+    <div class="menu-controls">
+      <button id="themeBtn"></button>
+      <button id="soundBtn">🔊</button>
+      <button id="notifyBtn">🔔</button>
+    </div>
   </aside>
 
   <main>
-    <header class="topbar"><h1>About</h1></header>
+    <header class="topbar">
+      <button id="mmMenuBtn" class="menu-btn">☰</button>
+      <h1>About</h1>
+    </header>
     <section>
-      <p><strong>Brain ⚡ Bolt</strong> is a daily quiz app designed to challenge your knowledge with carefully curated questions in general knowledge, trivia, riddles, geography, and pop culture.</p>
+      <p><strong>Brain ⚡ Bolt</strong> is a daily quiz app designed to challenge your knowledge with curated questions in general knowledge, trivia, riddles, geography, and pop culture.</p>
       <p>Play daily to keep your mind sharp and track your progress over time.</p>
     </section>
   </main>
 
   <script src="/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
-  </script>
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');</script>
 </body>
 </html>
