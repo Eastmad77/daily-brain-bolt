@@ -5,7 +5,7 @@ const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEP
 
 // Google Sheet CSV URLs (leave as your published CSV links)
 const BANK_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/.../pub?gid=2009978011&single=true&output=csv';
-const LIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/.../pub?gid=1410250735&single=true&output=csv';
+const LIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv';
 
 // State
 let rows = [];
