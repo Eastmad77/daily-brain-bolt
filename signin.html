@@ -11,7 +11,6 @@
 </head>
 <body>
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmMenuBtn" class="menu-btn">☰</button>
     <nav class="menu-nav">
       <a href="/index.html">🏠 Home</a>
       <a href="/about.html">ℹ️ About</a>
@@ -20,12 +19,19 @@
       <a href="/terms.html">📄 Terms</a>
       <a href="/signin.html">🔑 Sign In</a>
     </nav>
+    <div class="menu-controls">
+      <button id="themeBtn"></button>
+      <button id="soundBtn">🔊</button>
+      <button id="notifyBtn">🔔</button>
+    </div>
   </aside>
 
   <main>
-    <header class="topbar"><h1>Sign In</h1></header>
+    <header class="topbar">
+      <button id="mmMenuBtn" class="menu-btn">☰</button>
+      <h1>Sign In</h1>
+    </header>
     <section>
-      <p>Sign in to track your progress and unlock extra features.</p>
       <form>
         <label>Email<br><input type="email" required></label><br><br>
         <label>Password<br><input type="password" required></label><br><br>
@@ -35,8 +41,6 @@
   </main>
 
   <script src="/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');
-  </script>
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');</script>
 </body>
 </html>
