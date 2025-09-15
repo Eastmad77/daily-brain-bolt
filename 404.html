@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Page Not Found – Brain ⚡ Bolt</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
@@ -10,7 +9,6 @@
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Sidebar -->
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
     <nav class="menu-nav">
       <a href="/index.html">🏠 Home</a>
@@ -26,7 +24,6 @@
     </div>
   </aside>
 
-  <!-- Main content -->
   <main>
     <header class="topbar">
       <button id="mmMenuBtn" class="menu-btn">☰</button>
@@ -37,13 +34,17 @@
       <p>The page you were looking for doesn’t exist.</p>
       <p><a href="/index.html" class="btn">Return Home</a></p>
     </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>© 2025 Brain ⚡ Bolt ·
+        <a href="/privacy.html">Privacy</a> ·
+        <a href="/terms.html">Terms</a>
+      </p>
+    </footer>
   </main>
 
   <script src="/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js');
-    }
-  </script>
+  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');</script>
 </body>
 </html>
