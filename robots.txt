@@ -1,6 +1,4 @@
-# robots.txt for The Daily BrainBolt
 User-agent: *
 Allow: /
 
-# Sitemap link
 Sitemap: https://dailybrainbolt.com/sitemap.xml
