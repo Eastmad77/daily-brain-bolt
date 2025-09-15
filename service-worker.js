@@ -1,4 +1,4 @@
-/* Brain ⚡ Bolt — Service Worker (CSV freshness hardened) */
+/* Brain ⚡ Bolt — Service Worker (CSV freshness hardened, dark-only UI doesn’t affect SW) */
 const VERSION = 'v2.0.0';
 const STATIC_CACHE = `bb-static-${VERSION}`;
 const RUNTIME_CACHE = `bb-runtime-${VERSION}`;
@@ -26,34 +26,25 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS))
-  );
+  event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(STATIC_ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Clean old caches
     const keys = await caches.keys();
     await Promise.all(keys.map((k) => {
       if (![STATIC_CACHE, RUNTIME_CACHE].includes(k)) return caches.delete(k);
     }));
-
-    // Turn on navigation preload (if supported)
     if ('navigationPreload' in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
-
     await self.clients.claim();
   })());
 });
 
-// Optional: allow page to trigger immediate SW takeover
 self.addEventListener('message', (event) => {
-  if (event.data === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
+  if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
 
 const isSameOrigin = (url) => new URL(url, self.location.origin).origin === self.location.origin;
@@ -71,38 +62,30 @@ self.addEventListener('fetch', (event) => {
 
   const urlStr = request.url;
 
-  // 1) Google Sheets CSV — ALWAYS network-only (no cache)
   if (isSheetsCsv(urlStr)) {
     event.respondWith(fetch(request, { cache: 'no-store' }));
     return;
   }
 
-  // 2) Same-origin handling
   if (isSameOrigin(urlStr)) {
     const url = new URL(urlStr);
 
-    // 2a) Navigation requests -> network-first with cache fallback
     if (request.mode === 'navigate') {
       event.respondWith(networkFirstNavigate(event));
       return;
     }
 
-    // 2b) Known static assets -> cache-first
     if (STATIC_ASSETS.includes(url.pathname)) {
       event.respondWith(cacheFirst(request));
       return;
     }
 
-    // 2c) Other same-origin GET -> stale-while-revalidate
     event.respondWith(staleWhileRevalidate(request));
     return;
   }
 
-  // 3) Cross-origin default -> straight fetch
   event.respondWith(fetch(request));
 });
-
-/* ---------- Strategies ---------- */
 
 async function cacheFirst(request) {
   const cache = await caches.open(STATIC_CACHE);
@@ -112,29 +95,18 @@ async function cacheFirst(request) {
   if (res && res.ok) cache.put(request, res.clone());
   return res;
 }
-
 async function staleWhileRevalidate(request) {
   const cache = await caches.open(RUNTIME_CACHE);
   const cached = await cache.match(request);
   const fetchPromise = fetch(request)
-    .then((res) => {
-      if (res && res.ok) cache.put(request, res.clone());
-      return res;
-    })
+    .then((res) => { if (res && res.ok) cache.put(request, res.clone()); return res; })
     .catch(() => cached || Promise.reject(new Error('Network error')));
   return cached || fetchPromise;
 }
-
 async function networkFirstNavigate(event) {
   const cache = await caches.open(STATIC_CACHE);
-
-  // Use navigation preload if available
   const preloaded = await event.preloadResponse;
-  if (preloaded) {
-    cache.put(event.request, preloaded.clone());
-    return preloaded;
-  }
-
+  if (preloaded) { cache.put(event.request, preloaded.clone()); return preloaded; }
   try {
     const res = await fetch(event.request, { cache: 'no-store' });
     if (res && res.ok) cache.put(event.request, res.clone());
