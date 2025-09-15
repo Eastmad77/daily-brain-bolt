@@ -56,7 +56,7 @@ menuBtn?.addEventListener('click', () => { sideMenu?.classList.toggle('open'); }
 
 /* ===== NOTIFICATIONS (optional local) ===== */
 const LS_NOTIFY_KEY = 'bb_notify_enabled';
-const LS_LAST_PLAYED = 'bb_last_played_nz';
+const LS_LAST_PLAYED = 'bb_last_played_nz'; // << keep ONLY this declaration
 function canNotify(){ return 'Notification' in window; }
 async function requestNotifyPermission(){
   if (!canNotify()) return false;
@@ -86,7 +86,6 @@ async function ensureFreshLiveSet() {
   try {
     const res = await fetch(`${GAS_WEBAPP_URL}?action=status`, { cache: 'no-store' });
     const data = await res.json();
-    // If your status endpoint returns {ok, today, liveDate, count}, check & build as needed
     if (!(data && data.ok)) {
       await fetch(`${GAS_WEBAPP_URL}?action=build`, { cache: 'no-store' });
     }
@@ -119,7 +118,6 @@ function startElapsedTimer() {
     elapsedSeconds++;
     const m = Math.floor(elapsedSeconds/60), s = elapsedSeconds%60;
     elElapsed && (elElapsed.textContent = `${m}:${s.toString().padStart(2,'0')}`);
-    // progress visual (5 min scale)
     const pct = Math.min(1, elapsedSeconds/300);
     elTimerBar && (elTimerBar.style.transform = `scaleX(${pct})`);
   }, 1000);
@@ -197,7 +195,6 @@ function handleAnswer(btn, row){
   const correct = isCorrect(row, btn.textContent);
   if (correct){ btn.classList.add('correct'); playBeep(); correctCount++; }
   else { btn.classList.add('incorrect'); if (navigator.vibrate) navigator.vibrate(160); }
-  // Mark the correct one
   if (/^[ABCD]$/i.test(row.ans)) {
     const idx = 'ABCD'.indexOf(row.ans[0].toUpperCase());
     const correctText = row.opts[idx] || '';
@@ -238,25 +235,15 @@ function showSuccessSplash(){
 /* ===== Share: include score + elapsed time ===== */
 function shareScore(text) {
   if (navigator.share) {
-    navigator.share({
-      title: 'Brain ⚡ Bolt',
-      text,
-      url: window.location.href
-    }).catch(err => console.error('Share failed:', err));
+    navigator.share({ title: 'Brain ⚡ Bolt', text, url: window.location.href })
+      .catch(err => console.error('Share failed:', err));
   } else {
     navigator.clipboard.writeText(`${text} - ${window.location.href}`)
       .then(()=>alert('Score copied to clipboard!'))
       .catch(()=>alert('Could not copy to clipboard.'));
   }
 }
-
-// Game Over "Play Again"
-document.getElementById('goPlayAgain')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  startGame();
-});
-
-// Game Over "Share" — includes score + time
+document.getElementById('goPlayAgain')?.addEventListener('click', (e) => { e.preventDefault(); startGame(); });
 document.getElementById('goShareScore')?.addEventListener('click', (e) => {
   e.preventDefault();
   const total = rows.length || 12;
@@ -265,15 +252,9 @@ document.getElementById('goShareScore')?.addEventListener('click', (e) => {
   const text = `I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`;
   shareScore(text);
 });
-
-// Success Splash "Play Again"
 document.getElementById('ssPlayAgain')?.addEventListener('click', (e) => {
-  e.preventDefault();
-  successSplash.classList.remove('show');
-  startGame();
+  e.preventDefault(); successSplash.classList.remove('show'); startGame();
 });
-
-// Success Splash "Share" — includes score + time
 document.getElementById('ssShareScore')?.addEventListener('click', (e) => {
   e.preventDefault();
   const total = rows.length || 12;
@@ -286,6 +267,14 @@ document.getElementById('ssShareScore')?.addEventListener('click', (e) => {
 /* ===== INIT & Buttons ===== */
 document.getElementById('startBtn')?.addEventListener('click', startGame);
 document.getElementById('playAgainBtn')?.addEventListener('click', startGame);
+
+// Splash hard fallback (in case CSS animation doesn’t run)
+function killSplash() {
+  const s = document.querySelector('.splash');
+  if (s) s.remove();
+}
+document.addEventListener('DOMContentLoaded', () => setTimeout(killSplash, 1800));
+window.addEventListener('load', () => setTimeout(killSplash, 1800));
 
 (function init(){
   maybeShowDailyReady();
