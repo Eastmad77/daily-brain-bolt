@@ -5,30 +5,31 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
 
-  <!-- PWA + Icons -->
+  <!-- PWA & Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#152021">
+  <meta name="theme-color" content="#ffffff" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css" />
 
-  <!-- Config -->
+  <!-- Config & CSV Parser -->
   <script src="/firebase-config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="splash" class="splash" aria-hidden="true">
-    <img src="/app-icon.svg" alt="Brain Bolt Icon" class="splash-logo">
+
+  <!-- Splash (CSS handles fade-out) -->
+  <div class="splash" aria-hidden="true">
+    <img src="/app-icon.svg" alt="Brain Bolt" class="splash-logo">
     <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
   </div>
 
-  <!-- Side Menu -->
+  <!-- Sidebar menu -->
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmMenuBtn" class="menu-btn">☰</button>
-    <nav class="menu-nav">
+    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
+    <nav class="menu-nav" aria-label="Main">
       <a href="/index.html">🏠 Home</a>
       <a href="/about.html">ℹ️ About</a>
       <a href="/contact.html">✉️ Contact</a>
@@ -43,54 +44,52 @@
     </div>
   </aside>
 
-  <!-- Main App -->
   <main>
+    <!-- Top status bar -->
     <header class="topbar">
-      <div id="dateLabel"></div>
+      <div id="dateLabel" aria-live="polite"></div>
       <div id="setLabel">Ready</div>
       <div id="progressLabel">Q 0/12</div>
     </header>
 
-    <!-- Countdown -->
-    <div id="countdown" class="countdown"></div>
+    <!-- Countdown (optional; shown by JS when starting) -->
+    <div id="countdown" class="countdown" style="display:none;"></div>
 
-    <!-- Timer -->
+    <!-- Timer strip + elapsed time -->
     <div id="timerWrapper" class="timer-wrapper">
-      <div id="timerBar" class="timer-bar"></div>
+      <div id="timerBar" class="timer-bar" style="transform:scaleX(0)"></div>
     </div>
     <div id="elapsedTime" class="elapsed-time">0:00</div>
 
-    <!-- Question -->
+    <!-- Question + choices -->
     <section>
       <div id="questionBox" class="question-box">Press Start Quiz</div>
       <div id="choices" class="choices"></div>
     </section>
 
-    <!-- Controls -->
+    <!-- Controls (only those used by current app.js) -->
     <div class="controls">
-      <button id="startBtn">▶️ Start Quiz</button>
-      <button id="shuffleBtn">🔀 Shuffle</button>
-      <button id="shareBtn">📤 Share</button>
-      <button id="playAgainBtn" style="display:none;">🔄 Play Again</button>
+      <button id="startBtn" aria-label="Start quiz">▶️ Start Quiz</button>
+      <button id="playAgainBtn" style="display:none;" aria-label="Play again">🔄 Play Again</button>
     </div>
 
-    <!-- Game Over -->
-    <div id="gameOverBox" class="game-over" style="display:none;">
-      <h2>Game Over</h2>
-    </div>
+    <!-- Game over summary -->
+    <div id="gameOverBox" class="game-over" style="display:none;"></div>
   </main>
 
-  <!-- Success Splash -->
-  <div id="successSplash" class="success-splash">
+  <!-- Success splash (shown after 12/12) -->
+  <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
     <div class="success-content">
       <h2>🎉 Well done!</h2>
       <p>You completed today’s quiz!</p>
-      <button id="ssDismiss">OK</button>
+      <button id="ssDismiss" class="btn primary">OK</button>
     </div>
   </div>
 
-  <!-- Scripts -->
+  <!-- App logic -->
   <script src="/app.js"></script>
+
+  <!-- Service worker -->
   <script>
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').then(reg => {
