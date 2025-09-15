@@ -20,7 +20,7 @@
 </head>
 <body>
 
-  <!-- Splash -->
+  <!-- Splash (CSS fades out; JS has extra fallback) -->
   <div class="splash" aria-hidden="true">
     <img src="/app-icon.svg" alt="Brain Bolt" class="splash-logo">
     <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
@@ -51,7 +51,7 @@
       <div id="progressLabel">Q 0/12</div>
     </header>
 
-    <!-- Countdown -->
+    <!-- Countdown (optional; hidden by default) -->
     <div id="countdown" class="countdown" style="display:none;"></div>
 
     <!-- Timer strip + elapsed time -->
@@ -72,7 +72,7 @@
       <button id="playAgainBtn" style="display:none;" aria-label="Play again">🔄 Play Again</button>
     </div>
 
-    <!-- Game over summary (with share/footer links) -->
+    <!-- Game over summary (with Play Again / Home / Share) -->
     <div id="gameOverBox" class="game-over" style="display:none;">
       <p id="gameOverText"></p>
       <footer class="footer inline-footer">
@@ -93,7 +93,7 @@
     </footer>
   </main>
 
-  <!-- Success splash (with share/footer links) -->
+  <!-- Success splash (with Play Again / Home / Share) -->
   <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
     <div class="success-content">
       <h2>🎉 Well done!</h2>
@@ -127,6 +127,13 @@
         });
       });
     }
+
+    /* Extra safety: if CSS animations are disabled or blocked, remove the splash anyway */
+    (function(){
+      const kill = () => { const s = document.querySelector('.splash'); if (s) s.remove(); };
+      setTimeout(kill, 2000);
+      window.addEventListener('pageshow', () => setTimeout(kill, 2000));
+    })();
   </script>
 </body>
 </html>
