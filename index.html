@@ -20,7 +20,7 @@
 </head>
 <body>
 
-  <!-- Splash (CSS handles fade-out) -->
+  <!-- Splash -->
   <div class="splash" aria-hidden="true">
     <img src="/app-icon.svg" alt="Brain Bolt" class="splash-logo">
     <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
@@ -28,7 +28,6 @@
 
   <!-- Sidebar menu -->
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
-    <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
     <nav class="menu-nav" aria-label="Main">
       <a href="/index.html">🏠 Home</a>
       <a href="/about.html">ℹ️ About</a>
@@ -45,14 +44,15 @@
   </aside>
 
   <main>
-    <!-- Top status bar -->
+    <!-- Top status bar with menu button -->
     <header class="topbar">
+      <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
       <div id="dateLabel" aria-live="polite"></div>
       <div id="setLabel">Ready</div>
       <div id="progressLabel">Q 0/12</div>
     </header>
 
-    <!-- Countdown (optional; shown by JS when starting) -->
+    <!-- Countdown -->
     <div id="countdown" class="countdown" style="display:none;"></div>
 
     <!-- Timer strip + elapsed time -->
@@ -67,7 +67,7 @@
       <div id="choices" class="choices"></div>
     </section>
 
-    <!-- Controls (only those used by current app.js) -->
+    <!-- Controls -->
     <div class="controls">
       <button id="startBtn" aria-label="Start quiz">▶️ Start Quiz</button>
       <button id="playAgainBtn" style="display:none;" aria-label="Play again">🔄 Play Again</button>
@@ -77,7 +77,7 @@
     <div id="gameOverBox" class="game-over" style="display:none;"></div>
   </main>
 
-  <!-- Success splash (shown after 12/12) -->
+  <!-- Success splash -->
   <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
     <div class="success-content">
       <h2>🎉 Well done!</h2>
