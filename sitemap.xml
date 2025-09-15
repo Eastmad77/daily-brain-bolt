@@ -1,44 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Home -->
   <url>
     <loc>https://dailybrainbolt.com/</loc>
-    <lastmod>2025-09-08</lastmod>
-    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <!-- Static Pages -->
   <url>
     <loc>https://dailybrainbolt.com/about.html</loc>
-    <lastmod>2025-09-08</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://dailybrainbolt.com/terms.html</loc>
-    <lastmod>2025-09-08</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.4</priority>
+    <loc>https://dailybrainbolt.com/contact.html</loc>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://dailybrainbolt.com/privacy.html</loc>
-    <lastmod>2025-09-08</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.4</priority>
-  </url>
-  <url>
-    <loc>https://dailybrainbolt.com/contact.html</loc>
-    <lastmod>2025-09-08</lastmod>
-    <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
-
-  <!-- Error page -->
   <url>
-    <loc>https://dailybrainbolt.com/404.html</loc>
-    <lastmod>2025-09-08</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.1</priority>
+    <loc>https://dailybrainbolt.com/terms.html</loc>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://dailybrainbolt.com/signin.html</loc>
+    <priority>0.4</priority>
   </url>
 </urlset>
