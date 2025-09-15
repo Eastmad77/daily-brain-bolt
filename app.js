@@ -1,24 +1,25 @@
-/* ===== CONFIG & GLOBALS ===== */
+/* ===== Brain ⚡ Bolt — App =====
+   Hot-fix: GAS disabled; LIVE CSV set; robust against old caches.
+*/
 
-// Google Apps Script Web App (replace with your /exec URL)
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec';
+/* ===== CONFIG (HOT-FIX) ===== */
+// Disable GAS so no CORS call happens
+const GAS_WEBAPP_URL = '';
+// Your published CSV for the "live" sheet
+const LIVE_CSV_URL =
+  'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv';
 
-// Google Sheet CSV URLs (leave as your published CSV links)
-const BANK_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/.../pub?gid=2009978011&single=true&output=csv';
-const LIVE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv';
-
-// State
+/* ===== STATE ===== */
 let rows = [];
 let currentQuestionIndex = 0;
 let correctCount = 0;
 let elapsedInterval = null;
 let elapsedSeconds = 0;
 
-// Elements
+/* ===== ELEMENTS ===== */
 const elDate = document.getElementById('dateLabel');
 const elSet = document.getElementById('setLabel');
 const elProgress = document.getElementById('progressLabel');
-const elCountdown = document.getElementById('countdown');
 const elTimerBar = document.getElementById('timerBar');
 const elElapsed = document.getElementById('elapsedTime');
 const elQ = document.getElementById('questionBox');
@@ -34,7 +35,11 @@ const btnNotify = document.getElementById('notifyBtn');
 const successSplash = document.getElementById('successSplash');
 const ssDismiss = document.getElementById('ssDismiss');
 
-/* ===== DATE (NZ) ===== */
+/* ===== CONSTANTS ===== */
+const LS_NOTIFY_KEY = 'bb_notify_enabled';
+const LS_LAST_PLAYED = 'bb_last_played_nz';
+
+/* ===== UTIL: NZ date ===== */
 function nzTodayYMD() {
   try {
     const f = new Intl.DateTimeFormat('en-NZ', { timeZone: 'Pacific/Auckland', year:'numeric', month:'2-digit', day:'2-digit' });
@@ -44,7 +49,7 @@ function nzTodayYMD() {
 }
 elDate && (elDate.textContent = nzTodayYMD());
 
-/* ===== SOUND: correct-only beep ===== */
+/* ===== SOUND (correct-only beep) ===== */
 let soundEnabled = true;
 let beepAudio;
 function ensureAudio(){ if (!beepAudio) beepAudio = new Audio('/sounds/correct-beep.mp3'); }
@@ -55,14 +60,11 @@ btnSound?.addEventListener('click', ()=>{ soundEnabled = !soundEnabled; btnSound
 menuBtn?.addEventListener('click', () => { sideMenu?.classList.toggle('open'); });
 
 /* ===== NOTIFICATIONS (optional local) ===== */
-const LS_NOTIFY_KEY = 'bb_notify_enabled';
-const LS_LAST_PLAYED = 'bb_last_played_nz'; // << keep ONLY this declaration
 function canNotify(){ return 'Notification' in window; }
 async function requestNotifyPermission(){
   if (!canNotify()) return false;
   if (Notification.permission === 'granted') return true;
-  const res = await Notification.requestPermission();
-  return res === 'granted';
+  return (await Notification.requestPermission()) === 'granted';
 }
 function showLocalNotification(title, body){
   try { if (Notification.permission === 'granted') new Notification(title, { body, icon: '/icon-192.png', badge: '/icon-192.png' }); } catch {}
@@ -81,31 +83,32 @@ btnNotify?.addEventListener('click', async ()=>{
   else { localStorage.removeItem(LS_NOTIFY_KEY); alert('Notifications disabled or not supported.'); }
 });
 
-/* ===== GAS Freshness ===== */
+/* ===== GAS Freshness (disabled when URL empty) ===== */
+function isGASConfigured() {
+  return GAS_WEBAPP_URL && GAS_WEBAPP_URL.trim() && !/REPLACE_WITH/i.test(GAS_WEBAPP_URL);
+}
 async function ensureFreshLiveSet() {
+  if (!isGASConfigured()) return; // skip
   try {
-    const res = await fetch(`${GAS_WEBAPP_URL}?action=status`, { cache: 'no-store' });
-    const data = await res.json();
-    if (!(data && data.ok)) {
-      await fetch(`${GAS_WEBAPP_URL}?action=build`, { cache: 'no-store' });
-    }
+    const status = await fetch(`${GAS_WEBAPP_URL}?action=status`, { cache: 'no-store' });
+    const data = await status.json();
+    if (!(data && data.ok)) await fetch(`${GAS_WEBAPP_URL}?action=build`, { cache: 'no-store' });
   } catch (err) {
-    console.error('ensureFreshLiveSet error:', err);
+    console.warn('GAS skipped (status/build):', err?.message || err);
   }
 }
 
 /* ===== CSV ===== */
+function isLiveCsvConfigured() {
+  return LIVE_CSV_URL && !/REPLACE_WITH|\.{3}/i.test(LIVE_CSV_URL);
+}
 async function fetchLiveCSV() {
-  try {
-    await ensureFreshLiveSet();
-    const res = await fetch(LIVE_CSV_URL, { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch live CSV');
-    const text = await res.text();
-    return Papa.parse(text, { header: true, skipEmptyLines: true }).data;
-  } catch (err) {
-    console.error('Live CSV fetch error:', err);
-    return [];
-  }
+  if (!isLiveCsvConfigured()) throw new Error('LIVE_CSV_URL not configured.');
+  await ensureFreshLiveSet();
+  const res = await fetch(LIVE_CSV_URL, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`Failed to fetch live CSV (${res.status})`);
+  const text = await res.text();
+  return Papa.parse(text, { header: true, skipEmptyLines: true }).data;
 }
 
 /* ===== GAME ===== */
@@ -146,28 +149,29 @@ function isCorrect(row, selected){
 }
 
 async function startGame() {
-  elSet && (elSet.textContent = 'Loading…');
-  const live = await fetchLiveCSV();
-  let data = live.map(normalizeRow).filter(x=>x.q && x.opts.length>=2);
-  const today = nzTodayYMD();
-  const todays = data.filter(r=>r.date===today);
-  rows = (todays.length ? todays : data).slice(0,12);
+  try {
+    elSet && (elSet.textContent = 'Loading…');
+    const live = await fetchLiveCSV();
+    let data = live.map(normalizeRow).filter(x=>x.q && x.opts.length>=2);
+    const today = nzTodayYMD();
+    const todays = data.filter(r=>r.date===today);
+    rows = (todays.length ? todays : data).slice(0,12);
+    if (!rows.length) throw new Error('No rows found in live CSV');
 
-  if (!rows.length) {
-    elQ.textContent = "Could not load today’s quiz. Try again later.";
+    currentQuestionIndex = 0;
+    correctCount = 0;
+    elProgress && (elProgress.textContent = `Q 0/12`);
+    elGameOver && (elGameOver.style.display='none');
+    btnAgain && (btnAgain.style.display='none');
+    elSet && (elSet.textContent = 'Ready');
+
+    startElapsedTimer();
+    showQuestion();
+  } catch (err) {
+    console.error('startGame error:', err);
+    elQ.textContent = 'Could not load today’s quiz. Please check your LIVE CSV URL.';
     elSet && (elSet.textContent = 'Error');
-    return;
   }
-
-  currentQuestionIndex = 0;
-  correctCount = 0;
-  elProgress && (elProgress.textContent = `Q 0/12`);
-  elGameOver && (elGameOver.style.display='none');
-  btnAgain && (btnAgain.style.display='none');
-  elSet && (elSet.textContent = 'Ready');
-
-  startElapsedTimer();
-  showQuestion();
 }
 
 function showQuestion(){
@@ -232,11 +236,10 @@ function showSuccessSplash(){
   setTimeout(()=> successSplash.classList.remove('show'), 2500);
 }
 
-/* ===== Share: include score + elapsed time ===== */
+/* ===== Share ===== */
 function shareScore(text) {
   if (navigator.share) {
-    navigator.share({ title: 'Brain ⚡ Bolt', text, url: window.location.href })
-      .catch(err => console.error('Share failed:', err));
+    navigator.share({ title: 'Brain ⚡ Bolt', text, url: window.location.href }).catch(()=>{});
   } else {
     navigator.clipboard.writeText(`${text} - ${window.location.href}`)
       .then(()=>alert('Score copied to clipboard!'))
@@ -249,32 +252,25 @@ document.getElementById('goShareScore')?.addEventListener('click', (e) => {
   const total = rows.length || 12;
   const mm = Math.floor(elapsedSeconds/60);
   const ss = String(elapsedSeconds%60).padStart(2,'0');
-  const text = `I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`;
-  shareScore(text);
+  shareScore(`I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`);
 });
-document.getElementById('ssPlayAgain')?.addEventListener('click', (e) => {
-  e.preventDefault(); successSplash.classList.remove('show'); startGame();
-});
+document.getElementById('ssPlayAgain')?.addEventListener('click', (e) => { e.preventDefault(); successSplash.classList.remove('show'); startGame(); });
 document.getElementById('ssShareScore')?.addEventListener('click', (e) => {
   e.preventDefault();
   const total = rows.length || 12;
   const mm = Math.floor(elapsedSeconds/60);
   const ss = String(elapsedSeconds%60).padStart(2,'0');
-  const text = `I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`;
-  shareScore(text);
+  shareScore(`I scored ${correctCount}/${total} in ${mm}:${ss} on today’s Brain ⚡ Bolt quiz!`);
 });
 
 /* ===== INIT & Buttons ===== */
 document.getElementById('startBtn')?.addEventListener('click', startGame);
 document.getElementById('playAgainBtn')?.addEventListener('click', startGame);
 
-// Splash hard fallback (in case CSS animation doesn’t run)
-function killSplash() {
-  const s = document.querySelector('.splash');
-  if (s) s.remove();
-}
-document.addEventListener('DOMContentLoaded', () => setTimeout(killSplash, 1800));
-window.addEventListener('load', () => setTimeout(killSplash, 1800));
+// Splash hard fallback: kill after 2s regardless
+function killSplash() { const s = document.querySelector('.splash'); if (s) s.remove(); }
+document.addEventListener('DOMContentLoaded', () => setTimeout(killSplash, 2000));
+window.addEventListener('load', () => setTimeout(killSplash, 2000));
 
 (function init(){
   maybeShowDailyReady();
