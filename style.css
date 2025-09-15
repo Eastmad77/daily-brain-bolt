@@ -1,5 +1,17 @@
 /* ===== Base ===== */
 :root {
+  --bg: #ffffff; /* fallback */
+  --text: #111;
+  --accent: #0077ff;
+  --accent-alt: #ff6600;
+  --choice: #f4f4f4;
+  --choice-hover: #eaeaea;
+  --border-weak: #ccc;
+  --timer-bg: #ddd;
+  --timer-fill: var(--accent);
+}
+
+[data-theme="light"] {
   --bg: #ffffff;
   --text: #111;
   --accent: #0077ff;
