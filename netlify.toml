@@ -1,36 +1,8 @@
 [build]
-  command = ""
   publish = "."
+  command = ""
 
-[build.environment]
-  NODE_VERSION = "18"
-
-[[headers]]
-  for = "/icon-*.png"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/apple-touch-icon.png"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/favicon.svg"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/site.webmanifest"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "/service-worker.js"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
-
-[[headers]]
-  for = "/firebase-messaging-sw.js"
-  [headers.values]
-    Cache-Control = "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+[[redirects]]
+  from = "/*"
+  to = "/404.html"
+  status = 404
