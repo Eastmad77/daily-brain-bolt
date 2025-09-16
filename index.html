@@ -11,14 +11,14 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=3100" />
+  <link rel="stylesheet" href="/style.css?v=3110" />
 
   <!-- External Libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <!-- App Scripts -->
   <script defer src="/shell.js?v=340"></script>
-  <script defer src="/app.js?v=3100"></script>
+  <script defer src="/app.js?v=3110"></script>
 </head>
 <body>
   <!-- Startup Splash (animated) -->
@@ -38,10 +38,10 @@
     </div>
   </div>
 
-  <!-- Hero Header (larger, with SVG background) -->
+  <!-- Hero Header (SVG behind title/logo) -->
   <header class="topbar hero">
-    <div class="hero-bg">
-      <img src="/header-graphic.svg" alt="" aria-hidden="true" />
+    <div class="hero-bg" aria-hidden="true">
+      <img src="/header-graphic.svg" alt="" />
     </div>
     <div class="hero-inner">
       <div class="brand">
@@ -78,13 +78,10 @@
     </nav>
   </aside>
 
-  <!-- Main (single column: removed “Today’s Set” card) -->
+  <!-- Main -->
   <main class="container">
     <section class="card quiz-card">
-      <!-- Overall elapsed timer (subtle) -->
       <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
-
-      <!-- Per-question 10s timer (prominent) -->
       <div class="qtimer-wrapper" title="10-second question timer">
         <div id="qTimerBar" class="qtimer-bar"></div>
       </div>
