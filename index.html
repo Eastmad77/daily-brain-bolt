@@ -6,19 +6,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/favicon.svg" />
-  <link rel="stylesheet" href="/style.css?v=340" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <link rel="stylesheet" href="/style.css?v=350" />
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script defer src="/shell.js?v=340"></script>
-  <script defer src="/app.js?v=340"></script>
+  <script defer src="/app.js?v=350"></script>
 </head>
 <body>
-  <!-- Splash -->
-  <div class="splash" id="startSplash">
-    <img src="/app-icon.svg" class="splash-logo" alt="Brain Bolt logo" />
-    <h1 class="splash-title">Brain ⚡ Bolt</h1>
+  <!-- Startup Splash (animated) -->
+  <div class="splash" id="startSplash" aria-hidden="false">
+    <div class="splash-inner">
+      <div class="splash-badge">
+        <!-- animated bolt -->
+        <svg class="splash-bolt" width="140" height="140" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
+      </div>
+      <h1 class="splash-title">
+        <span class="word">Brain</span>
+        <span class="zap">⚡</span>
+        <span class="word">Bolt</span>
+      </h1>
+    </div>
   </div>
 
-  <!-- Hero -->
+  <!-- Hero Header -->
   <header class="topbar hero">
     <div class="hero-bg"></div>
     <div class="hero-inner">
@@ -95,15 +108,24 @@
   </main>
 
   <!-- Countdown -->
-  <div id="countdownOverlay" class="countdown-overlay" aria-hidden="true">
+  <div id="countdownOverlay" class="countdown-overlay" hidden aria-hidden="true">
     <div class="countdown-dot" id="countNum">3</div>
   </div>
 
-  <!-- Success -->
-  <div id="successSplash" class="success-splash" role="dialog" aria-modal="true">
-    <div class="success-content">
-      <h2>🎉 Well done!</h2>
-      <p>You completed today’s quiz!</p>
+  <!-- Success Splash (now styled like start splash) -->
+  <div id="successSplash" class="success-splash" aria-hidden="true">
+    <div class="splash-inner success-anim">
+      <div class="splash-badge">
+        <svg class="splash-bolt" width="120" height="120" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
+      </div>
+      <h2 class="splash-title">
+        <span class="word">Quiz</span>
+        <span class="zap">⚡</span>
+        <span class="word">Complete!</span>
+      </h2>
       <div class="row">
         <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
         <a href="/" class="btn">🏠 Home</a>
@@ -117,10 +139,9 @@
   </footer>
 
   <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js?v=341');
-  }
-</script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js?v=342');
+    }
+  </script>
 </body>
 </html>
-
