@@ -1,43 +1,30 @@
 <svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <!-- Smooth squircle via path -->
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#1a73e8"/>
       <stop offset="100%" stop-color="#0b53c6"/>
     </linearGradient>
     <radialGradient id="glow" cx="50%" cy="38%" r="60%">
-      <stop offset="0%" stop-color="#29ffa1" stop-opacity="0.22"/>
+      <stop offset="0%" stop-color="#29ffa1" stop-opacity=".22"/>
       <stop offset="70%" stop-color="#29ffa1" stop-opacity="0"/>
     </radialGradient>
     <filter id="boltShadow" x="-30%" y="-30%" width="160%" height="160%">
       <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#001a33" flood-opacity="0.4"/>
     </filter>
-    <!-- Safe inner clip (maskable padding for Android/iOS) -->
-    <clipPath id="safeClip">
-      <path d="M128 40c-48 0-88 40-88 88v256c0 48 40 88 88 88h256c48 0 88-40 88-88V128c0-48-40-88-88-88H128z"/>
-    </clipPath>
   </defs>
 
-  <!-- Squircle background -->
+  <!-- Full background squircle -->
   <path fill="url(#bg)" d="M128 40c-48 0-88 40-88 88v256c0 48 40 88 88 88h256c48 0 88-40 88-88V128c0-48-40-88-88-88H128z"/>
 
-  <!-- Accent glow -->
-  <g clip-path="url(#safeClip)">
-    <ellipse cx="256" cy="190" rx="210" ry="150" fill="url(#glow)"/>
+  <!-- Glow -->
+  <ellipse cx="256" cy="190" rx="210" ry="150" fill="url(#glow)"/>
+
+  <!-- Subtle inner badge -->
+  <g transform="translate(256,256) scale(0.82) translate(-256,-256)">
+    <circle cx="256" cy="272" r="120" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+    <g filter="url(#boltShadow)">
+      <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+    </g>
   </g>
-
-  <!-- Bolt badge circle (subtle) -->
-  <circle cx="256" cy="268" r="118" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-
-  <!-- Lightning bolt (simple geometry for crisp small sizes) -->
-  <g filter="url(#boltShadow)">
-    <path fill="#ffffff" d="M274 112c4 0 7 4 6 8l-24 84h70c5 0 7 6 4 9l-134 177c-3 4-10 1-9-4l26-109h-62c-5 0-8-6-5-10l122-151c2-3 4-4 6-4h0z"/>
-  </g>
-
-  <!-- Micro-contrast ring (helps at 16–32px) -->
-  <path d="M128 40h256c48 0 88 40 88 88v256c0 48-40 88-88 88H128c-48 0-88-40-88-88V128c0-48 40-88 88-88z"
-        fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="2"/>
-
-  <!-- Hidden metadata for maskable icons -->
-  <metadata>maskable</metadata>
 </svg>
