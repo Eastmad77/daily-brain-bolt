@@ -1,11 +1,18 @@
-// ===== Brain ⚡ Bolt — App.js v3.5 (splash animation + success match) =====
+// ===== Brain ⚡ Bolt — App.js v3.9 =====
+// - 10s per-question timer now ticks in the final 3 seconds (sound toggle respected)
+// - Keeps elapsed timer, sounds/haptics-on-answers, countdown, 2-wrong rule
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
 
+const QUESTION_TIME_MS = 10000;   // 10 seconds
+const QUESTION_TICK_MS = 100;     // smooth bar update (10Hz)
+
 let questions = [], currentIndex = 0, score = 0, wrongStreak = 0, elapsed = 0;
 let elapsedInterval = null;
+let qTimer = null, qRemaining = QUESTION_TIME_MS, qLastTickSec = 3;
 let soundOn = true;
 
+/* Elements */
 const startBtn = document.getElementById("startBtn");
 const shuffleBtn = document.getElementById("shuffleBtn");
 const shareBtn = document.getElementById("shareBtn");
@@ -23,6 +30,7 @@ const successSplash = document.getElementById("successSplash");
 const gameOverBox = document.getElementById("gameOverBox");
 const gameOverText = document.getElementById("gameOverText");
 const timerBar = document.getElementById("timerBar");
+const qTimerBar = document.getElementById("qTimerBar");
 const soundBtn = document.getElementById("soundBtn");
 const setLabel = document.getElementById("setLabel");
 
@@ -33,7 +41,6 @@ function killStartSplash() {
   s.classList.add('hiding');
   setTimeout(()=> s.remove(), 420);
 }
-// delay slightly so the animation plays
 window.addEventListener('load', () => setTimeout(killStartSplash, 1300));
 
 /* ===== Audio + haptics ===== */
@@ -52,10 +59,11 @@ function beep(freq=600, dur=0.25) {
     osc.stop(t0 + dur + 0.02);
   } catch {}
 }
-const beepTick = () => beep(620, 0.22);
-const beepGo = () => beep(950, 0.28);
-const sfxCorrect = () => beep(1020, 0.18);
+const beepTick = () => beep(620, 0.22);   // countdown overlay
+const beepGo   = () => beep(950, 0.28);
+const sfxCorrect   = () => beep(1020, 0.18);
 const sfxIncorrect = () => beep(220, 0.2);
+const tickSoft     = () => beep(740, 0.08);  // gentle per-question tick
 function vibrate(ms=100){ if (navigator.vibrate) navigator.vibrate(ms); }
 
 /* ===== CSV ===== */
@@ -72,6 +80,39 @@ function fetchCSV(){
 /* ===== Utils ===== */
 function formatTime(sec){ const m=Math.floor(sec/60), s=sec%60; return `${m}:${s<10?'0':''}${s}`; }
 function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===== Question timer (10s with final-3s ticks) ===== */
+function startQuestionTimer(onTimeout) {
+  stopQuestionTimer();
+  qRemaining = QUESTION_TIME_MS;
+  qLastTickSec = 3;
+  qTimerBar.classList.remove('warn');
+  qTimerBar.style.width = '100%';
+
+  qTimer = setInterval(() => {
+    qRemaining -= QUESTION_TICK_MS;
+    const pct = Math.max(0, qRemaining / QUESTION_TIME_MS) * 100;
+    qTimerBar.style.width = pct + '%';
+
+    const secsLeft = Math.ceil(qRemaining / 1000);
+    if (qRemaining <= 3000) {
+      qTimerBar.classList.add('warn');
+      // Play a gentle tick once at 3, 2, 1
+      if (secsLeft > 0 && secsLeft < qLastTickSec + 1) {
+        tickSoft();
+        qLastTickSec = secsLeft;
+      }
+    }
+
+    if (qRemaining <= 0) {
+      stopQuestionTimer();
+      onTimeout?.();
+    }
+  }, QUESTION_TICK_MS);
+}
+function stopQuestionTimer() {
+  if (qTimer) { clearInterval(qTimer); qTimer = null; }
+}
 
 /* ===== Game flow ===== */
 async function startGame() {
@@ -91,14 +132,21 @@ async function startGame() {
     playAgainBtn.classList.remove("pulse");
     setLabel && (setLabel.textContent = 'Ready');
 
-    // countdown
-    let n = 3; countNum.textContent = n; countdownOverlay.hidden = false;
+    // 3→2→1→GO circular countdown
+    let n = 3;
+    countNum.textContent = n;
+    countdownOverlay.hidden = false;
+
     const int = setInterval(() => {
       n--;
-      if (n > 0) { countNum.textContent = n; beepTick(); }
-      else {
+      if (n > 0) {
+        countNum.textContent = n;
+        countNum.style.animation = "none"; void countNum.offsetWidth; countNum.style.animation = "popIn .4s ease";
+        beepTick();
+      } else {
         clearInterval(int);
         countNum.textContent = "GO";
+        countNum.style.animation = "none"; void countNum.offsetWidth; countNum.style.animation = "popIn .4s ease";
         beepGo();
         setTimeout(()=>{ countdownOverlay.hidden = true; beginQuiz(); }, 380);
       }
@@ -118,7 +166,7 @@ function beginQuiz() {
   elapsedInterval = setInterval(()=>{
     elapsed++;
     elapsedTimeEl.textContent = formatTime(elapsed);
-    const pct = Math.min(100, (elapsed/300)*100);
+    const pct = Math.min(100, (elapsed/300)*100); // 5 min = full
     timerBar.style.width = pct + "%";
   },1000);
   showQuestion();
@@ -126,10 +174,11 @@ function beginQuiz() {
 
 function showQuestion() {
   if (currentIndex >= 12) return endGame();
+
+  // render
   const q = questions[currentIndex];
   qBox.textContent = q?.Question || "—";
   choicesDiv.innerHTML = "";
-
   ["OptionA","OptionB","OptionC","OptionD"].forEach((k)=>{
     const val = q[k]; if(!val) return;
     const b = document.createElement("button");
@@ -137,16 +186,40 @@ function showQuestion() {
     b.onclick = () => handleAnswer(b, q.Answer);
     choicesDiv.appendChild(b);
   });
-
   progressLabel.textContent = `Q ${currentIndex+1}/12`;
+
+  // (re)start per-question timer
+  startQuestionTimer(() => handleTimeout());
+}
+
+function handleTimeout() {
+  // treat as wrong; no specific button to mark, just move on with effects
+  sfxIncorrect(); vibrate(160);
+  wrongStreak++;
+  pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
+
+  if (wrongStreak >= 2) { endGame("Two wrong in a row!"); return; }
+
+  currentIndex++;
+  if (currentIndex >= 12) endGame();
+  else showQuestion();
 }
 
 function handleAnswer(btn, correctText) {
+  stopQuestionTimer();
   [...choicesDiv.querySelectorAll("button")].forEach(b=>b.disabled=true);
+
   const isCorrect = (btn.textContent||"").trim().toLowerCase() === String(correctText||"").trim().toLowerCase();
 
-  if (isCorrect) { btn.classList.add("correct"); sfxCorrect(); vibrate(60); score++; wrongStreak=0; }
-  else { btn.classList.add("incorrect"); sfxIncorrect(); vibrate(160); wrongStreak++; }
+  if (isCorrect) {
+    btn.classList.add("correct");
+    sfxCorrect(); vibrate(60);
+    score++; wrongStreak = 0;
+  } else {
+    btn.classList.add("incorrect");
+    sfxIncorrect(); vibrate(160);
+    wrongStreak++;
+  }
 
   pillScore.textContent = `Score ${score}`;
   pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
@@ -162,17 +235,17 @@ function handleAnswer(btn, correctText) {
 
 function endGame(msg="") {
   clearInterval(elapsedInterval);
+  stopQuestionTimer();
+
   if (msg) {
     gameOverText.textContent = msg;
     gameOverBox.style.display = "block";
     playAgainBtn.style.display = "inline-block";
     playAgainBtn.classList.add("pulse");
   } else {
-    // trigger success splash with same animation palette
     successSplash.setAttribute('aria-hidden', 'false');
-    successSplash.classList.remove('show'); // restart
-    // force reflow
-    void successSplash.offsetWidth;
+    successSplash.classList.remove('show'); // restart animation if needed
+    void successSplash.offsetWidth;        // reflow
     successSplash.classList.add('show');
   }
 }
@@ -186,14 +259,22 @@ shareBtn?.addEventListener("click", ()=>{
   else navigator.clipboard?.writeText(`${text} - ${location.href}`);
 });
 playAgainBtn?.addEventListener("click", startGame);
-document.getElementById("ssPlayAgain")?.addEventListener("click", (e)=>{e.preventDefault(); successSplash.classList.remove('show'); startGame();});
+
+/* Success overlay buttons */
+document.getElementById("ssPlayAgain")?.addEventListener("click", (e)=>{
+  e.preventDefault();
+  successSplash.classList.remove('show');
+  startGame();
+});
 document.getElementById("ssShareScore")?.addEventListener("click", (e)=>{
   e.preventDefault();
   const text = `I scored ${score}/12 on today’s Brain ⚡ Bolt!`;
   if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url: location.href}).catch(()=>{});
   else navigator.clipboard?.writeText(`${text} - ${location.href}`);
 });
-document.getElementById("soundBtn")?.addEventListener("click", ()=>{
+
+// sound toggle
+soundBtn?.addEventListener("click", ()=>{
   soundOn = !soundOn;
-  document.getElementById("soundBtn").textContent = soundOn ? "🔊" : "🔇";
+  soundBtn.textContent = soundOn ? "🔊" : "🔇";
 });
