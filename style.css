@@ -1,4 +1,4 @@
-/* ===== Brain ⚡ Bolt — Style v3.10 ===== */
+/* ===== Brain ⚡ Bolt — Style v3.10.1 ===== */
 
 /* THEME */
 :root{
@@ -13,7 +13,7 @@ html,body{height:100%}
 body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;background:var(--color-dark);color:var(--text-light)}
 a{color:var(--color-blue)} a:hover{text-decoration:underline}
 
-/* ===== START / SUCCESS SPLASH ===== */
+/* ===== SPLASHES (unchanged visuals) ===== */
 .splash,.success-splash{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:radial-gradient(120% 80% at 50% 20%,#1a73e8 0%,#0b53c6 50%,#0b2f5f 100%);overflow:hidden}
 .splash::before,.success-splash::before{content:"";position:absolute;inset:-20% -10%;background:radial-gradient(60% 40% at 20% 10%,rgba(41,255,161,.15),transparent 60%),radial-gradient(60% 40% at 80% 5%,rgba(255,255,255,.08),transparent 60%);filter:saturate(1.1);animation:bgSweep 6s ease-in-out infinite alternate}
 @keyframes bgSweep{0%{transform:translateX(-2%) translateY(0)}100%{transform:translateX(2%) translateY(-1%)}}
@@ -21,7 +21,7 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 .splash-badge{width:160px;height:160px;border-radius:32px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.18);display:grid;place-items:center;box-shadow:0 30px 80px rgba(0,0,0,.45), inset 0 6px 22px rgba(255,255,255,.06);transform:translateY(12px)}
 .splash-bolt{filter:drop-shadow(0 18px 32px rgba(0,0,0,.5));opacity:0;transform:scale(.2) rotate(-18deg);animation:boltIn .9s cubic-bezier(.2,.9,.1,1.1) .15s forwards, boltFlash .9s ease .6s}
 @keyframes boltIn{0%{opacity:0;transform:scale(.2) rotate(-18deg)}60%{opacity:1;transform:scale(1.15) rotate(2deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
-@keyframes boltFlash{0%{filter:drop-shadow(0 18px 32px rgba(0,0,0,.5))}45%{filter:drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 24px rgba(255,255,255,.85))}100%{filter:drop-shadow(0 18px 32px rgba(0,0,0,.5))}}
+@keyframes boltFlash{0%{filter:drop-shadow(0 18px 32px rgba(0,0,0,.5))}45%{filter:drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 0 24px rgba(255,255,255,.85))}100%{filter:drop-shadow(0 18px 32px rgba(0,0,0,.5))}
 .splash-title{font-weight:900;letter-spacing:.5px;display:flex;align-items:center;gap:.5rem;color:#fff;opacity:0;transform:translateY(8px);animation:titleIn .55s ease .45s forwards}
 .splash-title .zap{filter:drop-shadow(0 0 10px rgba(255,255,255,.35))}
 @keyframes titleIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
@@ -34,23 +34,39 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 .splash-buttons{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:1rem}
 .splash-buttons .btn{flex:1 1 auto;text-align:center;min-width:110px}
 
-/* ===== Header / Hero (larger + SVG bg) ===== */
+/* ===== HEADER / HERO (image behind text/logo) ===== */
 .topbar{
   background:var(--color-dark-2);
-  padding:1rem 1rem 0.6rem;
+  padding:1rem 1rem .6rem;
   display:flex; flex-direction:column;
   border-bottom:1px solid var(--color-dark-3);
   position:relative; overflow:hidden;
 }
-.hero-bg{position:absolute; inset:0; pointer-events:none; opacity:.18}
-.hero-bg img{width:100%; height:100%; object-fit:cover}
-.hero-inner{position:relative; display:flex;justify-content:space-between;align-items:center; min-height:84px}
-.brand{display:flex;align-items:center;gap:.75rem}
-.logo{width:42px;height:42px}
-.brand-text h1{font-size:1.6rem; line-height:1}
-.brand-text .tagline{font-size:.9rem; color:var(--text-muted)}
+.hero-bg{
+  position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.22;
+}
+.hero-bg img{
+  width:100%; height:100%; object-fit:cover;
+  filter: saturate(1.1) contrast(1.05);
+}
+.hero-inner{
+  position:relative; z-index:1; /* ensure above the image */
+  display:flex; justify-content:space-between; align-items:center; min-height:88px;
+}
+.brand{display:flex;align-items:center;gap:.75rem; min-width:0}
+.logo{width:44px;height:44px; flex:0 0 auto}
+.brand-text{min-width:0}
+.brand-text h1{
+  font-weight:900; line-height:1.05;
+  font-size: clamp(1.25rem, 3.2vw, 2rem);
+}
+.brand-text .tagline{
+  font-size: clamp(.82rem, 2.2vw, .95rem);
+  color:var(--text-muted);
+}
+.actions{position:relative; z-index:1}
 .actions button{background:none;border:none;color:var(--text-light);font-size:1.3rem;cursor:pointer}
-.status{position:relative; margin-top:.45rem; font-size:.9rem;color:var(--text-muted); display:flex; gap:.75rem}
+.status{position:relative; z-index:1; margin-top:.45rem; font-size:.9rem;color:var(--text-muted); display:flex; gap:.75rem}
 
 /* ===== Sidebar ===== */
 .side-menu{position:fixed;top:0;left:-260px;width:260px;height:100%;background:var(--color-dark-2);transition:left .3s ease;padding:1rem;z-index:999}
@@ -95,8 +111,8 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 /* ===== Footer ===== */
 .footer{text-align:center;padding:1rem;font-size:.8rem;color:var(--text-muted)}
 
-/* Responsive */
+/* Responsive refinements */
 @media (min-width:768px){
-  .brand-text h1{font-size:1.8rem}
-  .container{grid-template-columns:1fr}
+  .brand-text h1{font-size:clamp(1.5rem, 2.6vw, 2.2rem)}
+  .brand-text .tagline{font-size:clamp(.9rem, 1.6vw, 1rem)}
 }
