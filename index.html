@@ -11,14 +11,14 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=350" />
+  <link rel="stylesheet" href="/style.css?v=380" />
 
-  <!-- External Libraries -->
+  <!-- External Libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <!-- App Scripts -->
   <script defer src="/shell.js?v=340"></script>
-  <script defer src="/app.js?v=350"></script>
+  <script defer src="/app.js?v=380"></script>
 </head>
 <body>
   <!-- Startup Splash (animated) -->
@@ -40,7 +40,6 @@
 
   <!-- Hero Header -->
   <header class="topbar hero">
-    <div class="hero-bg"></div>
     <div class="hero-inner">
       <div class="brand">
         <img src="/app-icon.svg" class="logo" alt="logo" />
@@ -79,7 +78,14 @@
   <!-- Main -->
   <main class="container">
     <section class="card quiz-card">
+      <!-- Overall elapsed timer (subtle) -->
       <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
+
+      <!-- Per-question 10s timer (prominent) -->
+      <div class="qtimer-wrapper" title="10-second question timer">
+        <div id="qTimerBar" class="qtimer-bar"></div>
+      </div>
+
       <div class="meta">
         <span id="elapsedTime" class="elapsed-time">0:00</span>
         <div class="pill duo">
@@ -120,28 +126,27 @@
   </div>
 
   <!-- Success Splash -->
-<div id="successSplash" class="success-splash" aria-hidden="true">
-  <div class="splash-inner success-anim">
-    <div class="splash-badge">
-      <svg class="splash-bolt" width="120" height="120" viewBox="0 0 512 512" aria-hidden="true">
-        <path fill="#fff"
-          d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
-      </svg>
-    </div>
-    <h2 class="splash-title">
-      <span class="word">Quiz</span>
-      <span class="zap">⚡</span>
-      <span class="word">Complete!</span>
-    </h2>
-    <p class="splash-msg">A fresh quiz will be ready for you tomorrow ⚡</p>
-
-    <div class="splash-buttons">
-      <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
-      <a href="/" id="ssHomeBtn" class="btn">🏠 Home</a>
-      <a href="#" id="ssShareScore" class="btn ghost">📤 Share</a>
+  <div id="successSplash" class="success-splash" aria-hidden="true">
+    <div class="splash-inner success-anim">
+      <div class="splash-badge">
+        <svg class="splash-bolt" width="120" height="120" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
+      </div>
+      <h2 class="splash-title">
+        <span class="word">Quiz</span>
+        <span class="zap">⚡</span>
+        <span class="word">Complete!</span>
+      </h2>
+      <p class="splash-msg">A fresh quiz will be ready for you tomorrow ⚡</p>
+      <div class="splash-buttons">
+        <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
+        <a href="/" id="ssHomeBtn" class="btn">🏠 Home</a>
+        <a href="#" id="ssShareScore" class="btn ghost">📤 Share</a>
+      </div>
     </div>
   </div>
-</div>
 
   <footer class="footer">
     <p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
@@ -154,4 +159,3 @@
   </script>
 </body>
 </html>
-
