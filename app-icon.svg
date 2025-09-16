@@ -1,30 +1,26 @@
-<!-- /app-icon.svg -->
-<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0D2430"/>
-      <stop offset="100%" stop-color="#08161D"/>
+    <linearGradient id="bb-bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a73e8"/>
+      <stop offset="100%" stop-color="#0b53c6"/>
     </linearGradient>
-    <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#4AC9FF"/>
-      <stop offset="100%" stop-color="#1CA7E3"/>
-    </linearGradient>
+    <radialGradient id="bb-glow" cx="50%" cy="38%" r="60%">
+      <stop offset="0%" stop-color="#29ffa1" stop-opacity=".22"/>
+      <stop offset="70%" stop-color="#29ffa1" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="bb-boltShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-color="#001a33" flood-opacity=".4"/>
+    </filter>
+    <clipPath id="bb-safe">
+      <path d="M128 40c-48 0-88 40-88 88v256c0 48 40 88 88 88h256c48 0 88-40 88-88V128c0-48-40-88-88-88H128z"/>
+    </clipPath>
   </defs>
-
-  <!-- Rounded square base (matches header colors) -->
-  <rect x="64" y="64" width="896" height="896" rx="200" fill="url(#bg)"/>
-
-  <!-- Subtle circuit dots/lines impression (very faint) -->
-  <g opacity="0.12" stroke="#4AC9FF" stroke-width="6" stroke-linecap="round">
-    <path d="M220 280h90m40 0h70m-40 200h120m60 120h140" />
-    <circle cx="340" cy="280" r="6"/><circle cx="520" cy="480" r="6"/><circle cx="760" cy="680" r="6"/>
+  <path fill="url(#bb-bg)" d="M128 40c-48 0-88 40-88 88v256c0 48 40 88 88 88h256c48 0 88-40 88-88V128c0-48-40-88-88-88H128z"/>
+  <g clip-path="url(#bb-safe)">
+    <ellipse cx="256" cy="190" rx="210" ry="150" fill="url(#bb-glow)"/>
   </g>
-
-  <!-- Accent brain contour (soft) -->
-  <path fill="none" stroke="#FF8C00" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"
-        d="M370 340c-60 10-110 70-110 135 0 33 10 63 30 88-20 25-30 55-30 88 0 80 65 145 145 145h95
-           m194-456c60 10 110 70 110 135 0 33-10 63-30 88 20 25 30 55 30 88 0 80-65 145-145 145h-90"/>
-
-  <!-- Lightning bolt -->
-  <path fill="url(#bolt)" d="M540 260l-120 220h90l-30 180l120-220h-90z" />
+  <circle cx="256" cy="268" r="118" fill="rgba(255,255,255,.06)" stroke="rgba(255,255,255,.12)" stroke-width="2"/>
+  <g filter="url(#bb-boltShadow)">
+    <path fill="#fff" d="M274 112c4 0 7 4 6 8l-24 84h70c5 0 7 6 4 9l-134 177c-3 4-10 1-9-4l26-109h-62c-5 0-8-6-5-10l122-151c2-3 4-4 6-4z"/>
+  </g>
 </svg>
