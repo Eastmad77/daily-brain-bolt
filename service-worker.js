@@ -1,7 +1,7 @@
-// Brain ⚡ Bolt SW — v3.2.1 (navigation preload handled)
+// Brain ⚡ Bolt SW — v3.2.2 (force-refresh + navigation preload handled)
 
-const STATIC = 'bb-static-v3.2.1';
-const RUNTIME = 'bb-runtime-v3.2.1';
+const STATIC = 'bb-static-v3.2.2';
+const RUNTIME = 'bb-runtime-v3.2.2';
 
 const ASSETS = [
   '/', '/index.html', '/style.css', '/app.js',
@@ -10,23 +10,22 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(STATIC).then(c => c.addAll(ASSETS)));
+  event.waitUntil(caches.open(STATIC).then((c) => c.addAll(ASSETS)));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Enable navigation preload to speed up navigations
+    // Enable navigation preload
     if ('navigationPreload' in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
     const keys = await caches.keys();
-    await Promise.all(keys.map(k => (![STATIC, RUNTIME].includes(k)) && caches.delete(k)));
+    await Promise.all(keys.map((k) => (![STATIC, RUNTIME].includes(k)) && caches.delete(k)));
     await self.clients.claim();
   })());
 });
 
-// Treat Google Sheets CSV as network-only (fresh)
 const isSheetsCsv = (url) => {
   const u = new URL(url, self.location.origin);
   return (u.hostname.includes('docs.google.com') && u.pathname.includes('/spreadsheets/')) ||
@@ -39,17 +38,17 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Always bypass cache for the live CSV
+  // Live CSV: network-only (avoid staleness)
   if (isSheetsCsv(url.href)) {
     event.respondWith(fetch(req, { cache: 'no-store' }).catch(() => Response.error()));
     return;
   }
 
-  // Handle navigations using navigationPreload (preloadResponse), avoiding the console warning
+  // Navigations: honor navigation preload to avoid console warning
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
-        const preload = await event.preloadResponse;     // ✅ wait for preloadResponse
+        const preload = await event.preloadResponse;
         if (preload) return preload;
         const net = await fetch(req, { cache: 'no-store' });
         const cache = await caches.open(STATIC);
@@ -63,7 +62,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin: cache-first for static, then SWR for others
+  // Same-origin: cache-first for known assets, SWR for others
   if (url.origin === self.location.origin) {
     if (ASSETS.includes(url.pathname)) {
       event.respondWith(cacheFirst(req));
@@ -77,7 +76,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(fetch(req).catch(() => caches.match(req)));
 });
 
-async function cacheFirst(request){
+async function cacheFirst(request) {
   const cache = await caches.open(STATIC);
   const cached = await cache.match(request, { ignoreSearch: true });
   if (cached) return cached;
@@ -85,10 +84,11 @@ async function cacheFirst(request){
   if (res && res.ok) cache.put(request, res.clone());
   return res;
 }
-async function staleWhileRevalidate(request){
+
+async function staleWhileRevalidate(request) {
   const cache = await caches.open(RUNTIME);
   const cached = await cache.match(request);
-  const fetchPromise = fetch(request).then(res => {
+  const fetchPromise = fetch(request).then((res) => {
     if (res && res.ok) cache.put(request, res.clone());
     return res;
   }).catch(() => cached || Response.error());
