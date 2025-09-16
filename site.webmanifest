@@ -1,15 +1,13 @@
 {
-  "name": "Brain ⚡ Bolt",
+  "name": "Brain Bolt",
   "short_name": "BrainBolt",
-  "start_url": "/index.html",
+  "start_url": "/",
   "display": "standalone",
-  "scope": "/",
-  "theme_color": "#0e1e27",
-  "background_color": "#0e1e27",
-  "description": "Daily quiz: 12 fresh questions across GK, trivia, riddles, geography & pop culture.",
+  "background_color": "#1a73e8",
+  "theme_color": "#1a73e8",
   "icons": [
+    { "src": "/app-icon.svg", "sizes": "192x192", "type": "image/svg+xml" },
     { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
   ]
 }
