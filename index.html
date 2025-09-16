@@ -5,31 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Brain ⚡ Bolt</title>
 
-  <!-- PWA & Icons -->
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#0e1e27" />
+  <meta name="theme-color" content="#0b1720" />
 
-  <!-- Styles (cache-busted) -->
-  <link rel="stylesheet" href="/style.css?v=203" />
-
-  <!-- Config & CSV Parser -->
+  <link rel="stylesheet" href="/style.css?v=310" />
   <script src="/firebase-config.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
-  <!-- Splash (CSS fades out; JS has extra fallback) -->
+  <!-- Start Splash -->
   <div class="splash" aria-hidden="true">
+    <div class="splash-bg"></div>
     <img src="/app-icon.svg" alt="Brain Bolt" class="splash-logo">
-    <h1 class="splash-title">Brain <span class="bolt">⚡</span> Bolt</h1>
+    <h1 class="splash-title"><span class="title-left">Brain</span> <span class="bolt">⚡</span> <span class="title-right">Bolt</span></h1>
   </div>
 
-  <!-- Sidebar menu -->
+  <!-- Sidebar -->
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
     <nav class="menu-nav" aria-label="Main">
-      <a href="/index.html">🏠 Home</a>
+      <a href="/index.html" aria-current="page">🏠 Home</a>
       <a href="/about.html">ℹ️ About</a>
       <a href="/contact.html">✉️ Contact</a>
       <a href="/privacy.html">🔒 Privacy</a>
@@ -42,8 +39,7 @@
     </div>
   </aside>
 
-  <main>
-    <!-- Top status bar with menu button -->
+  <main id="appRoot">
     <header class="topbar">
       <button id="mmMenuBtn" class="menu-btn" aria-label="Open menu">☰</button>
       <div id="dateLabel" aria-live="polite"></div>
@@ -51,28 +47,20 @@
       <div id="progressLabel">Q 0/12</div>
     </header>
 
-    <!-- Countdown (optional; hidden by default) -->
-    <div id="countdown" class="countdown" style="display:none;"></div>
-
-    <!-- Timer strip + elapsed time -->
-    <div id="timerWrapper" class="timer-wrapper">
-      <div id="timerBar" class="timer-bar" style="transform:scaleX(0)"></div>
-    </div>
+    <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
     <div id="elapsedTime" class="elapsed-time">0:00</div>
 
-    <!-- Question + choices -->
     <section>
       <div id="questionBox" class="question-box">Press Start Quiz</div>
       <div id="choices" class="choices"></div>
     </section>
 
-    <!-- Controls -->
     <div class="controls">
-      <button id="startBtn" aria-label="Start quiz">▶️ Start Quiz</button>
-      <button id="playAgainBtn" style="display:none;" aria-label="Play again">🔄 Play Again</button>
+      <button id="startBtn">▶️ Start Quiz</button>
+      <button id="playAgainBtn" style="display:none;">🔄 Play Again</button>
+      <button id="shareBtn" class="ghost" style="display:none;">📤 Share</button>
     </div>
 
-    <!-- Game over summary (with Play Again / Home / Share) -->
     <div id="gameOverBox" class="game-over" style="display:none;">
       <p id="gameOverText"></p>
       <footer class="footer inline-footer">
@@ -84,16 +72,12 @@
       </footer>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
-      <p>© 2025 Brain ⚡ Bolt ·
-        <a href="/privacy.html">Privacy</a> ·
-        <a href="/terms.html">Terms</a>
-      </p>
+      <p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
     </footer>
   </main>
 
-  <!-- Success splash (with Play Again / Home / Share) -->
+  <!-- Success splash -->
   <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
     <div class="success-content">
       <h2>🎉 Well done!</h2>
@@ -109,31 +93,20 @@
     </div>
   </div>
 
-  <!-- App logic (cache-busted) -->
-  <script src="/app.js?v=203"></script>
-
-  <!-- Service worker -->
+  <script src="/app.js?v=310"></script>
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').then(reg => {
+      navigator.serviceWorker.register('/service-worker.js?v=310').then(reg => {
         if (reg.waiting) reg.waiting.postMessage('SKIP_WAITING');
         reg.addEventListener('updatefound', () => {
           const nw = reg.installing;
           nw?.addEventListener('statechange', () => {
-            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
-              nw.postMessage('SKIP_WAITING');
-            }
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) nw.postMessage('SKIP_WAITING');
           });
         });
       });
     }
-
-    /* Extra safety: if CSS animations are disabled or blocked, remove the splash anyway */
-    (function(){
-      const kill = () => { const s = document.querySelector('.splash'); if (s) s.remove(); };
-      setTimeout(kill, 2000);
-      window.addEventListener('pageshow', () => setTimeout(kill, 2000));
-    })();
+    (function(){ const kill=()=>{const s=document.querySelector('.splash'); if(s) s.remove();}; setTimeout(kill,2200); window.addEventListener('pageshow',()=>setTimeout(kill,2200));})();
   </script>
 </body>
 </html>
