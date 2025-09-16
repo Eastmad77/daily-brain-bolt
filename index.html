@@ -11,14 +11,14 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=380" />
+  <link rel="stylesheet" href="/style.css?v=3100" />
 
   <!-- External Libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <!-- App Scripts -->
   <script defer src="/shell.js?v=340"></script>
-  <script defer src="/app.js?v=380"></script>
+  <script defer src="/app.js?v=3100"></script>
 </head>
 <body>
   <!-- Startup Splash (animated) -->
@@ -38,8 +38,11 @@
     </div>
   </div>
 
-  <!-- Hero Header -->
+  <!-- Hero Header (larger, with SVG background) -->
   <header class="topbar hero">
+    <div class="hero-bg">
+      <img src="/header-graphic.svg" alt="" aria-hidden="true" />
+    </div>
     <div class="hero-inner">
       <div class="brand">
         <img src="/app-icon.svg" class="logo" alt="logo" />
@@ -75,7 +78,7 @@
     </nav>
   </aside>
 
-  <!-- Main -->
+  <!-- Main (single column: removed “Today’s Set” card) -->
   <main class="container">
     <section class="card quiz-card">
       <!-- Overall elapsed timer (subtle) -->
@@ -108,16 +111,6 @@
         <p id="gameOverText"></p>
       </div>
     </section>
-
-    <aside class="card info-card">
-      <h3>Today’s Set</h3>
-      <p>Fresh questions daily across GK, Trivia, Riddles, Geography & Pop Culture.</p>
-      <ul class="ticks">
-        <li>Fast 12-question format</li>
-        <li>Clean, crisp UI</li>
-        <li>Optional daily reminder</li>
-      </ul>
-    </aside>
   </main>
 
   <!-- Countdown -->
