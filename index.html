@@ -4,21 +4,13 @@
   <meta charset="UTF-8" />
   <title>Brain ⚡ Bolt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- PWA + Icons -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
-
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=3120" />
-
-  <!-- External Libs -->
+  <link rel="stylesheet" href="/style.css?v=fix1" />
+  <!-- PapaParse for CSV -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
-  <!-- App Scripts -->
-  <script defer src="/shell.js?v=342"></script>
-  <script defer src="/app.js?v=3120"></script>
+  <script defer src="/app.js?v=fix1"></script>
 </head>
 <body>
   <!-- Startup Splash -->
@@ -30,15 +22,11 @@
             d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
         </svg>
       </div>
-      <h1 class="splash-title">
-        <span class="word">Brain</span>
-        <span class="zap">⚡</span>
-        <span class="word">Bolt</span>
-      </h1>
+      <h1 class="splash-title"><span>Brain</span> <span class="zap">⚡</span> <span>Bolt</span></h1>
     </div>
   </div>
 
-  <!-- Hero Header -->
+  <!-- Header (SVG behind brand) -->
   <header class="topbar hero">
     <div class="hero-bg" aria-hidden="true">
       <img src="/header-graphic.svg" alt="" />
@@ -81,6 +69,7 @@
   <!-- Main -->
   <main class="container">
     <section class="card quiz-card">
+      <!-- Timers -->
       <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
       <div class="qtimer-wrapper"><div id="qTimerBar" class="qtimer-bar"></div></div>
 
@@ -122,11 +111,7 @@
             d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
         </svg>
       </div>
-      <h2 class="splash-title">
-        <span class="word">Quiz</span>
-        <span class="zap">⚡</span>
-        <span class="word">Complete!</span>
-      </h2>
+      <h2 class="splash-title"><span>Quiz</span> <span class="zap">⚡</span> <span>Complete!</span></h2>
       <p class="splash-msg">A fresh quiz will be ready for you tomorrow ⚡</p>
       <div class="splash-buttons">
         <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
@@ -141,8 +126,12 @@
   </footer>
 
   <script>
+    // TEMP: if a stale SW is causing the white screen, this forces an update
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=343');
+      navigator.serviceWorker.getRegistrations().then(regs=>{
+        for (const r of regs) r.update();
+      }).catch(()=>{});
+      navigator.serviceWorker.register('/service-worker.js?v=fix1');
     }
   </script>
 </body>
