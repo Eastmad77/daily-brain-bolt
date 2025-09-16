@@ -4,40 +4,51 @@
   <meta charset="UTF-8">
   <title>Privacy – Brain ⚡ Bolt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css?v=330">
+  <script defer src="/shell.js?v=330"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="left">
-      <button id="mmMenuBtn">☰</button>
-      <img src="/app-icon.svg" class="logo" alt="logo">
-      <span>Brain ⚡ Bolt</span>
+  <header class="topbar hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="brand">
+        <img src="/app-icon.svg" class="logo" alt="logo" />
+        <div class="brand-text">
+          <h1>Brain ⚡ Bolt</h1>
+          <p class="tagline">Daily 12-question challenge</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="mmMenuBtn" class="menu" aria-label="Open menu">☰</button>
+      </div>
     </div>
-    <div class="actions">
-      <button id="soundBtn">🔊</button>
-      <button id="notifyBtn">🔔</button>
+    <div class="status">
+      <span>Privacy</span>
     </div>
   </header>
 
-  <aside class="side-menu" id="mmSideMenu">
-    <nav class="menu-nav">
-      <a href="/">Home</a>
-      <a href="/about.html">About</a>
-      <a href="/contact.html">Contact</a>
-      <a href="/privacy.html" aria-current="page">Privacy</a>
-      <a href="/terms.html">Terms</a>
-      <a href="/signin.html">Sign In</a>
+  <aside class="side-menu" id="mmSideMenu" aria-hidden="true">
+    <nav class="menu-nav" aria-label="Main">
+      <a href="/">🏠 Home</a>
+      <a href="/about.html">ℹ️ About</a>
+      <a href="/contact.html">✉️ Contact</a>
+      <a href="/privacy.html" aria-current="page">🔒 Privacy</a>
+      <a href="/terms.html">📄 Terms</a>
+      <a href="/signin.html">🔑 Sign In</a>
+      <button type="button" id="notifyItem">🔕 Notifications: OFF</button>
     </nav>
   </aside>
 
-  <main>
-    <h1>Privacy Policy</h1>
-    <p>Brain ⚡ Bolt values your privacy. We don’t collect personal data beyond
-       what’s necessary to deliver the quiz experience.</p>
+  <main class="container" style="grid-template-columns:1fr;">
+    <section class="card">
+      <h1>Privacy Policy</h1>
+      <p>We keep things minimal. We don’t sell your data. Limited usage data may be used to keep the app running smoothly and improve the experience.</p>
+    </section>
   </main>
 
   <footer class="footer">
-    <p>© 2025 Brain Bolt | <a href="/privacy.html">Privacy</a> | <a href="/terms.html">Terms</a></p>
+    <p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
   </footer>
 </body>
 </html>
