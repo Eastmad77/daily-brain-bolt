@@ -11,17 +11,17 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=3110" />
+  <link rel="stylesheet" href="/style.css?v=3120" />
 
   <!-- External Libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <!-- App Scripts -->
-  <script defer src="/shell.js?v=340"></script>
-  <script defer src="/app.js?v=3110"></script>
+  <script defer src="/shell.js?v=342"></script>
+  <script defer src="/app.js?v=3120"></script>
 </head>
 <body>
-  <!-- Startup Splash (animated) -->
+  <!-- Startup Splash -->
   <div class="splash" id="startSplash" aria-hidden="false">
     <div class="splash-inner">
       <div class="splash-badge">
@@ -38,7 +38,7 @@
     </div>
   </div>
 
-  <!-- Hero Header (SVG behind title/logo) -->
+  <!-- Hero Header -->
   <header class="topbar hero">
     <div class="hero-bg" aria-hidden="true">
       <img src="/header-graphic.svg" alt="" />
@@ -82,9 +82,7 @@
   <main class="container">
     <section class="card quiz-card">
       <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
-      <div class="qtimer-wrapper" title="10-second question timer">
-        <div id="qTimerBar" class="qtimer-bar"></div>
-      </div>
+      <div class="qtimer-wrapper"><div id="qTimerBar" class="qtimer-bar"></div></div>
 
       <div class="meta">
         <span id="elapsedTime" class="elapsed-time">0:00</span>
@@ -144,7 +142,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=342');
+      navigator.serviceWorker.register('/service-worker.js?v=343');
     }
   </script>
 </body>
