@@ -1,72 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Brain ⚡ Bolt</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="icon" href="/favicon.svg">
-  <link rel="stylesheet" href="/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="/app.js" defer></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/style.css?v=320" />
+  <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script defer src="/app.js?v=320"></script>
 </head>
 <body>
-  <!-- Splash -->
+  <!-- Solid blue startup splash (auto-removed) -->
   <div class="splash" id="startSplash">
-    <img src="/app-icon.svg" class="splash-logo" alt="Brain Bolt logo">
+    <img src="/app-icon.svg" class="splash-logo" alt="Brain Bolt logo" />
     <h1 class="splash-title">Brain ⚡ Bolt</h1>
   </div>
 
-  <!-- Header -->
-  <header class="topbar">
-    <div class="left">
-      <button id="mmMenuBtn">☰</button>
-      <img src="/app-icon.svg" class="logo" alt="logo">
-      <span>Brain ⚡ Bolt</span>
+  <!-- Hero header with background art -->
+  <header class="topbar hero">
+    <div class="hero-bg"></div>
+    <div class="hero-inner">
+      <div class="brand">
+        <img src="/app-icon.svg" class="logo" alt="logo" />
+        <div class="brand-text">
+          <h1>Brain ⚡ Bolt</h1>
+          <p class="tagline">Daily 12-question challenge</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="soundBtn" aria-label="Toggle sound">🔊</button>
+        <button id="notifyBtn" aria-label="Enable notifications">🔔</button>
+        <button id="mmMenuBtn" class="menu">☰</button>
+      </div>
     </div>
-    <div class="actions">
-      <button id="soundBtn">🔊</button>
-      <button id="notifyBtn">🔔</button>
+
+    <!-- Status strip -->
+    <div class="status">
+      <span id="dateLabel"></span>
+      <span id="setLabel">Ready</span>
+      <span id="progressLabel">Q 0/12</span>
     </div>
   </header>
 
   <!-- Sidebar -->
-  <aside class="side-menu" id="mmSideMenu">
-    <nav class="menu-nav">
-      <a href="/" aria-current="page">Home</a>
-      <a href="/about.html">About</a>
-      <a href="/contact.html">Contact</a>
-      <a href="/privacy.html">Privacy</a>
-      <a href="/terms.html">Terms</a>
-      <a href="/signin.html">Sign In</a>
+  <aside class="side-menu" id="mmSideMenu" aria-hidden="true">
+    <nav class="menu-nav" aria-label="Main">
+      <a href="/" aria-current="page">🏠 Home</a>
+      <a href="/about.html">ℹ️ About</a>
+      <a href="/contact.html">✉️ Contact</a>
+      <a href="/privacy.html">🔒 Privacy</a>
+      <a href="/terms.html">📄 Terms</a>
+      <a href="/signin.html">🔑 Sign In</a>
     </nav>
   </aside>
 
-  <!-- Main -->
-  <main>
-    <div id="setLabel">Ready</div>
-    <div id="dateLabel"></div>
-    <div id="progressLabel"></div>
-    <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
-    <div id="elapsedTime">0:00</div>
+  <!-- Main content -->
+  <main class="container">
+    <!-- Quiz card -->
+    <section class="card quiz-card">
+      <!-- Progress bar (elapsed) -->
+      <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
+      <div class="meta">
+        <span id="elapsedTime" class="elapsed-time">0:00</span>
+        <div class="pill duo">
+          <span id="pillScore">Score 0</span>
+          <span id="pillStreak">Streak 0</span>
+        </div>
+      </div>
 
-    <div id="questionBox" class="question-box">Press Start to Play</div>
-    <div id="choices" class="choices"></div>
+      <div id="questionBox" class="question-box">Press Start to Play</div>
+      <div id="choices" class="choices"></div>
 
-    <div class="controls">
-      <button id="startBtn">Start</button>
-      <button id="shuffleBtn">Shuffle</button>
-      <button id="shareBtn">Share</button>
-    </div>
+      <div class="controls">
+        <button id="startBtn" class="btn primary">▶️ Start</button>
+        <button id="shuffleBtn" class="btn">🔀 Shuffle</button>
+        <button id="shareBtn" class="btn ghost">📤 Share</button>
+        <button id="playAgainBtn" class="btn" style="display:none;">🔄 Play Again</button>
+      </div>
 
-    <div id="gameOverBox" style="display:none">
-      <p id="gameOverText"></p>
-      <button id="playAgainBtn">Play Again</button>
-    </div>
+      <div id="gameOverBox" class="gameover" style="display:none;">
+        <p id="gameOverText"></p>
+      </div>
+    </section>
+
+    <!-- Info side card -->
+    <aside class="card info-card">
+      <h3>Today’s Set</h3>
+      <p>Fresh questions, every day. Categories include General Knowledge, Trivia, Riddles, Geography & Pop Culture.</p>
+      <ul class="ticks">
+        <li>Fast 12-question format</li>
+        <li>Clean, crisp UI</li>
+        <li>Daily reminder (optional)</li>
+      </ul>
+    </aside>
   </main>
 
+  <!-- Countdown overlay -->
+  <div id="countdownOverlay" class="countdown-overlay" aria-hidden="true">
+    <div class="countdown-dot" id="countNum">3</div>
+  </div>
+
+  <!-- Success splash (after finishing) -->
+  <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
+    <div class="success-content">
+      <h2>🎉 Well done!</h2>
+      <p>You completed today’s quiz!</p>
+      <div class="row">
+        <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
+        <a href="/" class="btn">🏠 Home</a>
+        <a href="#" id="ssShareScore" class="btn ghost">📤 Share</a>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer">
-    <p>© 2025 Brain Bolt | <a href="/privacy.html">Privacy</a> | <a href="/terms.html">Terms</a></p>
+    <p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
   </footer>
+
+  <!-- Service worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js?v=320');
+    }
+    // Splash failsafe
+    const killSplash = () => { document.getElementById('startSplash')?.remove(); };
+    window.addEventListener('load', () => setTimeout(killSplash, 1200));
+    document.addEventListener('DOMContentLoaded', () => setTimeout(killSplash, 1600));
+  </script>
 </body>
 </html>
