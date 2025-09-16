@@ -6,10 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/favicon.svg" />
-  <link rel="stylesheet" href="/style.css?v=330" />
+  <link rel="stylesheet" href="/style.css?v=340" />
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script defer src="/shell.js?v=330"></script>
-  <script defer src="/app.js?v=330"></script>
+  <script defer src="/shell.js?v=340"></script>
+  <script defer src="/app.js?v=340"></script>
 </head>
 <body>
   <!-- Splash -->
@@ -41,7 +41,7 @@
     </div>
   </header>
 
-  <!-- Sidebar (with notify toggle) -->
+  <!-- Sidebar -->
   <aside class="side-menu" id="mmSideMenu" aria-hidden="true">
     <nav class="menu-nav" aria-label="Main">
       <a href="/" aria-current="page">🏠 Home</a>
@@ -50,6 +50,8 @@
       <a href="/privacy.html">🔒 Privacy</a>
       <a href="/terms.html">📄 Terms</a>
       <a href="/signin.html">🔑 Sign In</a>
+      <a href="/pro.html">⭐ Pro</a>
+      <a href="/admin.html">🛠️ Admin</a>
       <button type="button" id="notifyItem">🔕 Notifications: OFF</button>
     </nav>
   </aside>
@@ -98,7 +100,7 @@
   </div>
 
   <!-- Success -->
-  <div id="successSplash" class="success-splash" role="dialog" aria-modal="true" aria-label="Quiz complete">
+  <div id="successSplash" class="success-splash" role="dialog" aria-modal="true">
     <div class="success-content">
       <h2>🎉 Well done!</h2>
       <p>You completed today’s quiz!</p>
@@ -116,7 +118,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=330');
+      navigator.serviceWorker.register('/service-worker.js?v=340');
     }
   </script>
 </body>
