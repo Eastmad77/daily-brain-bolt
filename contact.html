@@ -1,35 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8">
   <title>Contact – Brain ⚡ Bolt</title>
-  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/style.css?v=310">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
+  <header class="topbar">
+    <div class="left">
+      <button id="mmMenuBtn">☰</button>
+      <img src="/app-icon.svg" class="logo" alt="logo">
+      <span>Brain ⚡ Bolt</span>
+    </div>
+    <div class="actions">
+      <button id="soundBtn">🔊</button>
+      <button id="notifyBtn">🔔</button>
+    </div>
+  </header>
+
+  <aside class="side-menu" id="mmSideMenu">
     <nav class="menu-nav">
-      <a href="/index.html">🏠 Home</a>
-      <a href="/about.html">ℹ️ About</a>
-      <a href="/contact.html" aria-current="page">✉️ Contact</a>
-      <a href="/privacy.html">🔒 Privacy</a>
-      <a href="/terms.html">📄 Terms</a>
-      <a href="/signin.html">🔑 Sign In</a>
+      <a href="/">Home</a>
+      <a href="/about.html">About</a>
+      <a href="/contact.html" aria-current="page">Contact</a>
+      <a href="/privacy.html">Privacy</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/signin.html">Sign In</a>
     </nav>
-    <div class="menu-controls"><button id="soundBtn">🔊</button><button id="notifyBtn">🔔</button></div>
   </aside>
 
   <main>
-    <header class="topbar"><button id="mmMenuBtn" class="menu-btn">☰</button><h1>Contact</h1></header>
-    <section>
-      <p>Email: <a href="mailto:info@brainbolt.app">info@brainbolt.app</a></p>
-    </section>
-    <footer class="footer"><p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p></footer>
+    <h1>Contact Us</h1>
+    <p>Questions, feedback, or suggestions? Reach out:</p>
+    <ul>
+      <li>Email: support@dailybrainbolt.com</li>
+      <li>Twitter: @BrainBoltApp</li>
+    </ul>
   </main>
 
-  <script src="/app.js?v=310"></script>
-  <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/service-worker.js?v=310');</script>
+  <footer class="footer">
+    <p>© 2025 Brain Bolt | <a href="/privacy.html">Privacy</a> | <a href="/terms.html">Terms</a></p>
+  </footer>
 </body>
 </html>
