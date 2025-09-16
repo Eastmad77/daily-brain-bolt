@@ -6,7 +6,7 @@
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="/icon-192.png">
   <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/style.css?v=310">
 </head>
 <body>
   <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
@@ -18,31 +18,18 @@
       <a href="/terms.html">📄 Terms</a>
       <a href="/signin.html">🔑 Sign In</a>
     </nav>
-    <div class="menu-controls">
-      <button id="soundBtn">🔊</button>
-      <button id="notifyBtn">🔔</button>
-    </div>
+    <div class="menu-controls"><button id="soundBtn">🔊</button><button id="notifyBtn">🔔</button></div>
   </aside>
 
   <main>
-    <header class="topbar">
-      <button id="mmMenuBtn" class="menu-btn">☰</button>
-      <h1>About</h1>
-    </header>
+    <header class="topbar"><button id="mmMenuBtn" class="menu-btn">☰</button><h1>About</h1></header>
     <section>
-      <p><strong>Brain ⚡ Bolt</strong> delivers a fresh 12-question quiz every day across general knowledge, trivia, riddles, geography, and pop culture.</p>
+      <p><strong>Brain ⚡ Bolt</strong> delivers a fresh 12-question quiz every day across GK, trivia, riddles, geography, and pop culture.</p>
     </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <p>© 2025 Brain ⚡ Bolt ·
-        <a href="/privacy.html">Privacy</a> ·
-        <a href="/terms.html">Terms</a>
-      </p>
-    </footer>
+    <footer class="footer"><p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p></footer>
   </main>
 
-  <script src="/app.js"></script>
-  <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js');</script>
+  <script src="/app.js?v=310"></script>
+  <script>if('serviceWorker'in navigator)navigator.serviceWorker.register('/service-worker.js?v=310');</script>
 </body>
 </html>
