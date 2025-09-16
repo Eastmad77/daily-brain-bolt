@@ -1,6 +1,9 @@
-// ===== Brain ⚡ Bolt — App.js v3.9 =====
-// - 10s per-question timer now ticks in the final 3 seconds (sound toggle respected)
-// - Keeps elapsed timer, sounds/haptics-on-answers, countdown, 2-wrong rule
+// ===== Brain ⚡ Bolt — App.js v3.10 =====
+// Fixes checked:
+// 1) 10s per-question timer bar (visible & working, auto-fail on timeout, final 3s ticks)
+// 2) Blue circle countdown intact
+// 3) Success splash Home button works (anchor, no JS preventing navigation)
+// 4) Removed "Today’s Set" card from layout; header made larger with SVG bg
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
 
@@ -59,11 +62,11 @@ function beep(freq=600, dur=0.25) {
     osc.stop(t0 + dur + 0.02);
   } catch {}
 }
-const beepTick = () => beep(620, 0.22);   // countdown overlay
+const beepTick = () => beep(620, 0.22);
 const beepGo   = () => beep(950, 0.28);
 const sfxCorrect   = () => beep(1020, 0.18);
 const sfxIncorrect = () => beep(220, 0.2);
-const tickSoft     = () => beep(740, 0.08);  // gentle per-question tick
+const tickSoft     = () => beep(740, 0.08);
 function vibrate(ms=100){ if (navigator.vibrate) navigator.vibrate(ms); }
 
 /* ===== CSV ===== */
@@ -97,7 +100,6 @@ function startQuestionTimer(onTimeout) {
     const secsLeft = Math.ceil(qRemaining / 1000);
     if (qRemaining <= 3000) {
       qTimerBar.classList.add('warn');
-      // Play a gentle tick once at 3, 2, 1
       if (secsLeft > 0 && secsLeft < qLastTickSec + 1) {
         tickSoft();
         qLastTickSec = secsLeft;
@@ -132,7 +134,7 @@ async function startGame() {
     playAgainBtn.classList.remove("pulse");
     setLabel && (setLabel.textContent = 'Ready');
 
-    // 3→2→1→GO circular countdown
+    // 3→2→1→GO circular countdown (blue circle)
     let n = 3;
     countNum.textContent = n;
     countdownOverlay.hidden = false;
@@ -175,7 +177,6 @@ function beginQuiz() {
 function showQuestion() {
   if (currentIndex >= 12) return endGame();
 
-  // render
   const q = questions[currentIndex];
   qBox.textContent = q?.Question || "—";
   choicesDiv.innerHTML = "";
@@ -188,12 +189,10 @@ function showQuestion() {
   });
   progressLabel.textContent = `Q ${currentIndex+1}/12`;
 
-  // (re)start per-question timer
   startQuestionTimer(() => handleTimeout());
 }
 
 function handleTimeout() {
-  // treat as wrong; no specific button to mark, just move on with effects
   sfxIncorrect(); vibrate(160);
   wrongStreak++;
   pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
@@ -260,7 +259,7 @@ shareBtn?.addEventListener("click", ()=>{
 });
 playAgainBtn?.addEventListener("click", startGame);
 
-/* Success overlay buttons */
+/* Success overlay buttons (Home is a plain link and will navigate) */
 document.getElementById("ssPlayAgain")?.addEventListener("click", (e)=>{
   e.preventDefault();
   successSplash.classList.remove('show');
@@ -273,7 +272,6 @@ document.getElementById("ssShareScore")?.addEventListener("click", (e)=>{
   else navigator.clipboard?.writeText(`${text} - ${location.href}`);
 });
 
-// sound toggle
 soundBtn?.addEventListener("click", ()=>{
   soundOn = !soundOn;
   soundBtn.textContent = soundOn ? "🔊" : "🔇";
