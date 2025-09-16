@@ -1,12 +1,17 @@
-// Brain ⚡ Bolt SW — v3.2.2 (force-refresh + navigation preload handled)
+// Brain ⚡ Bolt — Service Worker v3.4.1
+// - Force-refresh new assets
+// - Navigation preload warning fixed
+// - Live CSV fetched network-only to avoid staleness
 
-const STATIC = 'bb-static-v3.2.2';
-const RUNTIME = 'bb-runtime-v3.2.2';
+const STATIC = 'bb-static-v3.4.1';
+const RUNTIME = 'bb-runtime-v3.4.1';
 
 const ASSETS = [
-  '/', '/index.html', '/style.css', '/app.js',
+  '/', '/index.html',
+  '/style.css', '/app.js', '/shell.js',
   '/about.html','/contact.html','/privacy.html','/terms.html','/signin.html','/pro.html','/admin.html','/404.html',
-  '/app-icon.svg','/favicon.svg','/header-graphic.svg','/icon-192.png','/icon-512.png'
+  '/favicon.svg','/app-icon.svg','/header-graphic.svg','/icon-192.png','/icon-512.png',
+  '/site.webmanifest'
 ];
 
 self.addEventListener('install', (event) => {
@@ -16,20 +21,27 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Enable navigation preload
+    // Enable navigation preload (avoids console warning and speeds first paint)
     if ('navigationPreload' in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
     const keys = await caches.keys();
-    await Promise.all(keys.map((k) => (![STATIC, RUNTIME].includes(k)) && caches.delete(k)));
+    await Promise.all(
+      keys.map((k) => {
+        if (![STATIC, RUNTIME].includes(k)) return caches.delete(k);
+      })
+    );
     await self.clients.claim();
   })());
 });
 
 const isSheetsCsv = (url) => {
-  const u = new URL(url, self.location.origin);
-  return (u.hostname.includes('docs.google.com') && u.pathname.includes('/spreadsheets/')) ||
-         (u.search && /(^|[?&])output=csv(&|$)/i.test(u.search));
+  try {
+    const u = new URL(url);
+    const isSheets = u.hostname.includes('docs.google.com') && u.pathname.includes('/spreadsheets/');
+    const isCsv = (u.search || '').includes('output=csv');
+    return isSheets && isCsv;
+  } catch { return false; }
 };
 
 self.addEventListener('fetch', (event) => {
@@ -38,18 +50,19 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // Live CSV: network-only (avoid staleness)
-  if (isSheetsCsv(url.href)) {
+  // LIVE CSV must always be fresh
+  if (isSheetsCsv(req.url)) {
     event.respondWith(fetch(req, { cache: 'no-store' }).catch(() => Response.error()));
     return;
   }
 
-  // Navigations: honor navigation preload to avoid console warning
+  // Navigations: use navigation preload, then network, then fallback
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
         const preload = await event.preloadResponse;
         if (preload) return preload;
+
         const net = await fetch(req, { cache: 'no-store' });
         const cache = await caches.open(STATIC);
         cache.put(req, net.clone());
@@ -72,7 +85,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cross-origin: network then fallback
+  // Cross-origin: network-first with cache fallback
   event.respondWith(fetch(req).catch(() => caches.match(req)));
 });
 
