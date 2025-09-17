@@ -1,4 +1,4 @@
-// Brain ⚡ Bolt — app.js (clean version)
+// Brain ⚡ Bolt — app.js (clean + fixed QUESTION_TICK_MS)
 
 (() => {
   const CSV_URL =
@@ -35,7 +35,7 @@
       gain.gain.value=.25; const t0=ctx.currentTime;
       osc.start(t0); gain.gain.exponentialRampToValueAtTime(.0001, t0+dur);
       osc.stop(t0+dur+.05);
-    } catch(e){ console.warn("Audio blocked", e); }
+    } catch(e){ /* ignore */ }
   }
   const sfxCorrect = () => beep(1020,.18);
   const sfxIncorrect = () => beep(220,.2);
@@ -82,13 +82,13 @@
     successSplash.classList.add("show");
   }
 
-  // --- Question Timer ---
+  // --- Question Timer (FIXED: QUESTION_TICK_MS) ---
   function startQuestionTimer(onTimeout){
     stopQuestionTimer(); if (!qTimerBar) return;
     qRemaining=QUESTION_TIME_MS; qLastTickSec=3;
     qTimerBar.style.width="100%";
     qTimer=setInterval(()=>{
-      qRemaining -= QUESTION_TICKMS;
+      qRemaining -= QUESTION_TICK_MS;                 // <-- fixed
       const pct=Math.max(0,qRemaining/QUESTION_TIME_MS)*100;
       qTimerBar.style.width=pct+"%";
       const secsLeft=Math.ceil(qRemaining/1000);
@@ -96,7 +96,7 @@
         if (secsLeft>0 && secsLeft<qLastTickSec+1){ beepTick(); qLastTickSec=secsLeft; }
       }
       if (qRemaining<=0){ stopQuestionTimer(); onTimeout && onTimeout(); }
-    },QUESTION_TICK_MS);
+    },QUESTION_TICK_MS);                               // <-- fixed
   }
   function stopQuestionTimer(){ if (qTimer){ clearInterval(qTimer); qTimer=null; } }
 
@@ -217,7 +217,8 @@
 
     ssPlayAgain && ssPlayAgain.addEventListener("click",(e)=>{e.preventDefault(); ensureSuccessHidden(); startGame();});
     ssHomeBtn && ssHomeBtn.addEventListener("click",(e)=>{e.preventDefault(); ensureSuccessHidden(); location.href="/";});
-    ssShareScore && ssShareScore.addEventListener("click",(e)=>{e.preventDefault();
+    ssShareScore && ssShareScore.addEventListener("click",(e)=>{
+      e.preventDefault();
       const text=`I scored ${score}/12 on Brain ⚡ Bolt!`;
       if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url:location.href}).catch(()=>{});
       else navigator.clipboard?.writeText(text+" "+location.href);
