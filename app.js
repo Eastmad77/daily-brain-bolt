@@ -1,4 +1,4 @@
-// Brain ⚡ Bolt — baseline app (fix1)
+// Brain ⚡ Bolt — app (fix2): force-hide success overlay on boot, show only on win, keep flow intact
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
 
@@ -10,7 +10,7 @@ let elapsedInterval = null;
 let qTimer = null, qRemaining = QUESTION_TIME_MS, qLastTickSec = 3;
 let soundOn = true;
 
-/* El refs (defensive) */
+/* Elements */
 const $ = id => document.getElementById(id);
 const startBtn = $("startBtn");
 const shuffleBtn = $("shuffleBtn");
@@ -33,7 +33,18 @@ const qTimerBar = $("qTimerBar");
 const soundBtn = $("soundBtn");
 const setLabel = $("setLabel");
 
-/* Splash control */
+/* ===== Force-hide success overlay at startup ===== */
+(function ensureSuccessHidden(){
+  if (successSplash){
+    successSplash.classList.remove("show");
+    successSplash.setAttribute("aria-hidden","true");
+    successSplash.hidden = true;              // DOM hidden
+    successSplash.style.display = "none";     // in case CSS cached
+    successSplash.style.pointerEvents = "none";
+  }
+})();
+
+/* ===== Startup splash control ===== */
 function killStartSplash(){
   const s = document.getElementById("startSplash");
   if (!s) return;
@@ -42,7 +53,7 @@ function killStartSplash(){
 }
 window.addEventListener("load", ()=> setTimeout(killStartSplash, 1300));
 
-/* Audio + haptics */
+/* ===== Audio + haptics ===== */
 function beep(freq=600, dur=0.25){
   if (!soundOn) return;
   try {
@@ -65,7 +76,7 @@ const sfxIncorrect = () => beep(220, .2);
 const tickSoft = () => beep(740, .08);
 function vibrate(ms=100){ if (navigator.vibrate) navigator.vibrate(ms); }
 
-/* CSV */
+/* ===== CSV ===== */
 function fetchCSV(){
   return new Promise((resolve, reject) => {
     if (!window.Papa) return reject(new Error("PapaParse not loaded"));
@@ -77,11 +88,11 @@ function fetchCSV(){
   });
 }
 
-/* Utils */
+/* ===== Utils ===== */
 function fmt(sec){ const m=Math.floor(sec/60), s=sec%60; return `${m}:${s<10?'0':''}${s}`; }
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 
-/* Question timer */
+/* ===== 10s Question timer ===== */
 function startQuestionTimer(onTimeout){
   stopQuestionTimer();
   if (!qTimerBar) return;
@@ -103,10 +114,12 @@ function startQuestionTimer(onTimeout){
 }
 function stopQuestionTimer(){ if (qTimer){ clearInterval(qTimer); qTimer=null; } }
 
-/* Game flow */
+/* ===== Game flow ===== */
 async function startGame(){
   try{
-    successSplash?.classList.remove("show");
+    // Ensure success overlay is hidden before we start
+    ensureSuccessHidden();
+
     setLabel && (setLabel.textContent = "Loading…");
     const data = await fetchCSV();
     questions = shuffle(data).slice(0,12);
@@ -146,6 +159,25 @@ async function startGame(){
     setLabel && (setLabel.textContent = "Error");
     console.error(e);
   }
+}
+
+/* Helper to (re)hide success overlay */
+function ensureSuccessHidden(){
+  if (!successSplash) return;
+  successSplash.classList.remove("show");
+  successSplash.setAttribute("aria-hidden","true");
+  successSplash.hidden = true;
+  successSplash.style.display = "none";
+  successSplash.style.pointerEvents = "none";
+}
+
+function showSuccess(){
+  if (!successSplash) return;
+  successSplash.hidden = false;
+  successSplash.style.display = ""; // allow CSS to control (display:grid via .show)
+  successSplash.style.pointerEvents = "auto";
+  successSplash.setAttribute("aria-hidden","false");
+  successSplash.classList.remove("show"); void successSplash.offsetWidth; successSplash.classList.add("show");
 }
 
 function beginQuiz(){
@@ -212,10 +244,7 @@ function endGame(msg=""){
     if (gameOverBox) gameOverBox.style.display = "block";
     if (playAgainBtn){ playAgainBtn.style.display = "inline-block"; playAgainBtn.classList.add("pulse"); }
   } else {
-    if (successSplash){
-      successSplash.setAttribute("aria-hidden","false");
-      successSplash.classList.remove("show"); void successSplash.offsetWidth; successSplash.classList.add("show");
-    }
+    showSuccess(); // show success overlay only on win
   }
 }
 
@@ -228,12 +257,14 @@ shareBtn && shareBtn.addEventListener("click", ()=>{
   else navigator.clipboard?.writeText(`${text} - ${location.href}`);
 });
 playAgainBtn && playAgainBtn.addEventListener("click", startGame);
-document.getElementById("ssPlayAgain")?.addEventListener("click",(e)=>{ e.preventDefault(); successSplash?.classList.remove("show"); startGame(); });
+
+document.getElementById("ssPlayAgain")?.addEventListener("click",(e)=>{ e.preventDefault(); ensureSuccessHidden(); startGame(); });
 document.getElementById("ssShareScore")?.addEventListener("click",(e)=>{ e.preventDefault(); const text=`I scored ${score}/12 on today’s Brain ⚡ Bolt!`; if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url:location.href}).catch(()=>{}); else navigator.clipboard?.writeText(`${text} - ${location.href}`); });
 document.getElementById("ssHomeBtn")?.setAttribute("href","/"); // plain link
+
 soundBtn && soundBtn.addEventListener("click", ()=>{ soundOn=!soundOn; soundBtn.textContent = soundOn ? "🔊" : "🔇"; });
 
-/* simple sidebar toggler (kept minimal) */
+/* Minimal sidebar toggle */
 const mmMenuBtn = document.getElementById("mmMenuBtn");
 const mmSideMenu = document.getElementById("mmSideMenu");
 mmMenuBtn && mmMenuBtn.addEventListener("click", ()=>{ if (!mmSideMenu) return; mmSideMenu.classList.toggle("open"); mmSideMenu.setAttribute("aria-hidden", String(!mmSideMenu.classList.contains("open"))); });
