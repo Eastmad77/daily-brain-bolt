@@ -1,13 +1,9 @@
-/* Brain ⚡ Bolt — baseline style (fix1) */
-
-/* THEME */
+/* Brain ⚡ Bolt — style (fix2) */
 :root{
   --color-dark:#0d1117; --color-dark-2:#161b22; --color-dark-3:#1f242d;
   --color-blue:#1a73e8; --color-blue-deep:#0b53c6; --color-green:#29ffa1;
   --text-light:#ffffff; --text-muted:#a6b3c5; --danger:#ff4c4c;
 }
-
-/* base */
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;background:var(--color-dark);color:var(--text-light)}
@@ -26,11 +22,8 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 .splash-title .zap{filter:drop-shadow(0 0 10px rgba(255,255,255,.35))}
 @keyframes titleIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .splash.hiding{opacity:0;transition:opacity .5s ease}
-.success-splash{display:none}
-.success-splash.show{display:grid}
-.splash-msg{margin-top:.5rem;font-size:.95rem;color:var(--text-muted)}
-.splash-buttons{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin-top:1rem}
-.splash-buttons .btn{flex:1 1 auto;text-align:center;min-width:110px}
+.success-splash{display:none;pointer-events:none}
+.success-splash.show{display:grid;pointer-events:auto}
 
 /* HEADER (SVG behind brand) */
 .topbar{background:var(--color-dark-2);padding:1rem 1rem .6rem;display:flex;flex-direction:column;border-bottom:1px solid var(--color-dark-3);position:relative;overflow:hidden}
