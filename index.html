@@ -4,23 +4,19 @@
   <meta charset="UTF-8" />
   <title>Brain ⚡ Bolt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <!-- PWA -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
-
   <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=fix3" />
-
+  <link rel="stylesheet" href="/style.css?v=fix5" />
   <!-- Libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
   <!-- App -->
-  <script defer src="/app.js?v=fix3"></script>
+  <script defer src="/app.js?v=fix5"></script>
 </head>
 <body>
-  <!-- Start Splash -->
+  <!-- Startup Splash -->
   <div id="startSplash" class="splash" aria-hidden="false">
     <div class="splash-inner">
       <div class="splash-badge"><img src="/app-icon.svg" alt="App Icon" /></div>
@@ -97,13 +93,13 @@
     </section>
   </main>
 
-  <!-- Countdown -->
-  <div id="countdownOverlay" class="countdown-overlay" hidden aria-hidden="true">
+  <!-- Countdown (NO hidden attr; use .show class) -->
+  <div id="countdownOverlay" class="countdown-overlay" aria-hidden="true">
     <div id="countNum" class="countdown-dot">3</div>
   </div>
 
   <!-- Success Splash -->
-  <div id="successSplash" class="success-splash" hidden aria-hidden="true">
+  <div id="successSplash" class="success-splash" aria-hidden="true">
     <div class="splash-inner">
       <div class="splash-badge"><img src="/app-icon.svg" alt="App Icon" /></div>
       <h2 class="splash-title">Quiz Complete!</h2>
@@ -122,7 +118,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=fix3');
+      navigator.serviceWorker.register('/service-worker.js?v=fix5');
     }
   </script>
 </body>
