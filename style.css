@@ -1,7 +1,8 @@
-/* Brain ⚡ Bolt — style (fix4) */
+/* Brain ⚡ Bolt — style (fix5) */
 :root{
   --color-dark:#0d1117; --color-dark-2:#161b22; --color-dark-3:#1f242d;
-  --color-blue:#1a73e8; --color-blue-deep:#0b53c6; --color-green:#29ffa1; /* accent green for main timer */
+  --color-blue:#1a73e8; --color-blue-deep:#0b53c6;
+  --color-green:#29ffa1; /* main elapsed timer */
   --text-light:#ffffff; --text-muted:#a6b3c5; --danger:#ff4c4c;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -20,7 +21,7 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 .splash-buttons{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:.75rem}
 .splash-msg{color:var(--text-muted);margin-top:.25rem}
 
-/* HEADER */
+/* HEADER (SVG behind brand) */
 .topbar{background:var(--color-dark-2);padding:1rem 1rem .6rem;display:flex;flex-direction:column;border-bottom:1px solid var(--color-dark-3);position:relative;overflow:hidden}
 .hero-bg{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.22}
 .hero-bg img{width:100%;height:100%;object-fit:cover;filter:saturate(1.1) contrast(1.05)}
@@ -32,8 +33,8 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 .brand-text .tagline{font-size:clamp(.85rem,2.4vw,1rem);color:var(--text-muted)}
 .actions button{background:none;border:none;color:var(--text-light);font-size:1.3rem;cursor:pointer}
 
-/* SIDEBAR */
-.side-menu{position:fixed;top:0;left:-260px;width:260px;height:100%;background:var(--color-dark-2);transition:left .3s ease;padding:1rem;z-index:999}
+/* SIDEBAR (high z) */
+.side-menu{position:fixed;top:0;left:-260px;width:260px;height:100%;background:var(--color-dark-2);transition:left .3s ease;padding:1rem;z-index:1100}
 .side-menu.open{left:0}
 .menu-nav a,.menu-nav button{display:block;padding:.75rem;border-radius:.5rem;color:var(--text-light);background:transparent;border:none;text-align:left;font-size:1rem;margin-bottom:.25rem;cursor:pointer}
 .menu-nav a:hover,.menu-nav button:hover,.menu-nav a:focus{background:var(--color-blue);color:#fff}
@@ -65,15 +66,14 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 .qtimer-bar{height:10px;width:100%;background:linear-gradient(90deg,#29a1ff,#1a73e8,#0b53c6);transition:width .1s linear}
 .qtimer-bar.warn{background:linear-gradient(90deg,#ff9a9a,#ff6b6b)}
 
-/* COUNTDOWN — Blue circular shapes */
+/* COUNTDOWN — Blue circular shapes (class-based visibility) */
 .countdown-overlay{
-  position:fixed; inset:0; display:none; /* hidden by default */
+  position:fixed; inset:0; display:none; /* default hidden */
   background:rgba(0,0,0,.8);
   justify-content:center; align-items:center;
-  z-index:1001;
+  z-index:1050; /* above page, below sidebar */
 }
-.countdown-overlay.show{ display:flex; }  /* force flex when shown */
-.countdown-overlay[hidden]{ display:none; }
+.countdown-overlay.show{ display:flex; }
 .countdown-dot{
   width:140px;height:140px;border-radius:50%;
   background:var(--color-blue); color:#fff;
