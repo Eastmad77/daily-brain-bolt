@@ -1,27 +1,18 @@
-// ===== Brain ⚡ Bolt — shell.js v3.4 =====
-// Shared nav + notification toggle
-
-document.addEventListener("DOMContentLoaded", () => {
+// Brain ⚡ Bolt — shell v3.11 (menu toggle + close-on-click)
+(function(){
   const menuBtn = document.getElementById("mmMenuBtn");
-  const sideMenu = document.getElementById("mmSideMenu");
-  const notifyItem = document.getElementById("notifyItem");
+  const side = document.getElementById("mmSideMenu");
+  if (!menuBtn || !side) return;
 
-  if (menuBtn && sideMenu) {
-    menuBtn.addEventListener("click", () => {
-      const open = sideMenu.classList.contains("open");
-      sideMenu.classList.toggle("open", !open);
-      sideMenu.setAttribute("aria-hidden", open);
-    });
-  }
+  menuBtn.addEventListener("click", ()=>{
+    side.classList.toggle("open");
+    side.setAttribute("aria-hidden", String(!side.classList.contains("open")));
+  });
 
-  if (notifyItem) {
-    notifyItem.addEventListener("click", () => {
-      if (notifyItem.textContent.includes("OFF")) {
-        notifyItem.textContent = "🔔 Notifications: ON";
-        alert("You will be reminded daily!");
-      } else {
-        notifyItem.textContent = "🔕 Notifications: OFF";
-      }
+  side.querySelectorAll("a,button").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      side.classList.remove("open");
+      side.setAttribute("aria-hidden","true");
     });
-  }
-});
+  });
+})();
