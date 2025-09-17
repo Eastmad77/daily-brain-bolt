@@ -4,29 +4,45 @@
   <meta charset="UTF-8" />
   <title>Brain ⚡ Bolt</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- PWA -->
+
+  <!-- PWA + Icons -->
   <link rel="manifest" href="/site.webmanifest" />
   <link rel="icon" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
-  <!-- Styles -->
-  <link rel="stylesheet" href="/style.css?v=fix5" />
+
+  <!-- Styles (cache-bust) -->
+  <link rel="stylesheet" href="/style.css?v=3111" />
+
   <!-- Libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <!-- App -->
-  <script defer src="/app.js?v=fix5"></script>
+
+  <!-- App Scripts (cache-bust) -->
+  <script defer src="/shell.js?v=3111"></script>
+  <script defer src="/app.js?v=3111"></script>
 </head>
 <body>
   <!-- Startup Splash -->
-  <div id="startSplash" class="splash" aria-hidden="false">
+  <div class="splash" id="startSplash" aria-hidden="false">
     <div class="splash-inner">
-      <div class="splash-badge"><img src="/app-icon.svg" alt="App Icon" /></div>
-      <h1 class="splash-title">Brain <span class="zap">⚡</span> Bolt</h1>
+      <div class="splash-badge">
+        <svg class="splash-bolt" width="140" height="140" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
+      </div>
+      <h1 class="splash-title">
+        <span class="word">Brain</span>
+        <span class="zap">⚡</span>
+        <span class="word">Bolt</span>
+      </h1>
     </div>
   </div>
 
-  <!-- Header (SVG behind brand) -->
+  <!-- Hero Header -->
   <header class="topbar hero">
-    <div class="hero-bg" aria-hidden="true"><img src="/header-graphic.svg" alt="" /></div>
+    <div class="hero-bg">
+      <img src="/header-graphic.svg" alt="" aria-hidden="true" />
+    </div>
     <div class="hero-inner">
       <div class="brand">
         <img src="/app-icon.svg" class="logo" alt="logo" />
@@ -65,9 +81,13 @@
   <!-- Main -->
   <main class="container">
     <section class="card quiz-card">
-      <!-- Timers -->
+      <!-- Overall elapsed timer -->
       <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
-      <div class="qtimer-wrapper"><div id="qTimerBar" class="qtimer-bar"></div></div>
+
+      <!-- Per-question 10s timer -->
+      <div class="qtimer-wrapper" title="10-second question timer">
+        <div id="qTimerBar" class="qtimer-bar"></div>
+      </div>
 
       <div class="meta">
         <span id="elapsedTime" class="elapsed-time">0:00</span>
@@ -93,21 +113,26 @@
     </section>
   </main>
 
-  <!-- Countdown (NO hidden attr; use .show class) -->
+  <!-- Countdown (class-based show/hide; no hidden attr) -->
   <div id="countdownOverlay" class="countdown-overlay" aria-hidden="true">
     <div id="countNum" class="countdown-dot">3</div>
   </div>
 
   <!-- Success Splash -->
   <div id="successSplash" class="success-splash" aria-hidden="true">
-    <div class="splash-inner">
-      <div class="splash-badge"><img src="/app-icon.svg" alt="App Icon" /></div>
-      <h2 class="splash-title">Quiz Complete!</h2>
-      <p class="splash-msg">A fresh quiz will be ready tomorrow ⚡</p>
+    <div class="splash-inner success-anim">
+      <div class="splash-badge">
+        <svg class="splash-bolt" width="120" height="120" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
+      </div>
+      <h2 class="splash-title"><span class="word">Quiz</span><span class="zap">⚡</span><span class="word">Complete!</span></h2>
+      <p class="splash-msg">A fresh quiz will be ready for you tomorrow ⚡</p>
       <div class="splash-buttons">
-        <button id="ssPlayAgain" class="btn primary">🔄 Play Again</button>
-        <a id="ssHomeBtn" href="/" class="btn">🏠 Home</a>
-        <button id="ssShareScore" class="btn ghost">📤 Share</button>
+        <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
+        <a href="/" id="ssHomeBtn" class="btn">🏠 Home</a>
+        <a href="#" id="ssShareScore" class="btn ghost">📤 Share</a>
       </div>
     </div>
   </div>
@@ -118,7 +143,7 @@
 
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=fix5');
+      navigator.serviceWorker.register('/service-worker.js?v=3111');
     }
   </script>
 </body>
