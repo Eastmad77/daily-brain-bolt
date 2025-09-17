@@ -1,5 +1,5 @@
-// Brain ⚡ Bolt — shell v3.11 (menu toggle + close-on-click)
-(function(){
+// Brain ⚡ Bolt — shell (fix6) : menu wiring
+(() => {
   const menuBtn = document.getElementById("mmMenuBtn");
   const side = document.getElementById("mmSideMenu");
   if (!menuBtn || !side) return;
