@@ -1,23 +1,20 @@
-// Brain ⚡ Bolt — app (fix3)
-// - Defensive DOM access (no null .textContent writes)
-// - Force-hide success overlay on boot; show only on win
-// - Start splash auto-dismiss; header, timers, countdown intact
-// - No shell.js dependency
+// Brain ⚡ Bolt — app (fix4)
+// Restores blue circle countdown + makes it always show
+// Restores timer bars; main elapsed timer is now green
+// Defensive DOM access
 
 (() => {
   const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
   const QUESTION_TIME_MS = 10000, QUESTION_TICK_MS = 100;
 
-  // State
   let questions = [], currentIndex = 0, score = 0, wrongStreak = 0, elapsed = 0;
   let elapsedInterval = null;
   let qTimer = null, qRemaining = QUESTION_TIME_MS, qLastTickSec = 3;
   let soundOn = true;
 
-  // Helpers
   const $ = id => document.getElementById(id);
   const setText = (el, txt) => { if (el) el.textContent = txt; };
-  const showEl = el => { if (el){ el.hidden = false; el.style.display = ""; } };
+  const showEl = (el, forceFlex=false) => { if (el){ el.hidden = false; el.style.display = forceFlex ? "flex" : ""; } };
   const hideEl = el => { if (el){ el.hidden = true; el.style.display = "none"; } };
   const fmt = sec => { const m=Math.floor(sec/60), s=sec%60; return `${m}:${s<10?'0':''}${s}`; };
   const shuffle = a => { for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
@@ -37,7 +34,6 @@
   const beepTick=()=>beep(620,.22), beepGo=()=>beep(950,.28), sfxCorrect=()=>beep(1020,.18), sfxIncorrect=()=>beep(220,.2), tickSoft=()=>beep(740,.08);
   const vibrate = ms => { if (navigator.vibrate) navigator.vibrate(ms); };
 
-  // CSV
   function fetchCSV(){
     return new Promise((resolve,reject)=>{
       if (!window.Papa) return reject(new Error("PapaParse not loaded"));
@@ -46,11 +42,10 @@
     });
   }
 
-  // DOM
+  // Cache els
   let startBtn, shuffleBtn, shareBtn, playAgainBtn, qBox, choicesDiv, pillScore, pillStreak, progressLabel,
       elapsedTimeEl, countdownOverlay, countNum, successSplash, gameOverBox, gameOverText, timerBar, qTimerBar,
-      soundBtn, setLabel, mmMenuBtn, mmSideMenu, ssPlayAgain, ssHomeBtn, ssShareScore;
-
+      soundBtn, setLabel, ssPlayAgain, ssHomeBtn, ssShareScore;
   function cacheEls(){
     startBtn = $("startBtn"); shuffleBtn = $("shuffleBtn"); shareBtn = $("shareBtn"); playAgainBtn = $("playAgainBtn");
     qBox = $("questionBox"); choicesDiv = $("choices"); pillScore = $("pillScore"); pillStreak = $("pillStreak");
@@ -58,7 +53,6 @@
     countdownOverlay = $("countdownOverlay"); countNum = $("countNum");
     successSplash = $("successSplash"); gameOverBox = $("gameOverBox"); gameOverText = $("gameOverText");
     timerBar = $("timerBar"); qTimerBar = $("qTimerBar"); soundBtn = $("soundBtn"); setLabel = $("setLabel");
-    mmMenuBtn = $("mmMenuBtn"); mmSideMenu = $("mmSideMenu");
     ssPlayAgain = $("ssPlayAgain"); ssHomeBtn = $("ssHomeBtn"); ssShareScore = $("ssShareScore");
   }
 
@@ -78,7 +72,6 @@
     successSplash.classList.remove("show"); void successSplash.offsetWidth; successSplash.classList.add("show");
   }
 
-  // Question timer
   function startQuestionTimer(onTimeout){
     stopQuestionTimer(); if (!qTimerBar) return;
     qRemaining = QUESTION_TIME_MS; qLastTickSec = 3;
@@ -97,7 +90,6 @@
   }
   function stopQuestionTimer(){ if (qTimer){ clearInterval(qTimer); qTimer=null; } }
 
-  // Game flow
   async function startGame(){
     try{
       ensureSuccessHidden();
@@ -113,10 +105,12 @@
       if (playAgainBtn){ playAgainBtn.style.display = "none"; playAgainBtn.classList.remove("pulse"); }
       setText(setLabel, "Ready");
 
-      // 3 → 2 → 1 → GO
+      // 3 → 2 → 1 → GO (blue circle)
       let n = 3;
       if (countNum && countdownOverlay){
-        setText(countNum, n); showEl(countdownOverlay);
+        setText(countNum, n);
+        countdownOverlay.classList.add("show"); // force flex display
+        showEl(countdownOverlay, true);
         const int = setInterval(()=>{
           n--;
           if (n>0){
@@ -128,9 +122,13 @@
             setText(countNum, "GO");
             countNum.style.animation = "none"; void countNum.offsetWidth; countNum.style.animation = "popIn .4s ease";
             beepGo();
-            setTimeout(()=>{ hideEl(countdownOverlay); beginQuiz(); }, 380);
+            setTimeout(()=>{
+              countdownOverlay.classList.remove("show");
+              hideEl(countdownOverlay);
+              beginQuiz();
+            }, 380);
           }
-        },700);
+        }, 700);
       } else {
         beginQuiz();
       }
@@ -144,9 +142,14 @@
   function beginQuiz(){
     elapsed = 0; setText(elapsedTimeEl, "0:00"); if (timerBar) timerBar.style.width = "0%";
     clearInterval(elapsedInterval);
+    // Main elapsed timer (green bar)
     elapsedInterval = setInterval(()=>{
       elapsed++; setText(elapsedTimeEl, fmt(elapsed));
-      if (timerBar){ const pct = Math.min(100, (elapsed/300)*100); timerBar.style.width = pct + "%"; }
+      if (timerBar){
+        // fills to 100% at 5 minutes; adjust if you want slower/faster
+        const pct = Math.min(100, (elapsed/300)*100);
+        timerBar.style.width = pct + "%";
+      }
     },1000);
     showQuestion();
   }
@@ -189,7 +192,7 @@
   function endGame(msg=""){
     clearInterval(elapsedInterval); stopQuestionTimer();
     if (msg){
-      if (gameOverText) setText(gameOverText, msg);
+      setText(gameOverText, msg);
       if (gameOverBox) gameOverBox.style.display = "block";
       if (playAgainBtn){ playAgainBtn.style.display = "inline-block"; playAgainBtn.classList.add("pulse"); }
     } else {
@@ -197,18 +200,18 @@
     }
   }
 
-  // Wire UI once DOM is ready
+  // Boot
   document.addEventListener("DOMContentLoaded", () => {
     cacheEls();
-    // Force-hide success overlay on boot
+    // hide success on boot
     ensureSuccessHidden();
 
-    // Kill the start splash shortly after window load
+    // soften/remove start splash after a beat
     window.addEventListener("load", ()=> setTimeout(()=>{
       const s = $("startSplash"); if (s){ s.classList.add("hiding"); setTimeout(()=> s.remove(), 420); }
     }, 1300));
 
-    // Buttons
+    // wire actions
     startBtn && startBtn.addEventListener("click", startGame);
     shuffleBtn && shuffleBtn.addEventListener("click", ()=>{ shuffle(questions); currentIndex=0; wrongStreak=0; showQuestion(); });
     shareBtn && shareBtn.addEventListener("click", ()=>{
@@ -218,9 +221,9 @@
     });
     playAgainBtn && playAgainBtn.addEventListener("click", startGame);
 
-    // Success splash controls
+    // success splash
     ssPlayAgain && ssPlayAgain.addEventListener("click", (e)=>{ e.preventDefault(); ensureSuccessHidden(); startGame(); });
-    ssHomeBtn && ssHomeBtn.addEventListener("click", ()=>{ ensureSuccessHidden(); /* link navigates */ });
+    ssHomeBtn && ssHomeBtn.addEventListener("click", ()=>{ ensureSuccessHidden(); /* link handles nav */ });
     ssShareScore && ssShareScore.addEventListener("click", (e)=>{
       e.preventDefault();
       const text = `I scored ${score}/12 on today’s Brain ⚡ Bolt!`;
@@ -228,14 +231,7 @@
       else navigator.clipboard?.writeText(`${text} - ${location.href}`);
     });
 
-    // Sound toggle
+    // sound
     soundBtn && soundBtn.addEventListener("click", ()=>{ soundOn = !soundOn; soundBtn.textContent = soundOn ? "🔊" : "🔇"; });
-
-    // Sidebar
-    mmMenuBtn && mmMenuBtn.addEventListener("click", ()=>{
-      if (!mmSideMenu) return;
-      mmSideMenu.classList.toggle("open");
-      mmSideMenu.setAttribute("aria-hidden", String(!mmSideMenu.classList.contains("open")));
-    });
   });
 })();
