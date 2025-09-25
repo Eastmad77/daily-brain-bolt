@@ -1,14 +1,20 @@
-// ===== Brain ⚡ Bolt — App.js v3.10.2 =====
+// ===== Brain ⚡ Bolt — App.js v3.10.3 =====
+// Fixes:
+// - startGame is globally available (window.startGame = startGame)
+// - Success splash buttons clickable (aria-hidden removed when showing)
+// - Success splash auto-returns to Home after 5s (cleared if user clicks a button)
+// - Startup splash hides via DOMContentLoaded / load / 4s fallback
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
 
-const QUESTION_TIME_MS = 10000;
-const QUESTION_TICK_MS = 100;
+const QUESTION_TIME_MS = 10000;   // 10 seconds per question
+const QUESTION_TICK_MS = 100;     // smooth bar update (10Hz)
 
 let questions = [], currentIndex = 0, score = 0, wrongStreak = 0, elapsed = 0;
 let elapsedInterval = null;
 let qTimer = null, qRemaining = QUESTION_TIME_MS, qLastTickSec = 3;
 let soundOn = true;
+let successAutoNav = null; // NEW: auto-return timer
 
 /* Elements */
 const startBtn = document.getElementById("startBtn");
@@ -32,7 +38,7 @@ const qTimerBar = document.getElementById("qTimerBar");
 const soundBtn = document.getElementById("soundBtn");
 const setLabel = document.getElementById("setLabel");
 
-/* ===== Splash Control ===== */
+/* ===== Splash control (robust) ===== */
 function killStartSplash() {
   const s = document.getElementById('startSplash');
   if (!s || s.dataset.dismissed === '1') return;
@@ -42,17 +48,198 @@ function killStartSplash() {
 }
 document.addEventListener('DOMContentLoaded', () => setTimeout(killStartSplash, 900));
 window.addEventListener('load', () => setTimeout(killStartSplash, 900));
-setTimeout(killStartSplash, 4000);
+setTimeout(killStartSplash, 4000); // fallback even if load never fires
 
-/* ===== Utils (beep/vibrate/CSV/etc.) ===== */
-// (keep your existing beep/timer/shuffle helpers here unchanged)
+/* ===== Audio + haptics ===== */
+function beep(freq=600, dur=0.25) {
+  if (!soundOn) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine"; osc.frequency.value = freq;
+    osc.connect(gain); gain.connect(ctx.destination);
+    gain.gain.value = 0.25;
+    const t0 = ctx.currentTime;
+    osc.start(t0);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.stop(t0 + dur + 0.02);
+  } catch {}
+}
+const beepTick = () => beep(620, 0.22);
+const beepGo   = () => beep(950, 0.28);
+const sfxCorrect   = () => beep(1020, 0.18);
+the sfxIncorrect = () => beep(220, 0.2);
+const tickSoft     = () => beep(740, 0.08);
+function vibrate(ms=100){ if (navigator.vibrate) navigator.vibrate(ms); }
 
-/* ===== Game Flow ===== */
-// (keep startGame, beginQuiz, showQuestion, handleTimeout, handleAnswer unchanged)
+/* ===== CSV ===== */
+function fetchCSV(){
+  return new Promise((resolve, reject) => {
+    Papa.parse(CSV_URL, {
+      download:true, header:true, skipEmptyLines:true,
+      complete:(res)=>resolve(res.data),
+      error:(err)=>reject(err)
+    });
+  });
+}
+
+/* ===== Utils ===== */
+function formatTime(sec){ const m=Math.floor(sec/60), s=sec%60; return `${m}:${s<10?'0':''}${s}`; }
+function shuffleArray(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+/* ===== Question timer (10s with final-3s ticks) ===== */
+function startQuestionTimer(onTimeout) {
+  stopQuestionTimer();
+  qRemaining = QUESTION_TIME_MS;
+  qLastTickSec = 3;
+  qTimerBar.classList.remove('warn');
+  qTimerBar.style.width = '100%';
+
+  qTimer = setInterval(() => {
+    qRemaining -= QUESTION_TICK_MS;
+    const pct = Math.max(0, qRemaining / QUESTION_TIME_MS) * 100;
+    qTimerBar.style.width = pct + '%';
+
+    const secsLeft = Math.ceil(qRemaining / 1000);
+    if (qRemaining <= 3000) {
+      qTimerBar.classList.add('warn');
+      if (secsLeft > 0 && secsLeft < qLastTickSec + 1) {
+        tickSoft();
+        qLastTickSec = secsLeft;
+      }
+    }
+
+    if (qRemaining <= 0) {
+      stopQuestionTimer();
+      onTimeout?.();
+    }
+  }, QUESTION_TICK_MS);
+}
+function stopQuestionTimer() {
+  if (qTimer) { clearInterval(qTimer); qTimer = null; }
+}
+
+/* ===== Game flow ===== */
+async function startGame() {
+  clearTimeout(successAutoNav); // cancel any pending auto-return
+  try {
+    successSplash.classList.remove('show'); // ensure hidden
+    setLabel && (setLabel.textContent = 'Loading…');
+
+    const data = await fetchCSV();
+    questions = shuffleArray(data).slice(0,12);
+    currentIndex = 0; score = 0; wrongStreak = 0; elapsed = 0;
+
+    pillScore.textContent = "Score 0";
+    pillStreak.textContent = "Streak 0";
+    progressLabel.textContent = "Q 0/12";
+    gameOverBox.style.display = "none";
+    playAgainBtn.style.display = "none";
+    playAgainBtn.classList.remove("pulse");
+    setLabel && (setLabel.textContent = 'Ready');
+
+    // 3→2→1→GO circular countdown
+    let n = 3;
+    countNum.textContent = n;
+    countdownOverlay.hidden = false;
+
+    const int = setInterval(() => {
+      n--;
+      if (n > 0) {
+        countNum.textContent = n;
+        countNum.style.animation = "none"; void countNum.offsetWidth; countNum.style.animation = "popIn .4s ease";
+        beepTick();
+      } else {
+        clearInterval(int);
+        countNum.textContent = "GO";
+        countNum.style.animation = "none"; void countNum.offsetWidth; countNum.style.animation = "popIn .4s ease";
+        beepGo();
+        setTimeout(()=>{ countdownOverlay.hidden = true; beginQuiz(); }, 380);
+      }
+    }, 700);
+  } catch (e) {
+    qBox.textContent = "Could not load today’s quiz. Please try again.";
+    setLabel && (setLabel.textContent = 'Error');
+    console.error(e);
+  }
+}
+
+function beginQuiz() {
+  elapsed = 0;
+  elapsedTimeEl.textContent = "0:00";
+  timerBar.style.width = "0%";
+  clearInterval(elapsedInterval);
+  elapsedInterval = setInterval(()=>{
+    elapsed++;
+    elapsedTimeEl.textContent = formatTime(elapsed);
+    const pct = Math.min(100, (elapsed/300)*100); // 5 min = full
+    timerBar.style.width = pct + "%";
+  },1000);
+  showQuestion();
+}
+
+function showQuestion() {
+  if (currentIndex >= 12) return endGame();
+
+  const q = questions[currentIndex];
+  qBox.textContent = q?.Question || "—";
+  choicesDiv.innerHTML = "";
+  ["OptionA","OptionB","OptionC","OptionD"].forEach((k)=>{
+    const val = q[k]; if(!val) return;
+    const b = document.createElement("button");
+    b.textContent = String(val);
+    b.onclick = () => handleAnswer(b, q.Answer);
+    choicesDiv.appendChild(b);
+  });
+  progressLabel.textContent = `Q ${currentIndex+1}/12`;
+
+  startQuestionTimer(() => handleTimeout());
+}
+
+function handleTimeout() {
+  sfxIncorrect(); vibrate(160);
+  wrongStreak++;
+  pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
+
+  if (wrongStreak >= 2) { endGame("Two wrong in a row!"); return; }
+
+  currentIndex++;
+  if (currentIndex >= 12) endGame();
+  else showQuestion();
+}
+
+function handleAnswer(btn, correctText) {
+  stopQuestionTimer();
+  [...choicesDiv.querySelectorAll("button")].forEach(b=>b.disabled=true);
+
+  const isCorrect = (btn.textContent||"").trim().toLowerCase() === String(correctText||"").trim().toLowerCase();
+
+  if (isCorrect) {
+    btn.classList.add("correct");
+    sfxCorrect(); vibrate(60);
+    score++; wrongStreak = 0;
+  } else {
+    btn.classList.add("incorrect");
+    sfxIncorrect(); vibrate(160);
+    wrongStreak++;
+  }
+
+  pillScore.textContent = `Score ${score}`;
+  pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
+
+  if (wrongStreak >= 2) { setTimeout(()=>endGame("Two wrong in a row!"), 700); return; }
+
+  setTimeout(()=>{
+    currentIndex++;
+    if (currentIndex >= 12) endGame();
+    else showQuestion();
+  }, 800);
+}
 
 function endGame(msg="") {
   clearInterval(elapsedInterval);
-  if (qTimer) { clearInterval(qTimer); qTimer = null; }
+  stopQuestionTimer();
 
   if (msg) {
     gameOverText.textContent = msg;
@@ -60,43 +247,51 @@ function endGame(msg="") {
     playAgainBtn.style.display = "inline-block";
     playAgainBtn.classList.add("pulse");
   } else {
+    // Ensure overlays aren't blocking and buttons are interactive
     countdownOverlay && (countdownOverlay.hidden = true);
     successSplash.removeAttribute('aria-hidden');
-    successSplash.classList.remove('show');
-    void successSplash.offsetWidth;
+    successSplash.classList.remove('show'); // restart animation if needed
+    void successSplash.offsetWidth;        // reflow
     successSplash.classList.add('show');
+
+    // NEW: auto-return to Home after 5 seconds
+    clearTimeout(successAutoNav);
+    successAutoNav = setTimeout(() => {
+      window.location.href = "/";
+    }, 5000);
   }
 }
 
 /* ===== Wire UI ===== */
-startBtn?.addEventListener("click", startGame);
-shuffleBtn?.addEventListener("click", ()=>{ /* … */ });
-shareBtn?.addEventListener("click", ()=>{ /* … */ });
-playAgainBtn?.addEventListener("click", startGame);
+startBtn?.addEventListener("click", () => window.startGame());
+shuffleBtn?.addEventListener("click", ()=>{ shuffleArray(questions); currentIndex=0; wrongStreak=0; showQuestion(); });
+shareBtn?.addEventListener("click", ()=>{
+  const text = `I'm playing Brain ⚡ Bolt! Current score: ${score}/12`;
+  if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url: location.href}).catch(()=>{});
+  else navigator.clipboard?.writeText(`${text} - ${location.href}`);
+});
+playAgainBtn?.addEventListener("click", () => window.startGame());
 
-/* Success Overlay Buttons */
+/* Success overlay buttons */
 document.getElementById("ssPlayAgain")?.addEventListener("click", (e)=>{
   e.preventDefault();
   successSplash.classList.remove('show');
-  startGame();
+  clearTimeout(successAutoNav);
+  window.startGame();
 });
 document.getElementById("ssShareScore")?.addEventListener("click", (e)=>{
   e.preventDefault();
+  clearTimeout(successAutoNav);
   const text = `I scored ${score}/12 on today’s Brain ⚡ Bolt!`;
-  if (navigator.share) {
-    navigator.share({title:"Brain ⚡ Bolt", text, url: location.href}).catch(()=>{});
-  } else {
-    navigator.clipboard?.writeText(`${text} - ${location.href}`);
-  }
+  if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url: location.href}).catch(()=>{});
+  else navigator.clipboard?.writeText(`${text} - ${location.href}`);
 });
-/* NEW: Home button defensive handler */
 document.getElementById("ssHomeBtn")?.addEventListener("click", (e)=>{
   e.preventDefault();
+  clearTimeout(successAutoNav);
   successSplash.classList.remove('show');
   window.location.href = "/";
 });
 
-soundBtn?.addEventListener("click", ()=>{
-  soundOn = !soundOn;
-  soundBtn.textContent = soundOn ? "🔊" : "🔇";
-});
+/* Make startGame globally reachable (prevents "startGame is not defined") */
+window.startGame = startGame;
