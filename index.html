@@ -11,14 +11,14 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
   <!-- Styles (cache-busted) -->
-  <link rel="stylesheet" href="/style.css?v=3105" />
+  <link rel="stylesheet" href="/style.css?v=3108" />
 
   <!-- External libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <!-- App scripts (cache-busted) -->
   <script defer src="/shell.js?v=343"></script>
-  <script defer src="/app.js?v=3105"></script>
+  <script defer src="/app.js?v=3108"></script>
 </head>
 <body>
   <!-- Startup Splash -->
@@ -115,7 +115,7 @@
     <div class="countdown-dot" id="countNum">3</div>
   </div>
 
-  <!-- Success Splash (no aria-hidden; visibility controlled by CSS .show) -->
+  <!-- Success Splash -->
   <div id="successSplash" class="success-splash">
     <div class="splash-inner success-anim">
       <div class="splash-badge">
@@ -145,7 +145,7 @@
   <!-- Register Service Worker (cache-busted) -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=344');
+      navigator.serviceWorker.register('/service-worker.js?v=345');
     }
   </script>
 </body>
