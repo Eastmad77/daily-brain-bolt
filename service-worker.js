@@ -1,10 +1,10 @@
-// Brain ⚡ Bolt — Service Worker v3.4.5
-// - Force-refresh new assets (STATIC/RUNTIME cache bump)
+// Brain ⚡ Bolt — Service Worker v3.4.6
+// - Force-refresh new assets (STATIC/RUNTIME bump)
 // - Navigation preload enabled
-// - Live Google Sheets CSV is always fetched fresh
+// - Live Google Sheets CSV always fetched fresh (no cache)
 
-const STATIC  = 'bb-static-v3.4.5';
-const RUNTIME = 'bb-runtime-v3.4.5';
+const STATIC  = 'bb-static-v3.4.6';
+const RUNTIME = 'bb-runtime-v3.4.6';
 
 const ASSETS = [
   '/', '/index.html',
@@ -52,13 +52,13 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // LIVE CSV → always fresh
+  // LIVE CSV → always network
   if (isSheetsCsv(req.url)) {
     event.respondWith(fetch(req, { cache: 'no-store' }).catch(() => Response.error()));
     return;
   }
 
-  // Navigations: use preload, then network, then fallback
+  // Navigations
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
