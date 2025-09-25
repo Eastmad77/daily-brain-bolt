@@ -10,29 +10,119 @@
   <link rel="icon" href="/favicon.svg" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
-  <!-- Styles (bump query version) -->
-  <link rel="stylesheet" href="/style.css?v=3102" />
+  <!-- Styles (cache-busted) -->
+  <link rel="stylesheet" href="/style.css?v=3104" />
 
-  <!-- External Libs -->
+  <!-- External libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
-  <!-- App Scripts (bump versions) -->
-  <script defer src="/shell.js?v=341"></script>
-  <script defer src="/app.js?v=3102"></script>
+  <!-- App scripts (cache-busted) -->
+  <script defer src="/shell.js?v=343"></script>
+  <script defer src="/app.js?v=3104"></script>
 </head>
 <body>
   <!-- Startup Splash -->
   <div class="splash" id="startSplash">
-    <!-- … unchanged … -->
+    <div class="splash-inner">
+      <div class="splash-badge">
+        <svg class="splash-bolt" width="140" height="140" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
+      </div>
+      <h1 class="splash-title">
+        <span class="word">Brain</span>
+        <span class="zap">⚡</span>
+        <span class="word">Bolt</span>
+      </h1>
+    </div>
   </div>
 
-  <!-- … header, quiz, countdown … -->
+  <!-- Hero Header -->
+  <header class="topbar hero">
+    <div class="hero-bg">
+      <img src="/header-graphic.svg" alt="" aria-hidden="true" />
+    </div>
+    <div class="hero-inner">
+      <div class="brand">
+        <img src="/app-icon.svg" class="logo" alt="logo" />
+        <div class="brand-text">
+          <h1>Brain ⚡ Bolt</h1>
+          <p class="tagline">Daily 12-question challenge</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button id="soundBtn" aria-label="Toggle sound">🔊</button>
+        <button id="mmMenuBtn" class="menu" aria-label="Open menu">☰</button>
+      </div>
+    </div>
+    <div class="status">
+      <span id="dateLabel"></span>
+      <span id="setLabel">Ready</span>
+      <span id="progressLabel">Q 0/12</span>
+    </div>
+  </header>
 
-  <!-- Success Splash (FIX: no aria-hidden here) -->
+  <!-- Sidebar -->
+  <aside class="side-menu" id="mmSideMenu" aria-hidden="true">
+    <nav class="menu-nav" aria-label="Main">
+      <a href="/" aria-current="page">🏠 Home</a>
+      <a href="/about.html">ℹ️ About</a>
+      <a href="/contact.html">✉️ Contact</a>
+      <a href="/privacy.html">🔒 Privacy</a>
+      <a href="/terms.html">📄 Terms</a>
+      <a href="/signin.html">🔑 Sign In</a>
+      <a href="/pro.html">⭐ Pro</a>
+      <a href="/admin.html">🛠️ Admin</a>
+      <button type="button" id="notifyItem">🔕 Notifications: OFF</button>
+    </nav>
+  </aside>
+
+  <!-- Quiz -->
+  <main class="container">
+    <section class="card quiz-card">
+      <div class="timer-wrapper"><div id="timerBar" class="timer-bar"></div></div>
+      <div class="qtimer-wrapper" title="10-second question timer">
+        <div id="qTimerBar" class="qtimer-bar"></div>
+      </div>
+
+      <div class="meta">
+        <span id="elapsedTime" class="elapsed-time">0:00</span>
+        <div class="pill duo">
+          <span id="pillScore">Score 0</span>
+          <span id="pillStreak">Streak 0</span>
+        </div>
+      </div>
+
+      <div id="questionBox" class="question-box">Press Start to Play</div>
+      <div id="choices" class="choices"></div>
+
+      <div class="controls">
+        <button id="startBtn" class="btn primary">▶️ Start</button>
+        <button id="shuffleBtn" class="btn">🔀 Shuffle</button>
+        <button id="shareBtn" class="btn ghost">📤 Share</button>
+        <button id="playAgainBtn" class="btn" style="display:none;">🔄 Play Again</button>
+      </div>
+
+      <div id="gameOverBox" class="gameover" style="display:none;">
+        <p id="gameOverText"></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Countdown -->
+  <div id="countdownOverlay" class="countdown-overlay" hidden aria-hidden="true">
+    <div class="countdown-dot" id="countNum">3</div>
+  </div>
+
+  <!-- Success Splash (no aria-hidden; visibility controlled by CSS .show) -->
   <div id="successSplash" class="success-splash">
     <div class="splash-inner success-anim">
       <div class="splash-badge">
-        <!-- bolt SVG … -->
+        <svg class="splash-bolt" width="120" height="120" viewBox="0 0 512 512" aria-hidden="true">
+          <path fill="#fff"
+            d="M274 128c4 0 7 4 6 8l-26 84h72c5 0 7 6 4 9L192 406c-3 4-10 1-9-4l28-111h-64c-5 0-8-6-5-10l124-153c2-3 4-4 6-4z"/>
+        </svg>
       </div>
       <h2 class="splash-title">
         <span class="word">Quiz</span>
@@ -52,9 +142,10 @@
     <p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
   </footer>
 
+  <!-- Register Service Worker (cache-busted) -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=342');
+      navigator.serviceWorker.register('/service-worker.js?v=343');
     }
   </script>
 </body>
