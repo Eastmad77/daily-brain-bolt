@@ -1,29 +1,27 @@
-// Brain ⚡ Bolt — shell.js
-// Menu toggle + close-on-click for sidebar. Tiny, dependency-free.
+// ===== Brain ⚡ Bolt — shell.js v3.4 =====
+// Shared nav + notification toggle
 
-(() => {
-  const menuBtn = document.getElementById("menuToggle");
-  const side = document.getElementById("sideMenu");
-  if (!menuBtn || !side) return;
+document.addEventListener("DOMContentLoaded", () => {
+  const menuBtn = document.getElementById("mmMenuBtn");
+  const sideMenu = document.getElementById("mmSideMenu");
+  const notifyItem = document.getElementById("notifyItem");
 
-  menuBtn.addEventListener("click", () => {
-    side.classList.toggle("open");
-    side.setAttribute("aria-hidden", String(!side.classList.contains("open")));
-  });
-
-  // Close sidebar after any click inside (links or buttons)
-  side.querySelectorAll("a,button").forEach((el) => {
-    el.addEventListener("click", () => {
-      side.classList.remove("open");
-      side.setAttribute("aria-hidden", "true");
+  if (menuBtn && sideMenu) {
+    menuBtn.addEventListener("click", () => {
+      const open = sideMenu.classList.contains("open");
+      sideMenu.classList.toggle("open", !open);
+      sideMenu.setAttribute("aria-hidden", open);
     });
-  });
+  }
 
-  // Close on ESC
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && side.classList.contains("open")) {
-      side.classList.remove("open");
-      side.setAttribute("aria-hidden", "true");
-    }
-  });
-})();
+  if (notifyItem) {
+    notifyItem.addEventListener("click", () => {
+      if (notifyItem.textContent.includes("OFF")) {
+        notifyItem.textContent = "🔔 Notifications: ON";
+        alert("You will be reminded daily!");
+      } else {
+        notifyItem.textContent = "🔕 Notifications: OFF";
+      }
+    });
+  }
+});
