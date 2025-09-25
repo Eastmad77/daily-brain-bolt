@@ -1,20 +1,22 @@
-// ===== Brain ⚡ Bolt — App.js v3.10.3 =====
-// Fixes:
-// - startGame is globally available (window.startGame = startGame)
-// - Success splash buttons clickable (aria-hidden removed when showing)
-// - Success splash auto-returns to Home after 5s (cleared if user clicks a button)
-// - Startup splash hides via DOMContentLoaded / load / 4s fallback
+// ===== Brain ⚡ Bolt — App.js v3.10.4 =====
+// Changes vs v3.10.1:
+// - Success splash has no buttons (handled in index.html); auto-returns Home after 5s
+// - Proper "consecutive correct" streak; resets to 0 on any wrong/timeout
+// - Everything else left as-is from your stable version
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
 
-const QUESTION_TIME_MS = 10000;   // 10 seconds per question
+const QUESTION_TIME_MS = 10000;   // 10 seconds
 const QUESTION_TICK_MS = 100;     // smooth bar update (10Hz)
 
-let questions = [], currentIndex = 0, score = 0, wrongStreak = 0, elapsed = 0;
+let questions = [], currentIndex = 0, score = 0;
+let wrongStreak = 0;            // for "two wrong in a row" rule (unchanged)
+let correctStreak = 0;          // NEW: real consecutive-correct streak
+let elapsed = 0;
 let elapsedInterval = null;
 let qTimer = null, qRemaining = QUESTION_TIME_MS, qLastTickSec = 3;
 let soundOn = true;
-let successAutoNav = null; // NEW: auto-return timer
+let successAutoNav = null;      // NEW: timer for auto-return to Home
 
 /* Elements */
 const startBtn = document.getElementById("startBtn");
@@ -48,7 +50,7 @@ function killStartSplash() {
 }
 document.addEventListener('DOMContentLoaded', () => setTimeout(killStartSplash, 900));
 window.addEventListener('load', () => setTimeout(killStartSplash, 900));
-setTimeout(killStartSplash, 4000); // fallback even if load never fires
+setTimeout(killStartSplash, 4000);
 
 /* ===== Audio + haptics ===== */
 function beep(freq=600, dur=0.25) {
@@ -69,7 +71,7 @@ function beep(freq=600, dur=0.25) {
 const beepTick = () => beep(620, 0.22);
 const beepGo   = () => beep(950, 0.28);
 const sfxCorrect   = () => beep(1020, 0.18);
-the sfxIncorrect = () => beep(220, 0.2);
+const sfxIncorrect = () => beep(220, 0.2);
 const tickSoft     = () => beep(740, 0.08);
 function vibrate(ms=100){ if (navigator.vibrate) navigator.vibrate(ms); }
 
@@ -122,14 +124,14 @@ function stopQuestionTimer() {
 
 /* ===== Game flow ===== */
 async function startGame() {
-  clearTimeout(successAutoNav); // cancel any pending auto-return
+  clearTimeout(successAutoNav);
   try {
     successSplash.classList.remove('show'); // ensure hidden
     setLabel && (setLabel.textContent = 'Loading…');
 
     const data = await fetchCSV();
     questions = shuffleArray(data).slice(0,12);
-    currentIndex = 0; score = 0; wrongStreak = 0; elapsed = 0;
+    currentIndex = 0; score = 0; wrongStreak = 0; correctStreak = 0; elapsed = 0;
 
     pillScore.textContent = "Score 0";
     pillStreak.textContent = "Streak 0";
@@ -139,7 +141,7 @@ async function startGame() {
     playAgainBtn.classList.remove("pulse");
     setLabel && (setLabel.textContent = 'Ready');
 
-    // 3→2→1→GO circular countdown
+    // 3→2→1→GO circular countdown (blue circle)
     let n = 3;
     countNum.textContent = n;
     countdownOverlay.hidden = false;
@@ -200,7 +202,8 @@ function showQuestion() {
 function handleTimeout() {
   sfxIncorrect(); vibrate(160);
   wrongStreak++;
-  pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
+  correctStreak = 0; // reset streak on timeout
+  pillStreak.textContent = `Streak ${correctStreak}`;
 
   if (wrongStreak >= 2) { endGame("Two wrong in a row!"); return; }
 
@@ -218,15 +221,18 @@ function handleAnswer(btn, correctText) {
   if (isCorrect) {
     btn.classList.add("correct");
     sfxCorrect(); vibrate(60);
-    score++; wrongStreak = 0;
+    score++;
+    wrongStreak = 0;
+    correctStreak++; // increment consecutive-correct
   } else {
     btn.classList.add("incorrect");
     sfxIncorrect(); vibrate(160);
     wrongStreak++;
+    correctStreak = 0; // reset streak on any wrong
   }
 
   pillScore.textContent = `Score ${score}`;
-  pillStreak.textContent = `Streak ${Math.max(0, score - wrongStreak)}`;
+  pillStreak.textContent = `Streak ${correctStreak}`;
 
   if (wrongStreak >= 2) { setTimeout(()=>endGame("Two wrong in a row!"), 700); return; }
 
@@ -247,51 +253,39 @@ function endGame(msg="") {
     playAgainBtn.style.display = "inline-block";
     playAgainBtn.classList.add("pulse");
   } else {
-    // Ensure overlays aren't blocking and buttons are interactive
+    // Success path: show splash briefly, then auto-return Home
     countdownOverlay && (countdownOverlay.hidden = true);
     successSplash.removeAttribute('aria-hidden');
-    successSplash.classList.remove('show'); // restart animation if needed
-    void successSplash.offsetWidth;        // reflow
+    successSplash.classList.remove('show'); // restart anim if needed
+    void successSplash.offsetWidth;         // reflow
     successSplash.classList.add('show');
 
-    // NEW: auto-return to Home after 5 seconds
     clearTimeout(successAutoNav);
     successAutoNav = setTimeout(() => {
       window.location.href = "/";
-    }, 5000);
+    }, 5000); // 5s auto-return
   }
 }
 
 /* ===== Wire UI ===== */
-startBtn?.addEventListener("click", () => window.startGame());
-shuffleBtn?.addEventListener("click", ()=>{ shuffleArray(questions); currentIndex=0; wrongStreak=0; showQuestion(); });
+startBtn?.addEventListener("click", startGame);
+shuffleBtn?.addEventListener("click", ()=>{
+  shuffleArray(questions);
+  currentIndex=0;
+  wrongStreak=0;
+  correctStreak=0;
+  pillStreak.textContent = `Streak ${correctStreak}`;
+  showQuestion();
+});
 shareBtn?.addEventListener("click", ()=>{
   const text = `I'm playing Brain ⚡ Bolt! Current score: ${score}/12`;
   if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url: location.href}).catch(()=>{});
   else navigator.clipboard?.writeText(`${text} - ${location.href}`);
 });
-playAgainBtn?.addEventListener("click", () => window.startGame());
+playAgainBtn?.addEventListener("click", startGame);
 
-/* Success overlay buttons */
-document.getElementById("ssPlayAgain")?.addEventListener("click", (e)=>{
-  e.preventDefault();
-  successSplash.classList.remove('show');
-  clearTimeout(successAutoNav);
-  window.startGame();
+// Note: success splash no longer has buttons; no listeners needed
+soundBtn?.addEventListener("click", ()=>{
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? "🔊" : "🔇";
 });
-document.getElementById("ssShareScore")?.addEventListener("click", (e)=>{
-  e.preventDefault();
-  clearTimeout(successAutoNav);
-  const text = `I scored ${score}/12 on today’s Brain ⚡ Bolt!`;
-  if (navigator.share) navigator.share({title:"Brain ⚡ Bolt", text, url: location.href}).catch(()=>{});
-  else navigator.clipboard?.writeText(`${text} - ${location.href}`);
-});
-document.getElementById("ssHomeBtn")?.addEventListener("click", (e)=>{
-  e.preventDefault();
-  clearTimeout(successAutoNav);
-  successSplash.classList.remove('show');
-  window.location.href = "/";
-});
-
-/* Make startGame globally reachable (prevents "startGame is not defined") */
-window.startGame = startGame;
