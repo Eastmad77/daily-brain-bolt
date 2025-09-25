@@ -11,14 +11,14 @@
   <link rel="apple-touch-icon" href="/icon-192.png" />
 
   <!-- Styles (cache-busted) -->
-  <link rel="stylesheet" href="/style.css?v=3108" />
+  <link rel="stylesheet" href="/style.css?v=3110" />
 
   <!-- External libs -->
   <script defer src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <!-- App scripts (cache-busted) -->
   <script defer src="/shell.js?v=343"></script>
-  <script defer src="/app.js?v=3108"></script>
+  <script defer src="/app.js?v=3110"></script>
 </head>
 <body>
   <!-- Startup Splash -->
@@ -115,7 +115,7 @@
     <div class="countdown-dot" id="countNum">3</div>
   </div>
 
-  <!-- Success Splash -->
+  <!-- Success Splash (NO buttons now) -->
   <div id="successSplash" class="success-splash">
     <div class="splash-inner success-anim">
       <div class="splash-badge">
@@ -129,12 +129,8 @@
         <span class="zap">⚡</span>
         <span class="word">Complete!</span>
       </h2>
-      <p class="splash-msg">A fresh quiz will be ready for you tomorrow ⚡</p>
-      <div class="splash-buttons">
-        <a href="#" id="ssPlayAgain" class="btn primary">🔄 Play Again</a>
-        <a href="/" id="ssHomeBtn" class="btn">🏠 Home</a>
-        <a href="#" id="ssShareScore" class="btn ghost">📤 Share</a>
-      </div>
+      <p class="splash-msg">Returning to Home…</p>
+      <!-- Buttons removed -->
     </div>
   </div>
 
@@ -145,7 +141,7 @@
   <!-- Register Service Worker (cache-busted) -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js?v=345');
+      navigator.serviceWorker.register('/service-worker.js?v=346');
     }
   </script>
 </body>
