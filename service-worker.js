@@ -1,10 +1,10 @@
-// Brain ⚡ Bolt — Service Worker v3.4.1
+// Brain ⚡ Bolt — Service Worker v3.4.2 (patched)
 // - Force-refresh new assets
 // - Navigation preload warning fixed
 // - Live CSV fetched network-only to avoid staleness
 
-const STATIC = 'bb-static-v3.4.1';
-const RUNTIME = 'bb-runtime-v3.4.1';
+const STATIC = 'bb-static-v3.4.2';
+const RUNTIME = 'bb-runtime-v3.4.2';
 
 const ASSETS = [
   '/', '/index.html',
