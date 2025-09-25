@@ -1,10 +1,10 @@
-// Brain ⚡ Bolt — Service Worker v3.4.4 (patched)
-// - Force-refresh new assets
-// - Navigation preload warning fixed
-// - Live CSV fetched network-only to avoid staleness
+// Brain ⚡ Bolt — Service Worker v3.4.5
+// - Force-refresh new assets (STATIC/RUNTIME cache bump)
+// - Navigation preload enabled
+// - Live Google Sheets CSV is always fetched fresh
 
-const STATIC  = 'bb-static-v3.4.4';
-const RUNTIME = 'bb-runtime-v3.4.4';
+const STATIC  = 'bb-static-v3.4.5';
+const RUNTIME = 'bb-runtime-v3.4.5';
 
 const ASSETS = [
   '/', '/index.html',
@@ -21,10 +21,11 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
-    // Enable navigation preload (avoids console warning and speeds first paint)
+    // Enable navigation preload
     if ('navigationPreload' in self.registration) {
       try { await self.registration.navigationPreload.enable(); } catch {}
     }
+    // Remove old caches
     const keys = await caches.keys();
     await Promise.all(
       keys.map((k) => {
@@ -35,6 +36,7 @@ self.addEventListener('activate', (event) => {
   })());
 });
 
+// Helper: detect live Google Sheets CSV
 const isSheetsCsv = (url) => {
   try {
     const u = new URL(url);
@@ -50,13 +52,13 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(req.url);
 
-  // LIVE CSV must always be fresh
+  // LIVE CSV → always fresh
   if (isSheetsCsv(req.url)) {
     event.respondWith(fetch(req, { cache: 'no-store' }).catch(() => Response.error()));
     return;
   }
 
-  // Navigations: use navigation preload, then network, then fallback
+  // Navigations: use preload, then network, then fallback
   if (req.mode === 'navigate') {
     event.respondWith((async () => {
       try {
@@ -75,7 +77,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Same-origin: cache-first for known assets, SWR for others
+  // Same-origin assets
   if (url.origin === self.location.origin) {
     if (ASSETS.includes(url.pathname)) {
       event.respondWith(cacheFirst(req));
@@ -85,7 +87,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Cross-origin: network-first with cache fallback
+  // Cross-origin: network-first
   event.respondWith(fetch(req).catch(() => caches.match(req)));
 });
 
