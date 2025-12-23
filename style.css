@@ -1,4 +1,4 @@
-/* ===== Brain ⚡ Bolt — Style v3.16 (hero 10/10 + zap fix + glass rails) ===== */
+/* ===== Brain ⚡ Bolt — Style v3.15 (hero polish + glass sweep) ===== */
 
 :root{
   --color-dark:#0d1117; --color-dark-2:#161b22; --color-dark-3:#1f242d;
@@ -33,10 +33,6 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 @keyframes bgSweep{0%{transform:translateX(-2%) translateY(0)}100%{transform:translateX(2%) translateY(-1%)}}
 .splash.hiding{opacity:0;transition:opacity .5s ease}
 
-/* ✅ CRITICAL FIX: Hide overlays unless explicitly shown by JS */
-.success-splash[aria-hidden="true"]{display:none}
-.countdown-overlay[aria-hidden="true"]{display:none}
-
 /* ================= Header / Hero ================= */
 .topbar{
   background:var(--color-dark-2);
@@ -46,31 +42,14 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   position:relative;overflow:hidden
 }
 
-/* ✅ 10/10 hero: glass rails + vignette (layout-safe) */
-.topbar::before{
-  content:"";
-  position:absolute; inset:0;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.06), transparent 38%),
-    radial-gradient(90% 120% at 20% 0%, rgba(41,255,161,.10), transparent 55%),
-    radial-gradient(90% 120% at 80% 0%, rgba(26,115,232,.14), transparent 58%);
-  pointer-events:none;
-  z-index:0;
-}
-.topbar::after{
-  content:"";
-  position:absolute; inset:0;
-  background:radial-gradient(120% 140% at 50% 0%, transparent 55%, rgba(0,0,0,.35) 100%);
-  pointer-events:none;
-  z-index:0;
-}
-
 .hero-bg{position:absolute;inset:0;pointer-events:none;opacity:.18}
 .hero-bg img{
-  width:100%;
-  height:100%;
-  object-fit:cover;
+  width:100%;height:100%;object-fit:cover;
   animation:heroDrift 22s ease-in-out infinite alternate
+}
+@keyframes heroDrift{
+  from{transform:scale(1) translateX(0)}
+  to{transform:scale(1.04) translateX(-12px)}
 }
 
 .hero-inner{
@@ -81,21 +60,19 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   min-height:84px
 }
 
-@keyframes heroDrift{
-  from{transform:scale(1) translateX(0)}
-  to{transform:scale(1.04) translateX(-12px)}
-}
-
-/* Ambient hero glow (subtle, layout-safe) */
+/* --- Ambient hero glow --- */
 .hero-inner::before{
   content:"";
   position:absolute;
-  left:-40px;
-  top:50%;
+  left:-40px;top:50%;
   transform:translateY(-50%);
-  width:280px;
-  height:280px;
-  background:radial-gradient(50% 50% at 50% 50%, rgba(41,255,161,.18), rgba(41,255,161,.05) 40%, transparent 70%);
+  width:280px;height:280px;
+  background:radial-gradient(
+    50% 50% at 50% 50%,
+    rgba(41,255,161,.18),
+    rgba(41,255,161,.05) 40%,
+    transparent 70%
+  );
   filter:blur(18px);
   animation:heroGlow 6s ease-in-out infinite alternate;
   pointer-events:none;
@@ -109,23 +86,14 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 
 /* ================= Brand ================= */
 .brand{display:flex;align-items:center;gap:.75rem}
-.logo{
-  width:42px;height:42px;
-  border-radius:50%;
-  box-shadow:
-    0 10px 30px rgba(0,0,0,.35),
-    0 0 0 1px rgba(255,255,255,.08),
-    0 0 24px rgba(26,115,232,.22);
-}
+.logo{width:42px;height:42px}
 
 .brand-text .kicker{
   font-size:.82rem;
   letter-spacing:.08em;
   text-transform:uppercase;
   color:var(--text-muted);
-  margin-bottom:.15rem;
-  opacity:.9;
-  text-shadow:0 6px 18px rgba(0,0,0,.35);
+  margin-bottom:.15rem
 }
 
 /* --- Title (gradient + glass sweep) --- */
@@ -137,48 +105,57 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   letter-spacing:.2px;
   color:#fff;
   overflow:hidden;
-  text-shadow:
-    0 1px 0 rgba(0,0,0,.35),
-    0 10px 30px rgba(0,0,0,.35);
 }
 
-/* Gradient title text (safe fallback) */
+/* Gradient text (safe fallback) */
 @supports (-webkit-background-clip:text){
   .brand-text h1{
-    background:linear-gradient(90deg,#ffffff 0%,#e6f0ff 40%,#ffffff 70%);
+    background:linear-gradient(
+      90deg,
+      #ffffff 0%,
+      #e6f0ff 40%,
+      #ffffff 70%
+    );
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
   }
 }
 
-/* Glass highlight sweep (one-time on load) */
+/* 🔥 Glass highlight sweep (one-time) */
 .brand-text h1::after{
   content:"";
   position:absolute;
   inset:-40% -60%;
-  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.65) 48%,rgba(255,255,255,.85) 50%,rgba(255,255,255,.65) 52%,transparent 65%);
+  background:linear-gradient(
+    110deg,
+    transparent 35%,
+    rgba(255,255,255,.65) 48%,
+    rgba(255,255,255,.85) 50%,
+    rgba(255,255,255,.65) 52%,
+    transparent 65%
+  );
   transform:translateX(-120%);
   filter:blur(6px);
   opacity:.9;
   animation:titleGlassSweep 1.2s ease-out .4s forwards;
   pointer-events:none;
 }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .brand-text h1::after{display:none}
+}
+
 @keyframes titleGlassSweep{
   from{transform:translateX(-120%)}
   to{transform:translateX(120%)}
 }
 
-/* ⚡ Zap micro-motion (✅ force visible even with gradient-clipped h1) */
+/* ⚡ Zap micro-motion */
 .brand-text h1 .zap{
   display:inline-block;
-  margin:0 .18em;
-  color:#fff;
-  -webkit-text-fill-color:#fff;          /* ✅ critical override */
-  background:none !important;
-  -webkit-background-clip:initial;
   filter:drop-shadow(0 0 10px rgba(255,255,255,.35));
-  animation:zapPulse 2.8s ease-in-out infinite;
-  transform-origin:50% 60%;
+  animation:zapPulse 2.8s ease-in-out infinite
 }
 @keyframes zapPulse{
   0%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 6px rgba(255,255,255,.4))}
@@ -192,8 +169,7 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   color:var(--text-muted);
   position:relative;
   padding-left:14px;
-  letter-spacing:.02em;
-  text-shadow:0 6px 18px rgba(0,0,0,.35);
+  letter-spacing:.02em
 }
 .brand-text .tagline::before{
   content:"";
@@ -204,14 +180,6 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   background:var(--color-green);
   transform:translateY(-50%);
   box-shadow:0 0 10px rgba(41,255,161,.8)
-}
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce){
-  .hero-bg img{animation:none}
-  .hero-inner::before{animation:none}
-  .brand-text h1::after{display:none}
-  .brand-text h1 .zap{animation:none}
 }
 
 /* ================= Status ================= */
