@@ -1,0 +1,286 @@
+/* ===== Brain ⚡ Bolt — Style v3.16 (hero 10/10 + zap fix + glass rails) ===== */
+
+:root{
+  --color-dark:#0d1117; --color-dark-2:#161b22; --color-dark-3:#1f242d;
+  --color-blue:#1a73e8; --color-blue-deep:#0b53c6; --color-green:#29ffa1;
+  --text-light:#ffffff; --text-muted:#a6b3c5; --danger:#ff4c4c;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;
+  background:var(--color-dark);
+  color:var(--text-light)
+}
+a{color:var(--color-blue)} a:hover{text-decoration:underline}
+
+/* ================= Splash ================= */
+.splash,.success-splash{
+  position:fixed;inset:0;z-index:1000;
+  display:grid;place-items:center;
+  background:radial-gradient(120% 80% at 50% 20%,#1a73e8 0%,#0b53c6 50%,#0b2f5f 100%);
+  overflow:hidden
+}
+.splash::before,.success-splash::before{
+  content:"";position:absolute;inset:-20% -10%;
+  background:
+    radial-gradient(60% 40% at 20% 10%,rgba(41,255,161,.15),transparent 60%),
+    radial-gradient(60% 40% at 80% 5%,rgba(255,255,255,.08),transparent 60%);
+  filter:saturate(1.1);
+  animation:bgSweep 6s ease-in-out infinite alternate
+}
+@keyframes bgSweep{0%{transform:translateX(-2%) translateY(0)}100%{transform:translateX(2%) translateY(-1%)}}
+.splash.hiding{opacity:0;transition:opacity .5s ease}
+
+/* ✅ CRITICAL FIX: Hide overlays unless explicitly shown by JS */
+.success-splash[aria-hidden="true"]{display:none}
+.countdown-overlay[aria-hidden="true"]{display:none}
+
+/* ================= Header / Hero ================= */
+.topbar{
+  background:var(--color-dark-2);
+  padding:1rem 1rem .6rem;
+  display:flex;flex-direction:column;
+  border-bottom:1px solid var(--color-dark-3);
+  position:relative;overflow:hidden
+}
+
+/* ✅ 10/10 hero: glass rails + vignette (layout-safe) */
+.topbar::before{
+  content:"";
+  position:absolute; inset:0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), transparent 38%),
+    radial-gradient(90% 120% at 20% 0%, rgba(41,255,161,.10), transparent 55%),
+    radial-gradient(90% 120% at 80% 0%, rgba(26,115,232,.14), transparent 58%);
+  pointer-events:none;
+  z-index:0;
+}
+.topbar::after{
+  content:"";
+  position:absolute; inset:0;
+  background:radial-gradient(120% 140% at 50% 0%, transparent 55%, rgba(0,0,0,.35) 100%);
+  pointer-events:none;
+  z-index:0;
+}
+
+.hero-bg{position:absolute;inset:0;pointer-events:none;opacity:.18}
+.hero-bg img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  animation:heroDrift 22s ease-in-out infinite alternate
+}
+
+.hero-inner{
+  position:relative;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  min-height:84px
+}
+
+@keyframes heroDrift{
+  from{transform:scale(1) translateX(0)}
+  to{transform:scale(1.04) translateX(-12px)}
+}
+
+/* Ambient hero glow (subtle, layout-safe) */
+.hero-inner::before{
+  content:"";
+  position:absolute;
+  left:-40px;
+  top:50%;
+  transform:translateY(-50%);
+  width:280px;
+  height:280px;
+  background:radial-gradient(50% 50% at 50% 50%, rgba(41,255,161,.18), rgba(41,255,161,.05) 40%, transparent 70%);
+  filter:blur(18px);
+  animation:heroGlow 6s ease-in-out infinite alternate;
+  pointer-events:none;
+  z-index:0
+}
+@keyframes heroGlow{
+  from{opacity:.6;transform:translateY(-50%) scale(.96)}
+  to{opacity:.9;transform:translateY(-50%) scale(1.04)}
+}
+.hero-inner > *{position:relative;z-index:1}
+
+/* ================= Brand ================= */
+.brand{display:flex;align-items:center;gap:.75rem}
+.logo{
+  width:42px;height:42px;
+  border-radius:50%;
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.35),
+    0 0 0 1px rgba(255,255,255,.08),
+    0 0 24px rgba(26,115,232,.22);
+}
+
+.brand-text .kicker{
+  font-size:.82rem;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--text-muted);
+  margin-bottom:.15rem;
+  opacity:.9;
+  text-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+
+/* --- Title (gradient + glass sweep) --- */
+.brand-text h1{
+  position:relative;
+  font-size:1.6rem;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.2px;
+  color:#fff;
+  overflow:hidden;
+  text-shadow:
+    0 1px 0 rgba(0,0,0,.35),
+    0 10px 30px rgba(0,0,0,.35);
+}
+
+/* Gradient title text (safe fallback) */
+@supports (-webkit-background-clip:text){
+  .brand-text h1{
+    background:linear-gradient(90deg,#ffffff 0%,#e6f0ff 40%,#ffffff 70%);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+}
+
+/* Glass highlight sweep (one-time on load) */
+.brand-text h1::after{
+  content:"";
+  position:absolute;
+  inset:-40% -60%;
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.65) 48%,rgba(255,255,255,.85) 50%,rgba(255,255,255,.65) 52%,transparent 65%);
+  transform:translateX(-120%);
+  filter:blur(6px);
+  opacity:.9;
+  animation:titleGlassSweep 1.2s ease-out .4s forwards;
+  pointer-events:none;
+}
+@keyframes titleGlassSweep{
+  from{transform:translateX(-120%)}
+  to{transform:translateX(120%)}
+}
+
+/* ⚡ Zap micro-motion (✅ force visible even with gradient-clipped h1) */
+.brand-text h1 .zap{
+  display:inline-block;
+  margin:0 .18em;
+  color:#fff;
+  -webkit-text-fill-color:#fff;          /* ✅ critical override */
+  background:none !important;
+  -webkit-background-clip:initial;
+  filter:drop-shadow(0 0 10px rgba(255,255,255,.35));
+  animation:zapPulse 2.8s ease-in-out infinite;
+  transform-origin:50% 60%;
+}
+@keyframes zapPulse{
+  0%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 6px rgba(255,255,255,.4))}
+  50%{transform:scale(1.08) rotate(-3deg);filter:drop-shadow(0 0 14px rgba(255,255,255,.8))}
+  100%{transform:scale(1) rotate(0deg)}
+}
+
+/* Tagline accent */
+.brand-text .tagline{
+  font-size:.9rem;
+  color:var(--text-muted);
+  position:relative;
+  padding-left:14px;
+  letter-spacing:.02em;
+  text-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+.brand-text .tagline::before{
+  content:"";
+  position:absolute;
+  left:0;top:50%;
+  width:6px;height:6px;
+  border-radius:50%;
+  background:var(--color-green);
+  transform:translateY(-50%);
+  box-shadow:0 0 10px rgba(41,255,161,.8)
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .hero-bg img{animation:none}
+  .hero-inner::before{animation:none}
+  .brand-text h1::after{display:none}
+  .brand-text h1 .zap{animation:none}
+}
+
+/* ================= Status ================= */
+.status{
+  margin-top:.45rem;
+  font-size:.9rem;
+  color:var(--text-muted);
+  display:flex;
+  gap:.75rem
+}
+
+/* ================= Quiz ================= */
+.container{padding:1rem}
+.card{
+  background:var(--color-dark-2);
+  padding:1rem;
+  border-radius:.75rem;
+  box-shadow:0 2px 12px rgba(0,0,0,.4)
+}
+
+.question-box{font-size:1.25rem;margin:1rem 0}
+.choices{display:flex;flex-direction:column;gap:.5rem}
+.choices button{
+  background:var(--color-dark-3);
+  border:1px solid var(--color-dark-3);
+  padding:.75rem;
+  border-radius:.5rem;
+  color:#fff;
+  text-align:left;
+  cursor:pointer
+}
+.choices button.correct{background:var(--color-green);color:#000}
+.choices button.incorrect{background:var(--danger)}
+
+/* ================= Timers ================= */
+.qtimer-wrapper{
+  height:8px;
+  background:#0c274f;
+  margin-bottom:.5rem;
+  border-radius:4px;
+  overflow:hidden
+}
+.qtimer-bar{
+  height:8px;
+  width:100%;
+  background:linear-gradient(90deg,#29a1ff,#1a73e8,#0b53c6);
+  transition:width .1s linear
+}
+.qtimer-bar.warn{
+  background:linear-gradient(90deg,#ff7a7a,#ff4c4c)
+}
+
+/* ================= Streak ================= */
+.streak-vis{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  gap:10px;
+  margin:14px 0 4px
+}
+.streak-dot{
+  height:16px;
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 8px 18px rgba(0,0,0,.32)
+}
+.streak-dot.is-correct{
+  background:linear-gradient(90deg,#1be28a,#29ffa1)
+}
+.streak-dot.is-wrong{
+  background:linear-gradient(90deg,#ff6d6d,#ff4c4c)
+}
