@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "sharp": "^0.33.4"
+  },
+  "scripts": {
+    "build:images": "node scripts/export-images.js",
+    "prebuild": "npm run build:images",
+    "build": "echo 'Static site build complete'"
+  }
+}

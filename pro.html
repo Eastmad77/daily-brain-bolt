@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pro • The Daily Brain Bolt</title>
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/style.css?v=5100" />
+  <script src="/shell.js?v=5100" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="hero-bg"><img src="/header-graphic.svg" alt=""></div>
+    <div class="hero-inner">
+      <a class="brand" href="/">
+        <img src="/app-icon.svg" alt="" class="logo" />
+        <div class="brand-text">
+          <div class="kicker">The Daily</div>
+          <h1>Brain <span class="zap">⚡</span> Bolt</h1>
+          <div class="tagline">Sharpen your mind — daily.</div>
+        </div>
+      </a>
+      <div class="actions">
+        <button id="mmMenuBtn" aria-label="Menu">☰</button>
+      </div>
+    </div>
+    <div class="status"><span class="muted">Pro Membership</span></div>
+  </header>
+
+  <!-- Side menu -->
+  <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <nav class="menu-nav">
+      <a href="/">🏠 Home</a>
+      <a href="/about.html">ℹ️ About</a>
+      <a href="/pro.html" aria-current="page">⭐ Pro</a>
+      <a href="/privacy.html">🔒 Privacy</a>
+      <a href="/terms.html">📄 Terms</a>
+      <a href="/contact.html">✉️ Contact</a>
+    </nav>
+  </aside>
+
+  <main class="container">
+    <section class="card">
+      <h1>Go Pro</h1>
+      <p class="muted">Unlock ad-free play, advanced stats, hard mode, and streak boosts.</p>
+
+      <div style="display:grid; gap:1rem; grid-template-columns:1fr; margin-top:1rem">
+        <div class="card" style="background:var(--color-dark-3)">
+          <h2>Monthly</h2>
+          <p class="price" style="margin:.25rem 0 1rem; font-size:1.25rem">NZ$3.99 / mo</p>
+          <button class="btn primary" id="btnMonthly">Subscribe Monthly</button>
+        </div>
+        <div class="card" style="background:var(--color-dark-3)">
+          <h2>Yearly</h2>
+          <p class="price" style="margin:.25rem 0 .25rem; font-size:1.25rem">NZ$39.99 / yr</p>
+          <p class="muted small" style="margin-bottom:1rem">Save big vs monthly</p>
+          <button class="btn primary" id="btnYearly">Subscribe Yearly</button>
+        </div>
+      </div>
+
+      <div id="proError" class="footer" style="display:none; color:var(--danger)" role="alert"></div>
+    </section>
+
+    <section class="card">
+      <h2>What you get</h2>
+      <ul style="margin:.5rem 0 0 1.25rem; line-height:1.7">
+        <li>Ad-free experience</li>
+        <li>Advanced stats & streak insights</li>
+        <li>Hard mode + bonus sets</li>
+        <li>Priority features</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2025 Brain ⚡ Bolt · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a></p>
+  </footer>
+
+  <script>
+    function startCheckout(plan){
+      const err = document.getElementById('proError');
+      err.style.display = 'none';
+      try {
+        alert('Starting checkout for: ' + plan);
+        // TODO: integrate Stripe/PayPal/etc.
+      } catch(e){
+        err.textContent = 'Could not start checkout. Please try again.';
+        err.style.display = 'block';
+        console.error(e);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnMonthly')?.addEventListener('click', () => startCheckout('monthly'));
+      document.getElementById('btnYearly') ?.addEventListener('click', () => startCheckout('yearly'));
+    });
+  </script>
+</body>
+</html>
