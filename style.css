@@ -33,6 +33,10 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 @keyframes bgSweep{0%{transform:translateX(-2%) translateY(0)}100%{transform:translateX(2%) translateY(-1%)}}
 .splash.hiding{opacity:0;transition:opacity .5s ease}
 
+/* ✅ CRITICAL FIX: Hide overlays unless explicitly shown by JS */
+.success-splash[aria-hidden="true"]{display:none}
+.countdown-overlay[aria-hidden="true"]{display:none}
+
 /* ================= Header / Hero ================= */
 .topbar{
   background:var(--color-dark-2);
@@ -44,12 +48,10 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
 
 .hero-bg{position:absolute;inset:0;pointer-events:none;opacity:.18}
 .hero-bg img{
-  width:100%;height:100%;object-fit:cover;
+  width:100%;
+  height:100%;
+  object-fit:cover;
   animation:heroDrift 22s ease-in-out infinite alternate
-}
-@keyframes heroDrift{
-  from{transform:scale(1) translateX(0)}
-  to{transform:scale(1.04) translateX(-12px)}
 }
 
 .hero-inner{
@@ -60,19 +62,21 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   min-height:84px
 }
 
-/* --- Ambient hero glow --- */
+@keyframes heroDrift{
+  from{transform:scale(1) translateX(0)}
+  to{transform:scale(1.04) translateX(-12px)}
+}
+
+/* Ambient hero glow (subtle, layout-safe) */
 .hero-inner::before{
   content:"";
   position:absolute;
-  left:-40px;top:50%;
+  left:-40px;
+  top:50%;
   transform:translateY(-50%);
-  width:280px;height:280px;
-  background:radial-gradient(
-    50% 50% at 50% 50%,
-    rgba(41,255,161,.18),
-    rgba(41,255,161,.05) 40%,
-    transparent 70%
-  );
+  width:280px;
+  height:280px;
+  background:radial-gradient(50% 50% at 50% 50%, rgba(41,255,161,.18), rgba(41,255,161,.05) 40%, transparent 70%);
   filter:blur(18px);
   animation:heroGlow 6s ease-in-out infinite alternate;
   pointer-events:none;
@@ -107,45 +111,27 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   overflow:hidden;
 }
 
-/* Gradient text (safe fallback) */
+/* Gradient title text (safe fallback) */
 @supports (-webkit-background-clip:text){
   .brand-text h1{
-    background:linear-gradient(
-      90deg,
-      #ffffff 0%,
-      #e6f0ff 40%,
-      #ffffff 70%
-    );
+    background:linear-gradient(90deg,#ffffff 0%,#e6f0ff 40%,#ffffff 70%);
     -webkit-background-clip:text;
     -webkit-text-fill-color:transparent;
   }
 }
 
-/* 🔥 Glass highlight sweep (one-time) */
+/* Glass highlight sweep (one-time on load) */
 .brand-text h1::after{
   content:"";
   position:absolute;
   inset:-40% -60%;
-  background:linear-gradient(
-    110deg,
-    transparent 35%,
-    rgba(255,255,255,.65) 48%,
-    rgba(255,255,255,.85) 50%,
-    rgba(255,255,255,.65) 52%,
-    transparent 65%
-  );
+  background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.65) 48%,rgba(255,255,255,.85) 50%,rgba(255,255,255,.65) 52%,transparent 65%);
   transform:translateX(-120%);
   filter:blur(6px);
   opacity:.9;
   animation:titleGlassSweep 1.2s ease-out .4s forwards;
   pointer-events:none;
 }
-
-/* Respect reduced motion */
-@media (prefers-reduced-motion: reduce){
-  .brand-text h1::after{display:none}
-}
-
 @keyframes titleGlassSweep{
   from{transform:translateX(-120%)}
   to{transform:translateX(120%)}
@@ -180,6 +166,14 @@ a{color:var(--color-blue)} a:hover{text-decoration:underline}
   background:var(--color-green);
   transform:translateY(-50%);
   box-shadow:0 0 10px rgba(41,255,161,.8)
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .hero-bg img{animation:none}
+  .hero-inner::before{animation:none}
+  .brand-text h1::after{display:none}
+  .brand-text h1 .zap{animation:none}
 }
 
 /* ================= Status ================= */
