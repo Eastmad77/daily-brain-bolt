@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Daily Brain Bolt</title>
+
+  <!-- PWA / Icons -->
+  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="icon" href="/favicon.svg" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/style.css?v=5111" />
+
+  <!-- Libraries & App scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js" defer></script>
+  <script src="/shell.js?v=5111" defer></script>
+  <script src="/app.js?v=5111" defer></script>
+</head>
+
+<body>
+  <!-- Start splash -->
+  <div id="startSplash" class="splash success-anim" role="dialog" aria-live="polite">
+    <div class="splash-inner">
+      <div class="splash-badge">
+        <img src="/app-icon.svg" alt="Brain Bolt logo" class="splash-bolt" width="110" height="110">
+      </div>
+      <div class="splash-title">Brain <span class="zap">⚡</span> Bolt</div>
+      <div class="splash-msg">Loading today’s set…</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="topbar">
+    <div class="hero-bg"><img src="/header-graphic.svg" alt=""></div>
+
+    <div class="hero-inner">
+      <a class="brand" href="/">
+        <img src="/app-icon.svg" alt="" class="logo" />
+        <div class="brand-text">
+          <div class="kicker">The Daily</div>
+          <h1>Brain <span class="zap">⚡</span> Bolt</h1>
+          <div class="tagline">Sharpen your mind — daily.</div>
+        </div>
+      </a>
+
+      <div class="actions">
+        <button id="mmMenuBtn" aria-label="Menu">☰</button>
+        <!-- Notifications moved to side menu -->
+        <button id="soundBtn" aria-label="Sound">🔊</button>
+      </div>
+    </div>
+
+    <div class="status" aria-live="polite">
+      <span id="setLabel" class="muted">Ready</span>
+      <span id="pillScore" class="muted">Score 0</span>
+      <span id="progressLabel" class="muted">Round 1/3 • Q 0/12</span>
+    </div>
+  </header>
+
+  <!-- Side menu -->
+  <aside id="mmSideMenu" class="side-menu" aria-hidden="true">
+    <nav class="menu-nav">
+      <a href="/" aria-current="page">🏠 Home</a>
+      <a href="/about.html">ℹ️ About</a>
+      <a href="/pro.html">⭐ Pro</a>
+      <a href="/privacy.html">🔒 Privacy</a>
+      <a href="/terms.html">📄 Terms</a>
+      <a href="/contact.html">✉️ Contact</a>
+      <hr class="menu-sep" />
+      <!-- Notifications now lives in the menu -->
+      <button id="notifyItem" aria-label="Notifications" class="menu-btn">🔔 Notifications: ON</button>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="container">
+    <section class="card quiz-card">
+      <!-- Overall timer -->
+      <div class="timer-wrapper">
+        <div id="timerBar" class="timer-bar"></div>
+      </div>
+
+      <div class="elapsed-time">Time: <span id="elapsedTime">0:00</span></div>
+
+      <!-- Countdown overlay -->
+      <div id="countdownOverlay" class="countdown-overlay" aria-hidden="true">
+        <div id="countNum" class="count-num">3</div>
+      </div>
+
+      <!-- Success splash -->
+      <div id="successSplash" class="success-splash" aria-hidden="true">
+        <div class="success-inner">
+          <div class="success-title">Nice work.</div>
+          <div class="success-sub">New set ready soon.</div>
+        </div>
+      </div>
+
+      <!-- Question -->
+      <div id="questionBox" class="question">Press Start to Play</div>
+
+      <!-- Choices -->
+      <div id="choices" class="choices"></div>
+
+      <!-- Streak dots -->
+      <div id="streakBar" class="streak-bar"></div>
+
+      <!-- Game over -->
+      <div id="gameOverBox" class="gameover" style="display:none;">
+        <div id="gameOverText" class="gameover-text"></div>
+      </div>
+
+      <!-- Buttons -->
+      <div class="controls">
+        <button id="startBtn" class="btn primary">Start</button>
+        <button id="shuffleBtn" class="btn">Shuffle Set</button>
+        <button id="shareBtn" class="btn">Share</button>
+        <button id="playAgainBtn" class="btn primary" style="display:none;">Play Again</button>
+      </div>
+    </section>
+  </main>
+</body>
+
+</html>
