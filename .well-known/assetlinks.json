@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.dailybrainbolt.app",
+      "sha256_cert_fingerprints": [
+        "94:EA:B2:F5:12:63:1D:03:72:D4:9E:05:5E:B9:AD:FF:6A:BA:38:31:AD:D9:31:1B:63:7C:59:22:73:7D:64:29"
+      ]
+    }
+  }
+]
