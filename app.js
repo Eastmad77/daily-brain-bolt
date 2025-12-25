@@ -1,861 +1,1074 @@
-/* ===== Brain ⚡ Bolt — App.js v3.16.0 (Rounds + Match Near-Miss Decoys + Splash Fix) =====
-   - Works with current index.html IDs:
-     startSplash, splashMsg, startBtn, shuffleBtn, soundBtn,
-     questionBox, choices, timerBar, qTimerBar, dots, pillScore, setLabel, qIndex,
-     countdownOverlay, countNum, countRing
-   - 36 questions: 3 rounds of 12
-     Round 1: QUIZ (Q1–Q12)
-     Round 2: MATCH (Q13–Q24) with HARD “near-miss” decoys
-     Round 3: QUIZ (Q25–Q36)
-*/
+// ===== Brain ⚡ Bolt — App.js v3.16.0 (Splash-safe + Level 2 restored + Near-miss decoys) =====
+//
+// Fixes your current issue:
+// ✅ No longer crashes if index.html doesn’t have optA/optB/optC/optD buttons
+// ✅ Works with your current DOM (questionBox + choices container)
+// ✅ Splash will always dismiss (or shows an error message instead of freezing)
+// ✅ Keeps 36 questions: 3 rounds of 12 (Round 2 = MATCH)
+// ✅ Level 2 will not be skipped (guards + strict round slicing)
+// ✅ Match round uses "Hard Mode Near-miss Decoys" (decoys feel plausibly correct)
+//
+// Notes:
+// - This file does NOT require layout changes. It creates option buttons inside #choices if missing.
+// - CSV is fetched with a cache-buster to avoid stale Sheets/Service Worker caches.
 
-const CSV_URL =
-  "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
+(() => {
+  "use strict";
 
-const QUESTION_TIME_MS = 10000; // 10s per quiz question
-const QUESTION_TICK_MS = 100;   // timer bar tick
+  // ---------------------------- CONFIG ----------------------------
+  const TZ = "Pacific/Auckland";
 
-const TOTAL_QUESTIONS = 36;
-const ROUND_SIZE = 12;
-const TOTAL_ROUNDS = 3;
+  // Published sheet CSV (you confirmed working)
+  const CSV_URL =
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vS6725qpD0gRYajBJaOjxcSpTFxJtS2fBzrT1XAjp9t5SHnBJCrLFuHY4C51HFV0A4MK-4c6t7jTKGG/pub?gid=1410250735&single=true&output=csv";
 
-// Round modes: 1 quiz, 2 match, 3 quiz
-const ROUND_MODES = ["quiz", "match", "quiz"];
+  // Timers
+  const QUESTION_TIME_MS = 10000; // 10s answer timer
+  const QUESTION_TICK_MS = 100; // timer UI update frequency
 
-// Match mode (Round 2) — HARD: near-miss decoys
-const MATCH_PAIRS = 6;   // 6 left clues
-const MATCH_DECOYS = 6;  // + 6 decoy answers on right
-const MATCH_TOTAL_TIME_MS = 45000; // total time for match round
+  // Rounds
+  const TOTAL_QUESTIONS = 36;
+  const ROUND_SIZE = 12;
+  const TOTAL_ROUNDS = 3;
+  const ROUND_MODES = ["quiz", "match", "quiz"]; // Round 2 is MATCH
 
-// Redemption rule
-// - You can make up to 3 wrong total (game over on 3).
-// - After a wrong, 3 consecutive correct answers “redeem” one wrong.
-const MAX_WRONG = 3;
-const REDEEM_STREAK = 3;
+  // Match mode (Round 2)
+  const MATCH_PAIRS = 6; // 6 left clues
+  const MATCH_DECOYS = 6; // 6 right-side decoys (Hard mode)
+  const MATCH_TOTAL_RIGHT = MATCH_PAIRS + MATCH_DECOYS;
 
-/* ---------------- DOM ---------------- */
-const $ = (id) => document.getElementById(id);
+  // Redemption rule (matches what you described earlier)
+  // - 3 wrong ends run
+  // - every 3 correct since last wrong removes 1 wrong (down to 0)
+  const MAX_WRONG = 3;
+  const REDEEM_STREAK = 3;
 
-const startSplash = $("startSplash");
-const splashMsg = $("splashMsg");
+  // ---------------------------- DOM HELPERS ----------------------------
+  const $ = (id) => document.getElementById(id);
 
-const startBtn = $("startBtn");
-const shuffleBtn = $("shuffleBtn");
-const soundBtn = $("soundBtn");
-
-const questionBox = $("questionBox");
-const choices = $("choices");
-
-const timerBar = $("timerBar");     // overall progress bar (we use as progress)
-const qTimerBar = $("qTimerBar");   // per-question timer bar
-
-const dots = $("dots");
-const pillScore = $("pillScore");
-const setLabel = $("setLabel");
-const qIndex = $("qIndex");
-
-const countdownOverlay = $("countdownOverlay");
-const countNum = $("countNum");
-const countRing = $("countRing");
-
-/* ---------------- State ---------------- */
-let questions = [];          // all 36 rows
-let playing = false;
-
-let soundOn = true;
-
-// game progress
-let score = 0;
-let wrongTotal = 0;
-let correctSinceLastWrong = 0;
-
-// indices
-let globalIndex = 0;         // 0..35 (across rounds)
-let roundIndex = 0;          // 0..2
-let roundStart = 0;          // roundIndex * 12
-let roundEnd = 12;           // exclusive
-let roundQ = [];             // slice of 12 for current round
-
-// quiz timers
-let qTimer = null;
-let qStart = 0;
-
-// match timers/state
-let matchTimer = null;
-let matchStart = 0;
-let matchState = null;
-
-/* ---------------- Audio (no mp3 dependency) ---------------- */
-// tiny WebAudio beeps so missing mp3 files can’t break anything
-let audioCtx = null;
-function ensureAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch {}
-  }
-}
-function beep(freq = 740, durMs = 70, vol = 0.045) {
-  if (!soundOn) return;
-  ensureAudio();
-  if (!audioCtx) return;
-  try {
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.type = "sine";
-    o.frequency.value = freq;
-    g.gain.value = vol;
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    o.start();
-    setTimeout(() => { try { o.stop(); } catch {} }, durMs);
-  } catch {}
-}
-function sTick() { beep(740, 55, 0.04); }
-function sGood() { beep(880, 90, 0.05); setTimeout(()=>beep(1040, 70, 0.04), 90); }
-function sBad()  { beep(220, 110, 0.05); }
-
-/* ---------------- Helpers ---------------- */
-function setText(el, t) { if (el) el.textContent = t; }
-
-function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
-
-function shuffleArray(arr) {
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function norm(s) {
-  return String(s || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, "")
-    .replace(/\s+/g, " ");
-}
-
-function tokenSet(s) {
-  return new Set(norm(s).split(" ").filter(Boolean));
-}
-
-function jaccard(a, b) {
-  const A = tokenSet(a), B = tokenSet(b);
-  if (!A.size || !B.size) return 0;
-  let inter = 0;
-  for (const t of A) if (B.has(t)) inter++;
-  return inter / (A.size + B.size - inter);
-}
-
-function safeHideSplash() {
-  if (!startSplash) return;
-  startSplash.classList.add("hide");
-  setTimeout(() => { startSplash.style.display = "none"; }, 260);
-}
-
-function showSplashError(msg) {
-  if (!startSplash) return;
-  setText(splashMsg, msg);
-  // leave splash visible so user sees the error
-}
-
-function setOverallProgress() {
-  // overall bar shows how far through the 36 we are (not time)
-  const p = (globalIndex / TOTAL_QUESTIONS);
-  if (timerBar) timerBar.style.width = `${clamp(p * 100, 0, 100)}%`;
-}
-
-function resetQTimerUI() {
-  if (qTimerBar) qTimerBar.style.width = "100%";
-}
-
-function startQuizTimer(onTimeout) {
-  stopQuizTimer();
-  qStart = Date.now();
-  resetQTimerUI();
-
-  qTimer = setInterval(() => {
-    const t = Date.now() - qStart;
-    const left = clamp(1 - (t / QUESTION_TIME_MS), 0, 1);
-    if (qTimerBar) qTimerBar.style.width = `${left * 100}%`;
-
-    // last 3 seconds tick
-    const secLeft = Math.ceil((QUESTION_TIME_MS - t) / 1000);
-    if (secLeft <= 3 && secLeft >= 1) {
-      // only tick once per second
-      const boundary = QUESTION_TIME_MS - (secLeft * 1000);
-      if (t >= boundary && t < boundary + QUESTION_TICK_MS + 20) sTick();
+  // "First match" getter for compatibility across older/newer HTML IDs
+  const pickEl = (...ids) => {
+    for (const id of ids) {
+      const el = $(id);
+      if (el) return el;
     }
-
-    if (t >= QUESTION_TIME_MS) {
-      stopQuizTimer();
-      onTimeout?.();
-    }
-  }, QUESTION_TICK_MS);
-}
-
-function stopQuizTimer() {
-  if (qTimer) clearInterval(qTimer);
-  qTimer = null;
-}
-
-function startMatchTimer(totalMs, onTimeout) {
-  stopMatchTimer();
-  matchStart = Date.now();
-  // reuse qTimerBar as “round timer” bar in match mode
-  if (qTimerBar) qTimerBar.style.width = "100%";
-
-  matchTimer = setInterval(() => {
-    const t = Date.now() - matchStart;
-    const left = clamp(1 - (t / totalMs), 0, 1);
-    if (qTimerBar) qTimerBar.style.width = `${left * 100}%`;
-    if (t >= totalMs) {
-      stopMatchTimer();
-      onTimeout?.();
-    }
-  }, 100);
-}
-
-function stopMatchTimer() {
-  if (matchTimer) clearInterval(matchTimer);
-  matchTimer = null;
-}
-
-/* --------- Dots / lives + redemption --------- */
-function renderDots() {
-  if (!dots) return;
-  // 3 “lives” style dots (filled = remaining)
-  const remaining = MAX_WRONG - wrongTotal;
-  dots.innerHTML = "";
-  for (let i = 0; i < MAX_WRONG; i++) {
-    const d = document.createElement("span");
-    d.className = "dot";
-    if (i < remaining) d.classList.add("dot-on");
-    dots.appendChild(d);
-  }
-}
-
-function registerCorrect() {
-  score++;
-  correctSinceLastWrong++;
-
-  // redemption
-  if (wrongTotal > 0 && correctSinceLastWrong >= REDEEM_STREAK) {
-    wrongTotal = Math.max(0, wrongTotal - 1);
-    correctSinceLastWrong = 0;
-  }
-
-  setText(pillScore, `Score ${score}`);
-  renderDots();
-}
-
-function registerWrong() {
-  wrongTotal++;
-  correctSinceLastWrong = 0;
-  renderDots();
-}
-
-function isGameOver() {
-  return wrongTotal >= MAX_WRONG;
-}
-
-/* ---------------- CSV load ---------------- */
-function fetchCSVRows() {
-  return new Promise((resolve, reject) => {
-    if (!window.Papa) return reject(new Error("PapaParse not found"));
-
-    // ✅ cache-buster
-    const url = CSV_URL + "&_ts=" + Date.now();
-
-    Papa.parse(url, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
-      complete: (res) => resolve(res.data || []),
-      error: (err) => reject(err),
-    });
-  });
-}
-
-function normaliseRow(r) {
-  // Expect headers: Date, Question, OptionA, OptionB, Answer, OptionC, OptionD, Explanation, Category, Difficulty, ID, LastUsed, DayNumber
-  return {
-    Date: String(r.Date || "").trim(),
-    Question: String(r.Question || "").trim(),
-    OptionA: String(r.OptionA || "").trim(),
-    OptionB: String(r.OptionB || "").trim(),
-    OptionC: String(r.OptionC || "").trim(),
-    OptionD: String(r.OptionD || "").trim(),
-    Answer: String(r.Answer || "").trim(),
-    Explanation: String(r.Explanation || "").trim(),
-    Category: String(r.Category || "").trim(),
-    Difficulty: String(r.Difficulty || "").trim(),
-    ID: String(r.ID || "").trim(),
+    return null;
   };
-}
 
-/* ---------------- Countdown (3 seconds) ---------------- */
-function showCountdown(seconds = 3) {
-  return new Promise((resolve) => {
-    if (!countdownOverlay || !countNum || !countRing) return resolve();
+  const splashEl = pickEl("startSplash", "splash");
+  const splashMsgEl =
+    splashEl?.querySelector(".splash-msg") || pickEl("splashStatus");
 
-    countdownOverlay.style.display = "flex";
-    countdownOverlay.classList.remove("hide");
+  const questionBox = pickEl("questionBox", "question");
+  const choicesDiv = pickEl("choices");
 
-    let s = seconds;
+  const startBtn = pickEl("startBtn");
+  const shuffleBtn = pickEl("shuffleBtn");
+  const soundBtn = pickEl("soundBtn");
+  const shareBtn = pickEl("shareBtn");
 
-    const tick = () => {
-      setText(countNum, String(s));
-      // ring progress: 0..1
-      const p = (seconds - s) / seconds;
-      countRing.style.setProperty("--p", String(p));
-      sTick();
-      if (s <= 0) {
-        countdownOverlay.classList.add("hide");
-        setTimeout(() => {
-          countdownOverlay.style.display = "none";
-          resolve();
-        }, 180);
+  const setLabel = pickEl("setLabel");
+  const progressLabel = pickEl("progressLabel");
+
+  const pillScore = pickEl("pillScore");
+  const pillWrong = pickEl("pillWrong");
+  const pillStreak = pickEl("pillStreak");
+  const pillRound = pickEl("pillRound");
+
+  const timerBar = pickEl("timerBar");
+  const elapsedTimeEl = pickEl("elapsedTime");
+
+  const countdownOverlay = pickEl("countdownOverlay");
+  const countdownNum = pickEl("countNum");
+
+  // If timerBar has no internal fill element (it doesn’t), we create one safely
+  let timerFill = null;
+  function ensureTimerFill() {
+    if (!timerBar) return null;
+    timerBar.style.position = timerBar.style.position || "relative";
+    timerBar.style.overflow = "hidden";
+    timerFill = timerBar.querySelector(".timer-fill");
+    if (!timerFill) {
+      timerFill = document.createElement("div");
+      timerFill.className = "timer-fill";
+      // Inline styling so we don't rely on CSS changes
+      Object.assign(timerFill.style, {
+        position: "absolute",
+        left: "0px",
+        top: "0px",
+        height: "100%",
+        width: "0%",
+        background: "rgba(255,255,255,0.22)",
+        transition: "width 0.08s linear",
+      });
+      timerBar.appendChild(timerFill);
+    }
+    return timerFill;
+  }
+
+  function setText(el, t) {
+    if (el) el.textContent = t == null ? "" : String(t);
+  }
+
+  function show(el) {
+    if (el) el.style.display = "";
+  }
+
+  function hide(el) {
+    if (el) el.style.display = "none";
+  }
+
+  function safeClass(el, cls, on) {
+    if (!el) return;
+    if (on) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+
+  // ---------------------------- AUDIO (resilient, never blocks) ----------------------------
+  // IMPORTANT: Audio 404s must NOT freeze splash.
+  // If mp3s are missing, we silently disable sound effects.
+  let soundOn = true;
+  let tickAudio = null,
+    goodAudio = null,
+    badAudio = null;
+
+  function initAudio() {
+    try {
+      tickAudio = new Audio("tick.mp3");
+      goodAudio = new Audio("good.mp3");
+      badAudio = new Audio("bad.mp3");
+
+      // Prevent errors from bubbling
+      [tickAudio, goodAudio, badAudio].forEach((a) => {
+        if (!a) return;
+        a.preload = "auto";
+        a.addEventListener("error", () => {
+          // If files are missing, disable just that audio ref (do not crash)
+          if (a === tickAudio) tickAudio = null;
+          if (a === goodAudio) goodAudio = null;
+          if (a === badAudio) badAudio = null;
+        });
+      });
+    } catch {
+      tickAudio = goodAudio = badAudio = null;
+    }
+  }
+
+  function play(audio) {
+    if (!soundOn || !audio) return;
+    try {
+      audio.currentTime = 0;
+      const p = audio.play();
+      if (p && typeof p.catch === "function") p.catch(() => {});
+    } catch {}
+  }
+
+  // ---------------------------- DATA LOAD ----------------------------
+  function papaParseUrl(url) {
+    return new Promise((resolve, reject) => {
+      if (!window.Papa) {
+        reject(new Error("PapaParse missing"));
         return;
       }
-      s--;
-      setTimeout(tick, 1000);
+      window.Papa.parse(url, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: (res) => resolve((res && res.data) || []),
+        error: (err) => reject(err || new Error("CSV parse failed")),
+      });
+    });
+  }
+
+  function normaliseRow(r) {
+    // Keep the bank headers you use
+    const obj = {
+      Date: r.Date ?? "",
+      Question: r.Question ?? "",
+      OptionA: r.OptionA ?? "",
+      OptionB: r.OptionB ?? "",
+      OptionC: r.OptionC ?? "",
+      OptionD: r.OptionD ?? "",
+      Answer: r.Answer ?? "",
+      Explanation: r.Explanation ?? "",
+      Category: r.Category ?? "",
+      Difficulty: r.Difficulty ?? "",
+      ID: r.ID ?? "",
+      LastUsed: r.LastUsed ?? "",
+      DayNumber: r.DayNumber ?? "",
+    };
+    // Trim common strings
+    Object.keys(obj).forEach((k) => {
+      if (typeof obj[k] === "string") obj[k] = obj[k].trim();
+    });
+    return obj;
+  }
+
+  async function loadQuestions() {
+    setText(splashMsgEl, "Loading today’s set…");
+
+    // ✅ Cache buster
+    const url = CSV_URL + "&_ts=" + Date.now();
+
+    const rows = await papaParseUrl(url);
+    const cleaned = rows.map(normaliseRow).filter((r) => r.Question && r.Answer);
+
+    // IMPORTANT: preserve CSV row order (do not shuffle globally)
+    const first36 = cleaned.slice(0, TOTAL_QUESTIONS);
+
+    if (first36.length < TOTAL_QUESTIONS) {
+      throw new Error(
+        `Only loaded ${first36.length}/${TOTAL_QUESTIONS} questions. Check LIVE sheet has 36 rows.`
+      );
+    }
+    return first36;
+  }
+
+  // ---------------------------- GAME STATE ----------------------------
+  let questions = [];
+  let roundIndex = 0;
+
+  let score = 0;
+  let wrongTotal = 0;
+  let correctSinceLastWrong = 0;
+
+  let roundQuestions = [];
+  let quizIndexInRound = 0; // 0..11 within quiz rounds
+
+  let qTimer = null;
+  let qStartMs = 0;
+  let elapsedInterval = null;
+  let elapsedSec = 0;
+
+  // Level 2 match state
+  let matchState = null;
+
+  // ---------------------------- SPLASH ----------------------------
+  function dismissSplash() {
+    if (!splashEl) return;
+    safeClass(splashEl, "hide", true);
+    // In case CSS transitions differ, always hard-hide
+    setTimeout(() => {
+      try {
+        splashEl.style.display = "none";
+      } catch {}
+    }, 350);
+  }
+
+  function splashError(msg) {
+    setText(splashMsgEl, msg || "Could not load today’s set.");
+    // Don’t dismiss; keep splash showing the error
+  }
+
+  // ---------------------------- UI: PILLS + PROGRESS ----------------------------
+  function updatePills() {
+    setText(pillScore, `Score: ${score}`);
+    setText(pillWrong, `Wrong: ${wrongTotal}/${MAX_WRONG}`);
+    setText(pillStreak, `Streak: ${correctSinceLastWrong}`);
+    setText(pillRound, `Level: ${roundIndex + 1}/${TOTAL_ROUNDS}`);
+  }
+
+  function updateProgressLabel(extra = "") {
+    const mode = ROUND_MODES[roundIndex] || "quiz";
+    const labelMode = mode === "match" ? "MATCH ⚡" : "QUIZ";
+    const base = `Round ${roundIndex + 1}/${TOTAL_ROUNDS} • ${labelMode}`;
+    setText(setLabel, base);
+    setText(
+      progressLabel,
+      extra ||
+        (mode === "match"
+          ? `Pairs: ${matchState?.solvedCount || 0}/${MATCH_PAIRS} • Wrong: ${wrongTotal}/${MAX_WRONG}`
+          : `Q: ${quizIndexInRound + 1}/${ROUND_SIZE} • Wrong: ${wrongTotal}/${MAX_WRONG}`)
+    );
+    updatePills();
+  }
+
+  // ---------------------------- TIMER ----------------------------
+  function stopQuestionTimer() {
+    if (qTimer) clearInterval(qTimer);
+    qTimer = null;
+    qStartMs = 0;
+    if (timerFill) timerFill.style.width = "0%";
+  }
+
+  function startQuestionTimer(onTimeout) {
+    ensureTimerFill();
+    stopQuestionTimer();
+    qStartMs = Date.now();
+    qTimer = setInterval(() => {
+      const t = Date.now() - qStartMs;
+      const pct = Math.min(1, t / QUESTION_TIME_MS);
+      if (timerFill) timerFill.style.width = `${Math.floor(pct * 100)}%`;
+      if (t >= QUESTION_TIME_MS) {
+        stopQuestionTimer();
+        onTimeout && onTimeout();
+      }
+    }, QUESTION_TICK_MS);
+  }
+
+  function startElapsedTimer() {
+    if (elapsedInterval) clearInterval(elapsedInterval);
+    elapsedSec = 0;
+    setText(elapsedTimeEl, "0:00");
+    elapsedInterval = setInterval(() => {
+      elapsedSec++;
+      const m = Math.floor(elapsedSec / 60);
+      const s = elapsedSec % 60;
+      setText(elapsedTimeEl, `${m}:${String(s).padStart(2, "0")}`);
+    }, 1000);
+  }
+
+  function stopElapsedTimer() {
+    if (elapsedInterval) clearInterval(elapsedInterval);
+    elapsedInterval = null;
+  }
+
+  // ---------------------------- COUNTDOWN (3-2-1 with ring feel) ----------------------------
+  function ensureCountdownRing() {
+    if (!countdownOverlay) return null;
+    let ring = countdownOverlay.querySelector(".countdown-ring");
+    if (!ring) {
+      ring = document.createElement("div");
+      ring.className = "countdown-ring";
+      // Inline ring (no CSS changes needed)
+      Object.assign(ring.style, {
+        position: "absolute",
+        width: "120px",
+        height: "120px",
+        borderRadius: "999px",
+        border: "2px solid rgba(255,255,255,0.25)",
+        boxShadow: "0 0 20px rgba(255,255,255,0.15)",
+        inset: "0",
+        margin: "auto",
+        left: "0",
+        right: "0",
+        top: "0",
+        bottom: "0",
+        pointerEvents: "none",
+      });
+      countdownOverlay.style.position =
+        countdownOverlay.style.position || "relative";
+      countdownOverlay.appendChild(ring);
+    }
+    return ring;
+  }
+
+  async function runCountdown3() {
+    if (!countdownOverlay || !countdownNum) return;
+    const ring = ensureCountdownRing();
+
+    show(countdownOverlay);
+
+    const steps = [3, 2, 1];
+    for (const n of steps) {
+      setText(countdownNum, String(n));
+      play(tickAudio);
+
+      // pulse ring
+      if (ring) {
+        ring.animate(
+          [
+            { transform: "scale(0.96)", opacity: 0.55 },
+            { transform: "scale(1.06)", opacity: 0.95 },
+            { transform: "scale(1.0)", opacity: 0.75 },
+          ],
+          { duration: 500, easing: "cubic-bezier(.2,.8,.2,1)" }
+        );
+      }
+
+      await new Promise((r) => setTimeout(r, 650));
+    }
+
+    hide(countdownOverlay);
+  }
+
+  // ---------------------------- QUIZ MODE ----------------------------
+  function getRoundSlice(idx) {
+    const start = idx * ROUND_SIZE;
+    return questions.slice(start, start + ROUND_SIZE);
+  }
+
+  function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function norm(s) {
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, " ");
+  }
+
+  function buildQuizOptions(q) {
+    // Use A/B/C/D from sheet if present; otherwise build from answer + distractors
+    const opts = [q.OptionA, q.OptionB, q.OptionC, q.OptionD]
+      .map((x) => String(x || "").trim())
+      .filter(Boolean);
+
+    // Guarantee answer exists in options
+    const ans = String(q.Answer || "").trim();
+    if (ans && !opts.some((o) => norm(o) === norm(ans))) opts.push(ans);
+
+    // If duplicates, unique them
+    const seen = new Set();
+    const uniq = [];
+    for (const o of opts) {
+      const k = norm(o);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      uniq.push(o);
+    }
+
+    // Ensure 4 options (pad if bank row is malformed)
+    while (uniq.length < 4) uniq.push(uniq[uniq.length - 1] || ans || "—");
+
+    return shuffleArray(uniq.slice(0, 4));
+  }
+
+  function clearChoices() {
+    if (!choicesDiv) return;
+    choicesDiv.innerHTML = "";
+    // keep existing classes; don’t overwrite layout
+  }
+
+  function renderQuizQuestion() {
+    if (!questionBox || !choicesDiv) return;
+
+    const q = roundQuestions[quizIndexInRound];
+    if (!q) {
+      // safety: end round if missing
+      endRound();
+      return;
+    }
+
+    clearChoices();
+    setText(questionBox, q.Question);
+
+    const opts = buildQuizOptions(q);
+
+    // Build buttons dynamically in #choices
+    opts.forEach((txt) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.type = "button";
+      b.textContent = txt;
+      b.addEventListener("click", () => onQuizAnswer(txt, q));
+      choicesDiv.appendChild(b);
+    });
+
+    updateProgressLabel();
+    startQuestionTimer(() => {
+      // timeout counts as wrong
+      registerWrong();
+      nextQuizQuestion();
+    });
+  }
+
+  function onQuizAnswer(selectedText, q) {
+    stopQuestionTimer();
+
+    const isCorrect = norm(selectedText) === norm(q.Answer);
+
+    if (isCorrect) {
+      registerCorrect();
+      play(goodAudio);
+      flashChoiceFeedback(true, selectedText);
+    } else {
+      registerWrong();
+      play(badAudio);
+      flashChoiceFeedback(false, selectedText, q.Answer);
+    }
+
+    // move on after short feedback
+    setTimeout(() => {
+      nextQuizQuestion();
+    }, 520);
+  }
+
+  function flashChoiceFeedback(isCorrect, selected, answer) {
+    if (!choicesDiv) return;
+    const btns = Array.from(choicesDiv.querySelectorAll("button"));
+    btns.forEach((b) => {
+      const t = norm(b.textContent);
+      if (t === norm(selected)) safeClass(b, isCorrect ? "correct" : "wrong", true);
+      if (!isCorrect && answer && t === norm(answer)) safeClass(b, "correct", true);
+      b.disabled = true;
+    });
+  }
+
+  function nextQuizQuestion() {
+    quizIndexInRound++;
+    if (quizIndexInRound >= ROUND_SIZE) {
+      endRound();
+      return;
+    }
+    renderQuizQuestion();
+  }
+
+  // ---------------------------- REDEMPTION RULE + STREAK ----------------------------
+  function registerCorrect() {
+    score++;
+    correctSinceLastWrong++;
+
+    // redemption: every 3 correct since last wrong reduces wrongTotal by 1
+    if (wrongTotal > 0 && correctSinceLastWrong >= REDEEM_STREAK) {
+      wrongTotal = Math.max(0, wrongTotal - 1);
+      correctSinceLastWrong = 0;
+    }
+    updatePills();
+  }
+
+  function registerWrong() {
+    wrongTotal++;
+    correctSinceLastWrong = 0;
+    updatePills();
+
+    if (wrongTotal >= MAX_WRONG) {
+      endGame(`3 incorrect — game over!`);
+    }
+  }
+
+  // ---------------------------- MATCH MODE (Hard Near-miss Decoys) ----------------------------
+  function truncateClue(s) {
+    const t = String(s || "").trim();
+    if (t.length <= 44) return t;
+    return t.slice(0, 42).trim() + "…";
+  }
+
+  function tokenise(s) {
+    return norm(s)
+      .split(" ")
+      .map((x) => x.replace(/[^a-z0-9]/g, ""))
+      .filter((x) => x.length >= 3);
+  }
+
+  function overlapScore(a, b) {
+    const A = new Set(tokenise(a));
+    const B = new Set(tokenise(b));
+    let c = 0;
+    for (const x of A) if (B.has(x)) c++;
+    return c;
+  }
+
+  function collectDecoyPool(pool) {
+    // Pull from other questions' options (A/B/C/D), explanations, answers
+    const items = [];
+    pool.forEach((q) => {
+      [q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.Answer]
+        .map((x) => String(x || "").trim())
+        .filter(Boolean)
+        .forEach((x) => items.push(x));
+    });
+
+    // Unique
+    const seen = new Set();
+    const uniq = [];
+    for (const x of items) {
+      const k = norm(x);
+      if (!k || seen.has(k)) continue;
+      seen.add(k);
+      uniq.push(x);
+    }
+    return uniq;
+  }
+
+  function pickNearMissDecoys(correctAnswer, poolItems, excludeSet, needed) {
+    // Prefer decoys that "feel" similar:
+    // - shared tokens with correct answer (near-miss)
+    // - similar length range
+    const ans = String(correctAnswer || "").trim();
+    const ansLen = ans.length;
+
+    const candidates = poolItems
+      .filter((x) => !excludeSet.has(norm(x)))
+      .map((x) => ({
+        text: x,
+        score:
+          overlapScore(ans, x) * 10 -
+          Math.abs(ansLen - String(x).length) * 0.08,
+      }))
+      .sort((a, b) => b.score - a.score);
+
+    const out = [];
+    for (const c of candidates) {
+      if (out.length >= needed) break;
+      // Ensure decoys aren’t identical-ish
+      const k = norm(c.text);
+      if (excludeSet.has(k)) continue;
+      excludeSet.add(k);
+      out.push(c.text);
+    }
+
+    // If not enough, fill randomly
+    if (out.length < needed) {
+      const rest = poolItems.filter((x) => !excludeSet.has(norm(x)));
+      const fill = shuffleArray(rest).slice(0, needed - out.length);
+      fill.forEach((x) => {
+        excludeSet.add(norm(x));
+        out.push(x);
+      });
+    }
+
+    return out;
+  }
+
+  function renderMatchUI(state) {
+    if (!choicesDiv || !questionBox) return;
+    clearChoices();
+
+    // We keep layout by using the same #choices grid area.
+    // We render left column then right column as one combined grid (like before).
+    setText(questionBox, "Match the pairs");
+
+    const wrap = document.createElement("div");
+    wrap.className = "match-grid";
+    // Do not clobber styles: only add a class the CSS already supports (if any),
+    // otherwise it behaves like a normal div.
+    Object.assign(wrap.style, {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: "10px",
+      width: "100%",
+    });
+
+    const leftCol = document.createElement("div");
+    const rightCol = document.createElement("div");
+    Object.assign(leftCol.style, { display: "grid", gap: "10px" });
+    Object.assign(rightCol.style, { display: "grid", gap: "10px" });
+
+    state.leftTiles.forEach((t) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.type = "button";
+      b.textContent = t.text;
+      b.dataset.side = "L";
+      b.dataset.pairId = t.pairId;
+      b.addEventListener("click", () => onMatchTap(b));
+      leftCol.appendChild(b);
+    });
+
+    state.rightTiles.forEach((t) => {
+      const b = document.createElement("button");
+      b.className = "choice";
+      b.type = "button";
+      b.textContent = t.text;
+      b.dataset.side = "R";
+      b.dataset.pairId = t.pairId;
+      b.dataset.isDecoy = t.isDecoy ? "1" : "0";
+      b.addEventListener("click", () => onMatchTap(b));
+      rightCol.appendChild(b);
+    });
+
+    wrap.appendChild(leftCol);
+    wrap.appendChild(rightCol);
+    choicesDiv.appendChild(wrap);
+  }
+
+  function startMatchRound() {
+    stopQuestionTimer();
+
+    // Take the 12 questions for this round (Q13–Q24 in LIVE)
+    const pool = roundQuestions.slice();
+    if (pool.length !== ROUND_SIZE) {
+      // safety: ensure we never skip round 2 due to bad slicing
+      endGame("Match round data missing (expected 12).");
+      return;
+    }
+
+    // Choose 6 pairs from the 12
+    const chosen = shuffleArray(pool).slice(0, MATCH_PAIRS);
+
+    // Build pairs: left is clue, right is correct answer
+    const pairs = chosen.map((q, i) => ({
+      pairId: `p${i}`,
+      // Make clues less obvious (harder): shorter + category removed
+      left: truncateClue(q.Question),
+      right: String(q.Answer || "").trim(),
+    }));
+
+    // Build decoys: near-miss decoys that feel plausible
+    const exclude = new Set(pairs.map((p) => norm(p.right)));
+    const poolItems = collectDecoyPool(pool);
+
+    // “Hard mode near-miss” decoys are chosen relative to *each* correct answer.
+    // We create a combined decoy list by sampling near-misses across the answers.
+    const decoys = [];
+    const perAnswer = Math.max(1, Math.floor(MATCH_DECOYS / MATCH_PAIRS));
+    const remainder = MATCH_DECOYS - perAnswer * MATCH_PAIRS;
+
+    pairs.forEach((p, idx) => {
+      const need = perAnswer + (idx < remainder ? 1 : 0);
+      const picked = pickNearMissDecoys(p.right, poolItems, exclude, need);
+      decoys.push(...picked);
+    });
+
+    // Right tiles: 6 correct + 6 decoys (12 total)
+    const rightTiles = shuffleArray([
+      ...pairs.map((p) => ({
+        text: p.right,
+        pairId: p.pairId,
+        isDecoy: false,
+      })),
+      ...decoys.slice(0, MATCH_DECOYS).map((d, i) => ({
+        text: d,
+        pairId: `decoy_${i}`,
+        isDecoy: true,
+      })),
+    ]);
+
+    // Left tiles: 6 clues
+    const leftTiles = shuffleArray(
+      pairs.map((p) => ({
+        text: p.left,
+        pairId: p.pairId,
+      }))
+    );
+
+    matchState = {
+      pairs,
+      leftTiles,
+      rightTiles,
+      solved: new Set(),
+      selectedLeft: null,
+      selectedRight: null,
+      locked: false,
+      solvedCount: 0,
     };
 
-    // start at 3
-    tick();
-  });
-}
-
-/* ---------------- Round selection ---------------- */
-function computeRoundIndex(idx) {
-  return Math.floor(idx / ROUND_SIZE); // 0,1,2
-}
-
-function enterRound(ri) {
-  roundIndex = ri;
-  roundStart = ri * ROUND_SIZE;
-  roundEnd = roundStart + ROUND_SIZE;
-  roundQ = questions.slice(roundStart, roundEnd);
-
-  const mode = ROUND_MODES[roundIndex];
-  setText(setLabel, `Level ${roundIndex + 1} / ${TOTAL_ROUNDS} • ${mode === "match" ? "MATCH" : "QUIZ"} ⚡`);
-}
-
-/* ---------------- QUIZ mode ---------------- */
-function renderQuizQuestion() {
-  // ensure we’re in a quiz round
-  const row = questions[globalIndex];
-  if (!row) return endSession();
-
-  const localNumber = (globalIndex - roundStart) + 1;
-  setText(qIndex, `${localNumber} / ${ROUND_SIZE}`);
-  setText(questionBox, row.Question || "—");
-
-  // answers (always 4 buttons in index)
-  const opts = [row.OptionA, row.OptionB, row.OptionC, row.OptionD].map(x => String(x || "").trim());
-  // If any missing, still render safely
-  const btns = [
-    $("optA"), $("optB"), $("optC"), $("optD")
-  ].filter(Boolean);
-
-  btns.forEach((b, i) => {
-    b.disabled = false;
-    b.className = "choice-btn";
-    b.textContent = opts[i] || "—";
-    b.onclick = () => handleQuizAnswer(opts[i], row.Answer, b);
-  });
-
-  // start timer
-  startQuizTimer(() => {
-    // timeout counts as wrong
-    sBad();
-    pulseWrong(btns);
-    registerWrong();
-    if (isGameOver()) return endGame("3 incorrect — game over!");
-    nextStep();
-  });
-}
-
-function handleQuizAnswer(chosen, correct, btnEl) {
-  stopQuizTimer();
-
-  const ok = norm(chosen) === norm(correct);
-  if (ok) {
-    sGood();
-    flashCorrect(btnEl);
-    registerCorrect();
-  } else {
-    sBad();
-    flashWrong(btnEl);
-    registerWrong();
-    if (isGameOver()) return endGame("3 incorrect — game over!");
+    updateProgressLabel(`Pairs: 0/${MATCH_PAIRS} • Wrong: ${wrongTotal}/${MAX_WRONG}`);
+    renderMatchUI(matchState);
   }
 
-  setTimeout(() => nextStep(), 520);
-}
-
-/* ---------------- MATCH mode (Round 2) ---------------- */
-function shortenClue(q) {
-  const s = String(q || "").trim();
-  if (!s) return "—";
-  const noQ = s.replace(/\?+$/g, "");
-  // shorten without changing layout: keep it snappy
-  if (noQ.length <= 64) return noQ;
-  return noQ.slice(0, 62) + "…";
-}
-
-function buildNearMissDecoys(pairs, poolRows, decoyCount) {
-  // Build a decoy candidate pool from options of the 12 rows, excluding correct answers.
-  const correctSet = new Set(pairs.map(p => norm(p.right)));
-
-  const candidates = [];
-  for (const r of poolRows) {
-    const opts = [r.OptionA, r.OptionB, r.OptionC, r.OptionD].map(x => String(x || "").trim()).filter(Boolean);
-    for (const o of opts) {
-      const n = norm(o);
-      if (!n) continue;
-      if (correctSet.has(n)) continue;
-      candidates.push(o);
-    }
+  function clearMatchSelectionStyles() {
+    if (!choicesDiv) return;
+    choicesDiv.querySelectorAll("button.choice.selected").forEach((b) => {
+      b.classList.remove("selected");
+    });
   }
 
-  // unique
-  const uniq = [...new Map(candidates.map(v => [norm(v), v])).values()];
-
-  // Score each candidate as “near miss” by max similarity to any correct answer
-  const scored = uniq.map(v => {
-    let best = 0;
-    for (const p of pairs) best = Math.max(best, jaccard(v, p.right));
-    return { v, best };
-  });
-
-  // Sort: highest similarity first (near miss)
-  scored.sort((a, b) => b.best - a.best);
-
-  // take top N, but if too few, pad with random uniques
-  const picked = [];
-  for (const s of scored) {
-    if (picked.length >= decoyCount) break;
-    picked.push(s.v);
+  function setSelected(btn) {
+    if (!btn) return;
+    // Clear selection on same side
+    const side = btn.dataset.side;
+    const buttons = Array.from(choicesDiv.querySelectorAll("button.choice"));
+    buttons
+      .filter((b) => b.dataset.side === side)
+      .forEach((b) => b.classList.remove("selected"));
+    btn.classList.add("selected");
   }
 
-  if (picked.length < decoyCount) {
-    const remain = uniq.filter(v => !picked.some(p => norm(p) === norm(v)));
-    const extra = shuffleArray(remain).slice(0, decoyCount - picked.length);
-    picked.push(...extra);
+  function findButton(side, pairId) {
+    const all = Array.from(choicesDiv.querySelectorAll("button.choice"));
+    return all.find((b) => b.dataset.side === side && b.dataset.pairId === pairId);
   }
 
-  return picked.slice(0, decoyCount);
-}
-
-function startMatchRound() {
-  stopQuizTimer();
-  stopMatchTimer();
-  resetQTimerUI();
-
-  // Round 2 uses Q13–Q24 (12 rows) exactly in CSV order
-  const pool = roundQ.slice();
-
-  // pick 6 pairs from pool (stable but not “obvious”)
-  // We’ll sample across the 12: take every other item then slice to 6
-  const spaced = pool.filter((_, i) => i % 2 === 0);
-  const basePairs = (spaced.length >= MATCH_PAIRS ? spaced : pool).slice(0, MATCH_PAIRS);
-
-  const pairs = basePairs.map((q, i) => ({
-    pairId: `p${i}`,
-    left: shortenClue(q.Question),
-    right: String(q.Answer || "").trim(),
-  }));
-
-  // HARD near-miss decoys
-  const decoys = buildNearMissDecoys(pairs, pool, MATCH_DECOYS);
-
-  const leftTiles = shuffleArray(pairs.map(p => ({
-    side: "L",
-    pairId: p.pairId,
-    text: p.left,
-  })));
-
-  const rightTiles = shuffleArray([
-    ...pairs.map(p => ({
-      side: "R",
-      pairId: p.pairId,
-      text: p.right,
-      isDecoy: false,
-    })),
-    ...decoys.map((d, i) => ({
-      side: "R",
-      pairId: `decoy_${i}`,
-      text: d,
-      isDecoy: true,
-    })),
-  ]);
-
-  matchState = {
-    pairs,
-    leftTiles,
-    rightTiles,
-    solved: new Set(),
-    selL: null,
-    selR: null,
-    locked: false,
-  };
-
-  // UI labels
-  setText(qIndex, `— / ${ROUND_SIZE}`);
-  setText(questionBox, "Match the pairs");
-  // Use choices grid for match
-  renderMatchGrid();
-
-  // Match timer
-  startMatchTimer(MATCH_TOTAL_TIME_MS, () => {
-    // Timeout ends round (counts as wrong)
-    sBad();
-    registerWrong();
-    if (isGameOver()) return endGame("3 incorrect — game over!");
-    // move to next round
-    globalIndex = roundEnd; // jump to next round start
-    nextStep(true);
-  });
-}
-
-function renderMatchGrid() {
-  if (!choices || !matchState) return;
-
-  // Clear and switch to match grid styling (CSS already supports "match-grid" in your build)
-  choices.innerHTML = "";
-  choices.classList.add("match-grid");
-
-  const makeBtn = (tile) => {
-    const b = document.createElement("button");
-    b.className = "choice-btn match-btn";
-    b.textContent = tile.text;
-    b.dataset.side = tile.side;
-    b.dataset.pairId = tile.pairId;
-    b.onclick = () => onMatchTap(b);
-    return b;
-  };
-
-  // Left column first
-  matchState.leftTiles.forEach(t => choices.appendChild(makeBtn(t)));
-
-  // Right tiles (correct + decoys)
-  matchState.rightTiles.forEach(t => choices.appendChild(makeBtn(t)));
-}
-
-function clearMatchSelections() {
-  if (!choices) return;
-  const btns = [...choices.querySelectorAll("button")];
-  btns.forEach(b => b.classList.remove("selected"));
-}
-
-function syncMatchSelectionStyles() {
-  if (!choices || !matchState) return;
-  const btns = [...choices.querySelectorAll("button")];
-  btns.forEach(b => {
-    const pid = b.dataset.pairId;
-    const side = b.dataset.side;
-    const selected = (side === "L" && matchState.selL === pid) || (side === "R" && matchState.selR === pid);
-    b.classList.toggle("selected", !!selected);
-  });
-}
-
-function onMatchTap(btn) {
-  if (!matchState || matchState.locked || btn.disabled) return;
-
-  const side = btn.dataset.side;
-  const pairId = btn.dataset.pairId;
-
-  if (side === "L") matchState.selL = pairId;
-  else matchState.selR = pairId;
-
-  syncMatchSelectionStyles();
-
-  if (!matchState.selL || !matchState.selR) return;
-
-  matchState.locked = true;
-
-  const correct = matchState.selL === matchState.selR;
-  const btns = [...choices.querySelectorAll("button")];
-
-  const leftBtn = btns.find(b => b.dataset.side === "L" && b.dataset.pairId === matchState.selL);
-  const rightBtn = btns.find(b => b.dataset.side === "R" && b.dataset.pairId === matchState.selR);
-
-  if (!leftBtn || !rightBtn) {
-    matchState.selL = null; matchState.selR = null; matchState.locked = false;
-    clearMatchSelections();
-    return;
+  function microShake(btn) {
+    if (!btn) return;
+    try {
+      btn.animate(
+        [
+          { transform: "translateX(0px)" },
+          { transform: "translateX(-4px)" },
+          { transform: "translateX(4px)" },
+          { transform: "translateX(-3px)" },
+          { transform: "translateX(3px)" },
+          { transform: "translateX(0px)" },
+        ],
+        { duration: 260, easing: "cubic-bezier(.2,.8,.2,1)" }
+      );
+    } catch {}
   }
 
-  if (correct) {
-    sGood();
-    // premium connection glow (CSS class hooks)
-    leftBtn.classList.add("correct", "lock");
-    rightBtn.classList.add("correct", "lock");
+  function connectionGlow(aBtn, bBtn) {
+    // Tiny premium "connection" glow when correct pair locks
+    // Inline using a transient overlay line (no layout changes)
+    if (!choicesDiv || !aBtn || !bBtn) return;
 
-    // lock them
+    const rectA = aBtn.getBoundingClientRect();
+    const rectB = bBtn.getBoundingClientRect();
+    const wrapRect = choicesDiv.getBoundingClientRect();
+
+    const x1 = rectA.left + rectA.width;
+    const y1 = rectA.top + rectA.height / 2;
+    const x2 = rectB.left;
+    const y2 = rectB.top + rectB.height / 2;
+
+    const line = document.createElement("div");
+    Object.assign(line.style, {
+      position: "absolute",
+      left: `${x1 - wrapRect.left}px`,
+      top: `${y1 - wrapRect.top}px`,
+      width: `${Math.max(10, x2 - x1)}px`,
+      height: "2px",
+      background:
+        "linear-gradient(90deg, rgba(255,255,255,0.0), rgba(255,255,255,0.55), rgba(255,255,255,0.0))",
+      filter: "drop-shadow(0 0 10px rgba(255,255,255,0.35))",
+      transformOrigin: "left center",
+      transform: `rotate(${Math.atan2(y2 - y1, x2 - x1)}rad)`,
+      pointerEvents: "none",
+      opacity: "0",
+      borderRadius: "2px",
+      zIndex: "20",
+    });
+
+    // Ensure container can host absolute overlay
+    choicesDiv.style.position = choicesDiv.style.position || "relative";
+    choicesDiv.appendChild(line);
+
+    try {
+      line.animate(
+        [{ opacity: 0, transform: line.style.transform }, { opacity: 1 }, { opacity: 0 }],
+        { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" }
+      );
+    } catch {}
+
+    setTimeout(() => {
+      try {
+        line.remove();
+      } catch {}
+    }, 500);
+  }
+
+  function lockCorrectPair(leftBtn, rightBtn) {
+    if (!leftBtn || !rightBtn) return;
     leftBtn.disabled = true;
     rightBtn.disabled = true;
+    leftBtn.classList.remove("selected");
+    rightBtn.classList.remove("selected");
+    leftBtn.classList.add("correct");
+    rightBtn.classList.add("correct");
 
-    matchState.solved.add(matchState.selL);
+    // glow pulse
+    try {
+      leftBtn.animate(
+        [{ boxShadow: "0 0 0 rgba(255,255,255,0)" }, { boxShadow: "0 0 18px rgba(255,255,255,0.25)" }, { boxShadow: "0 0 0 rgba(255,255,255,0)" }],
+        { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" }
+      );
+      rightBtn.animate(
+        [{ boxShadow: "0 0 0 rgba(255,255,255,0)" }, { boxShadow: "0 0 18px rgba(255,255,255,0.25)" }, { boxShadow: "0 0 0 rgba(255,255,255,0)" }],
+        { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" }
+      );
+    } catch {}
+  }
 
-    // count as “correct”
-    registerCorrect();
+  function onMatchTap(btn) {
+    if (!matchState || matchState.locked) return;
+    if (!btn || btn.disabled) return;
 
-    matchState.selL = null;
-    matchState.selR = null;
-    matchState.locked = false;
-    clearMatchSelections();
+    const side = btn.dataset.side;
+    const pairId = btn.dataset.pairId;
 
-    // finish match round once all solved
-    if (matchState.solved.size >= MATCH_PAIRS) {
-      stopMatchTimer();
-      // jump to next round start
-      globalIndex = roundEnd;
-      return nextStep(true);
+    // select
+    if (side === "L") matchState.selectedLeft = pairId;
+    else matchState.selectedRight = pairId;
+
+    setSelected(btn);
+
+    if (!matchState.selectedLeft || !matchState.selectedRight) return;
+
+    matchState.locked = true;
+
+    const leftBtn = findButton("L", matchState.selectedLeft);
+    const rightBtn = findButton("R", matchState.selectedRight);
+
+    const isCorrect = matchState.selectedLeft === matchState.selectedRight;
+
+    if (isCorrect) {
+      play(goodAudio);
+      connectionGlow(leftBtn, rightBtn);
+      lockCorrectPair(leftBtn, rightBtn);
+
+      matchState.solved.add(matchState.selectedLeft);
+      matchState.solvedCount = matchState.solved.size;
+
+      registerCorrect();
+
+      matchState.selectedLeft = null;
+      matchState.selectedRight = null;
+      matchState.locked = false;
+
+      updateProgressLabel(
+        `Pairs: ${matchState.solvedCount}/${MATCH_PAIRS} • Wrong: ${wrongTotal}/${MAX_WRONG}`
+      );
+
+      if (matchState.solvedCount >= MATCH_PAIRS) {
+        // Completed match round
+        setTimeout(() => endRound(), 380);
+      }
+      return;
     }
 
-    return;
+    // wrong: decoy or mismatch
+    play(badAudio);
+    microShake(leftBtn);
+    microShake(rightBtn);
+
+    // brief wrong flash
+    if (leftBtn) leftBtn.classList.add("wrong");
+    if (rightBtn) rightBtn.classList.add("wrong");
+
+    registerWrong();
+
+    setTimeout(() => {
+      if (leftBtn) leftBtn.classList.remove("wrong", "selected");
+      if (rightBtn) rightBtn.classList.remove("wrong", "selected");
+      matchState.selectedLeft = null;
+      matchState.selectedRight = null;
+      matchState.locked = false;
+
+      updateProgressLabel(
+        `Pairs: ${matchState.solvedCount}/${MATCH_PAIRS} • Wrong: ${wrongTotal}/${MAX_WRONG}`
+      );
+    }, 260);
   }
 
-  // wrong (near-miss decoy OR wrong pair)
-  sBad();
-  registerWrong();
+  // ---------------------------- ROUND FLOW ----------------------------
+  function beginRound(idx) {
+    roundIndex = idx;
 
-  // micro shake
-  leftBtn.classList.add("shake");
-  rightBtn.classList.add("shake");
-  setTimeout(() => {
-    leftBtn.classList.remove("shake");
-    rightBtn.classList.remove("shake");
-  }, 260);
+    // Strict slicing: never shuffle across rounds
+    roundQuestions = getRoundSlice(roundIndex);
 
-  // clear selection
-  matchState.selL = null;
-  matchState.selR = null;
-  matchState.locked = false;
-
-  setTimeout(() => {
-    clearMatchSelections();
-    syncMatchSelectionStyles();
-  }, 140);
-
-  if (isGameOver()) return endGame("3 incorrect — game over!");
-}
-
-/* ---------------- Visual feedback helpers ---------------- */
-function flashCorrect(btn) {
-  if (!btn) return;
-  btn.classList.add("correct");
-  setTimeout(() => btn.classList.remove("correct"), 260);
-}
-function flashWrong(btn) {
-  if (!btn) return;
-  btn.classList.add("wrong", "shake");
-  setTimeout(() => btn.classList.remove("wrong", "shake"), 340);
-}
-function pulseWrong(btns) {
-  (btns || []).forEach(b => b && b.classList.add("wrong"));
-  setTimeout(() => (btns || []).forEach(b => b && b.classList.remove("wrong")), 240);
-}
-
-/* ---------------- Flow control ---------------- */
-function resetGame() {
-  playing = false;
-  score = 0;
-  wrongTotal = 0;
-  correctSinceLastWrong = 0;
-
-  globalIndex = 0;
-  enterRound(0);
-
-  setText(pillScore, `Score ${score}`);
-  renderDots();
-  setOverallProgress();
-  resetQTimerUI();
-
-  // Ensure choices is quiz-mode default (index has 4 option buttons, but we render via those buttons)
-  if (choices) choices.classList.remove("match-grid");
-
-  // Render first question text
-  setText(setLabel, `Level 1 / ${TOTAL_ROUNDS} • QUIZ ⚡`);
-  setText(qIndex, `1 / ${ROUND_SIZE}`);
-
-  // Buttons for quiz are in DOM already; showQuestion will wire them.
-  // Don’t start timer until user presses Start.
-}
-
-function wireQuizButtonsIfNeeded() {
-  // Ensure the option buttons exist
-  const ids = ["optA", "optB", "optC", "optD"];
-  const missing = ids.some(id => !$(id));
-  if (missing) {
-    // fallback: if index uses different structure, fail loudly on splash msg
-    throw new Error("Missing option buttons (optA/optB/optC/optD) in index.html");
-  }
-}
-
-function stepIntoCurrentMode() {
-  // Determine round based on globalIndex
-  const ri = computeRoundIndex(globalIndex);
-
-  // If we just entered a new round, update slices/labels
-  if (ri !== roundIndex) enterRound(ri);
-
-  const mode = ROUND_MODES[roundIndex];
-
-  // update labels
-  setText(setLabel, `Level ${roundIndex + 1} / ${TOTAL_ROUNDS} • ${mode === "match" ? "MATCH" : "QUIZ"} ⚡`);
-
-  // Overall progress
-  setOverallProgress();
-
-  if (mode === "match") {
-    // start match only once at round start
-    if (globalIndex !== roundStart) {
-      // if something bumped us mid-round, normalise to round start
-      globalIndex = roundStart;
-    }
-    return startMatchRound();
-  }
-
-  // QUIZ
-  if (choices) choices.classList.remove("match-grid");
-  return renderQuizQuestion();
-}
-
-function nextStep(fromRoundJump = false) {
-  // In quiz mode, advance by 1 question; in match mode we jump by setting globalIndex = roundEnd.
-  if (!fromRoundJump) globalIndex++;
-
-  if (globalIndex >= TOTAL_QUESTIONS) return endSession();
-
-  // If we crossed into next round, enter it
-  const ri = computeRoundIndex(globalIndex);
-  if (ri !== roundIndex) enterRound(ri);
-
-  // If we’re in quiz mode, local counter changes
-  const localNumber = (globalIndex - roundStart) + 1;
-  if (ROUND_MODES[roundIndex] === "quiz") setText(qIndex, `${localNumber} / ${ROUND_SIZE}`);
-
-  stepIntoCurrentMode();
-}
-
-function endSession() {
-  stopQuizTimer();
-  stopMatchTimer();
-  setOverallProgress();
-  if (qTimerBar) qTimerBar.style.width = "0%";
-  setText(questionBox, "Daily set complete ✅");
-  setText(setLabel, `Done • Score ${score}`);
-  setText(qIndex, `— / ${ROUND_SIZE}`);
-  if (choices) choices.classList.remove("match-grid");
-
-  // disable buttons
-  ["optA","optB","optC","optD"].forEach(id => {
-    const b = $(id);
-    if (b) { b.disabled = true; b.onclick = null; }
-  });
-
-  playing = false;
-}
-
-function endGame(msg) {
-  stopQuizTimer();
-  stopMatchTimer();
-  setText(questionBox, msg || "Game over");
-  setText(setLabel, `Final • Score ${score}`);
-  if (qTimerBar) qTimerBar.style.width = "0%";
-  playing = false;
-
-  // disable buttons
-  ["optA","optB","optC","optD"].forEach(id => {
-    const b = $(id);
-    if (b) { b.disabled = true; b.onclick = null; }
-  });
-}
-
-/* ---------------- Shuffle (optional) ----------------
-   IMPORTANT: You suspected row order might be changing.
-   This build keeps CSV order by default.
-   Shuffle button will shuffle WITHIN EACH ROUND only.
-*/
-function shuffleWithinRounds() {
-  if (!questions.length) return;
-  const r1 = questions.slice(0, 12);
-  const r2 = questions.slice(12, 24);
-  const r3 = questions.slice(24, 36);
-  questions = [...shuffleArray(r1), ...shuffleArray(r2), ...shuffleArray(r3)];
-}
-
-/* ---------------- Boot ---------------- */
-async function boot() {
-  try {
-    // validate DOM early (prevents silent splash hang)
-    if (!startSplash) throw new Error("Missing startSplash in index.html");
-    if (!questionBox || !choices) throw new Error("Missing questionBox/choices in index.html");
-    if (!startBtn) throw new Error("Missing startBtn in index.html");
-
-    wireQuizButtonsIfNeeded();
-
-    setText(splashMsg, "Loading today’s set…");
-
-    const rows = await fetchCSVRows();
-    const cleaned = rows.map(normaliseRow).filter(r => r.Question && r.Answer);
-
-    if (cleaned.length < TOTAL_QUESTIONS) {
-      throw new Error(`Only found ${cleaned.length} questions. Need at least ${TOTAL_QUESTIONS}.`);
+    // Guard: do not skip Level 2 even if questions array got shorter
+    if (roundQuestions.length !== ROUND_SIZE) {
+      endGame(
+        `Round data missing (got ${roundQuestions.length}/${ROUND_SIZE}). Check LIVE sheet has 36 rows and app is loading latest CSV.`
+      );
+      return;
     }
 
-    // Keep CSV order exactly
-    questions = cleaned.slice(0, TOTAL_QUESTIONS);
+    quizIndexInRound = 0;
+    matchState = null;
 
-    resetGame();
+    updatePills();
 
-    // auto dismiss splash (no tap)
-    setTimeout(() => safeHideSplash(), 380);
+    const mode = ROUND_MODES[roundIndex];
+    if (mode === "match") {
+      startMatchRound();
+      return;
+    }
 
-  } catch (e) {
-    console.error(e);
-    showSplashError("Could not load today’s set. Check the published CSV URL + network.");
+    renderQuizQuestion();
   }
-}
 
-/* ---------------- Events ---------------- */
-if (soundBtn) {
-  soundBtn.addEventListener("click", async () => {
-    soundOn = !soundOn;
-    soundBtn.classList.toggle("is-off", !soundOn);
-    // resume audio context if user interacts
-    try { ensureAudio(); if (audioCtx && audioCtx.state === "suspended") await audioCtx.resume(); } catch {}
-  });
-}
+  function endRound() {
+    stopQuestionTimer();
 
-if (shuffleBtn) {
-  shuffleBtn.addEventListener("click", () => {
-    // shuffle within rounds only, then restart session state but keep score reset
-    shuffleWithinRounds();
-    resetGame();
-  });
-}
+    const next = roundIndex + 1;
+    if (next >= TOTAL_ROUNDS) {
+      endGame("Daily set complete ✅");
+      return;
+    }
 
-if (startBtn) {
-  startBtn.addEventListener("click", async () => {
-    if (playing) return;
+    // Start next round after a tiny breath
+    setTimeout(() => beginRound(next), 380);
+  }
 
-    playing = true;
+  function endGame(message) {
+    stopQuestionTimer();
+    stopElapsedTimer();
 
-    // unlock audio on user gesture
-    try { ensureAudio(); if (audioCtx && audioCtx.state === "suspended") await audioCtx.resume(); } catch {}
+    if (questionBox) setText(questionBox, message);
+    if (choicesDiv) {
+      clearChoices();
+      // Keep layout: show a soft end-state line
+      const p = document.createElement("div");
+      p.className = "end-state";
+      p.textContent = "Come back tomorrow for a fresh set.";
+      Object.assign(p.style, {
+        opacity: "0.85",
+        padding: "10px 0",
+        textAlign: "center",
+      });
+      choicesDiv.appendChild(p);
+    }
 
-    await showCountdown(3);
+    updateProgressLabel("Run finished");
+  }
 
-    // enter the correct mode at question 1
-    enterRound(0);
-    stepIntoCurrentMode();
-  });
-}
+  // ---------------------------- BUTTON WIRING (NEVER THROW) ----------------------------
+  function wireButtons() {
+    if (startBtn) {
+      startBtn.addEventListener("click", async () => {
+        // Don’t allow start before data is ready
+        if (!questions || questions.length < TOTAL_QUESTIONS) return;
 
-// Kick off
-document.addEventListener("DOMContentLoaded", boot);
+        // countdown with ring + ticks
+        await runCountdown3();
+
+        // start run
+        startElapsedTimer();
+        beginRound(0);
+      });
+    }
+
+    if (shuffleBtn) {
+      shuffleBtn.addEventListener("click", () => {
+        // Shuffle options for current quiz question only (not the question order)
+        const mode = ROUND_MODES[roundIndex];
+        if (mode !== "quiz") return;
+        renderQuizQuestion();
+      });
+    }
+
+    if (soundBtn) {
+      soundBtn.addEventListener("click", () => {
+        soundOn = !soundOn;
+        soundBtn.classList.toggle("off", !soundOn);
+      });
+    }
+
+    if (shareBtn) {
+      shareBtn.addEventListener("click", async () => {
+        const text = `BrainBolt — Score ${score}, Wrong ${wrongTotal}/${MAX_WRONG}`;
+        try {
+          if (navigator.share) {
+            await navigator.share({ text, url: location.href });
+          } else if (navigator.clipboard) {
+            await navigator.clipboard.writeText(`${text} — ${location.href}`);
+          }
+        } catch {}
+      });
+    }
+  }
+
+  // ---------------------------- BOOT ----------------------------
+  async function boot() {
+    ensureTimerFill();
+    initAudio();
+    wireButtons();
+    updatePills();
+
+    try {
+      questions = await loadQuestions();
+
+      // Auto-dismiss splash (no tap)
+      // Keep a short delay so it feels intentional
+      setTimeout(() => {
+        dismissSplash();
+      }, 350);
+
+      // Optional: show ready hint
+      // (Don’t force-run; user starts via Start button)
+      setText(questionBox, "Ready for today’s set?");
+      updateProgressLabel("Tap Start to begin");
+    } catch (err) {
+      console.error(err);
+      splashError(
+        "Could not load today’s questions. Check the LIVE sheet publish + your CSV URL, then refresh."
+      );
+    }
+  }
+
+  // Start
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else {
+    boot();
+  }
+})();
